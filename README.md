@@ -1,6 +1,6 @@
 # Hui
 
-**TODO: Add description**
+Hui (辉 "shine" in Chinese) is an Elixir library for interfacing with Solr enterprise search platform
 
 ## Installation
 
