@@ -3,16 +3,6 @@ defmodule Hui do
   Documentation for Hui.
   """
 
-  @doc """
-  Hello world.
+  use HTTPoison.Base
 
-  ## Examples
-
-      iex> Hui.hello
-      :world
-
-  """
-  def hello do
-    :world
-  end
 end
