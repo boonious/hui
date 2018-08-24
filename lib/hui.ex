@@ -3,6 +3,5 @@ defmodule Hui do
   Documentation for Hui.
   """
 
-  use HTTPoison.Base
 
 end

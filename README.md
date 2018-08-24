@@ -6,15 +6,15 @@ Hui (辉 "shine" in Chinese) is an Elixir client and library for interfacing wit
 
 ### Other low-level HTTP client features
 
-Under the hood, `Hui` uses `HTTPoison` - an HTTP client to interact with Solr.
-The default low-level functions such as 
-[get/3](https://hexdocs.pm/httpoison/HTTPoison.html#get/3)
-of HTTPoison remains available via the Hui Module. 
-For example, if needs be you could create a direct `get/3` request to a Solr endpoint
-using the `params` option for query parameters: 
+Under the hood, Hui uses `HTTPoison` - an HTTP client to interact with Solr.
+The default low-level functions such as `get/1`, `get/3`
+of HTTPoison remains available via the `Hui.Search` Module.
+For example, if needs be you could create a "get" direct request to a Solr endpoint
+using options such as `params` for query parameters:
 
 ```
-    iex> Hui.get("http://localhost:8983/solr/gettingstarted/select", [], params: [{"q", "*"}])
+    iex> Hui.Search.get("http://localhost:8983/solr/gettingstarted/select?q=test")
+    iex> Hui.Search.get("http://localhost:8983/solr/gettingstarted/select", [], params: [{"q", "*"}])
 ``` 
 
 The request returns a `HTTPoison.Response` containing raw Solr response (body) that needs 
