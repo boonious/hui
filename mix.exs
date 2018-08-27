@@ -38,7 +38,8 @@ defmodule Hui.MixProject do
     [
       {:httpoison, "~> 1.0"},
       {:poison, "~> 3.1"},
-      {:ex_doc, "~> 0.19", only: :dev, runtime: false}
+      {:ex_doc, "~> 0.19", only: :dev, runtime: false},
+      {:bypass, "~> 0.8", only: :test}
     ]
   end
 end
