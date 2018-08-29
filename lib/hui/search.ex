@@ -29,7 +29,7 @@ defmodule Hui.Search do
 
   @doc "Issues a simple query (`q=query`) request to the default Solr URL"
   def search(query) when is_bitstring(query), do: search(@default_url |> Hui.URL.select_path, query)
-  def search(_query), do: nil
+  def search(_query), do: {:error, "unsupported or malformed query"}
 
   @doc "Issues a simple query (`q=query`) request to a Solr url"
   def search(url, query), do: get( url <> "?q=" <> URI.encode(query))

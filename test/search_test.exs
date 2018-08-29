@@ -11,7 +11,7 @@ defmodule HuiSearchTest do
   describe "http client" do
 
     # malformed Solr endpoints, unable cores or bad query params (404, 400 etc.)
-    test "handling errors", context do
+    test "should handle errors", context do
       Bypass.expect context.bypass, fn conn ->
         Plug.Conn.resp(conn, 404, "")
       end
@@ -19,16 +19,17 @@ defmodule HuiSearchTest do
       assert 404 = resp.status_code
     end
 
-    test "handling unreachable host or offline server", context do
+    test "should handle unreachable host or offline server", context do
       Bypass.down(context.bypass)
       assert {:error, %HTTPoison.Error{id: nil, reason: :econnrefused}} = Hui.Search.search("http://localhost:#{context.bypass.port}", "http test")
     end
 
   end
 
-  describe "simple" do
+  describe "simple search" do
+    # test for Hui.search(query)
 
-    test "keywords search", context do
+    test "should perform keywords query", context do
       Bypass.expect context.bypass, fn conn ->
         Plug.Conn.resp(conn, 200, context.simple_search_response_sample)
       end
@@ -36,6 +37,10 @@ defmodule HuiSearchTest do
       resp_h = resp.body |> Poison.decode!
       assert length(resp_h["response"]["docs"]) > 0
       assert String.match?(resp.request_url, ~r/q=*/)
+    end
+
+    test "should handle malformed and unsupported queries" do
+      assert {:error, "unsupported or malformed query"} = Hui.search(nil)
     end
 
   end
