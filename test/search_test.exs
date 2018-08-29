@@ -1,6 +1,7 @@
 defmodule HuiSearchTest do
   use ExUnit.Case, async: true
   doctest Hui
+  doctest Hui.URL
 
   setup do
     resp = File.read!("./test/data/simple_search_response.json")
