@@ -16,7 +16,7 @@ defmodule HuiSearchTest do
       Bypass.expect context.bypass, fn conn ->
         Plug.Conn.resp(conn, 404, "")
       end
-      {_, resp} = Hui.Search.search("http://localhost:#{context.bypass.port}","http test")
+      {_, resp} = Hui.Search.search("http://localhost:#{context.bypass.port}", q: "http test")
       assert 404 = resp.status_code
     end
 
@@ -34,10 +34,23 @@ defmodule HuiSearchTest do
       Bypass.expect context.bypass, fn conn ->
         Plug.Conn.resp(conn, 200, context.simple_search_response_sample)
       end
-      {_status, resp} = Hui.Search.search("http://localhost:#{context.bypass.port}", "*")
+      {_status, resp} = Hui.Search.search("http://localhost:#{context.bypass.port}", q: "*")
       resp_h = resp.body |> Poison.decode!
       assert length(resp_h["response"]["docs"]) > 0
       assert String.match?(resp.request_url, ~r/q=*/)
+    end
+
+    test "should query with other Solr parameters", context do
+      Bypass.expect context.bypass, fn conn ->
+        Plug.Conn.resp(conn, 200, context.simple_search_response_sample)
+      end
+
+      solr_params = [q: "*", rows: 10, fq: ["cat:electronics", "popularity:[0 TO *]"] ]
+
+      {_status, resp} = Hui.Search.search("http://localhost:#{context.bypass.port}", solr_params)
+      resp_h = resp.body |> Poison.decode!
+      assert length(resp_h["response"]["docs"]) > 0
+      assert String.match?(resp.request_url, ~r/q=%2A&rows=10&fq=cat%3Aelectronics&fq=popularity%3A%5B0\+TO\+%2A%5D/)
     end
 
     test "should handle malformed and unsupported queries" do
@@ -52,14 +65,23 @@ defmodule HuiSearchTest do
   #
   # this required a configured working Solr core/collection
   # see: Configuration for further details
-  @tag live: false
   describe "live SOLR API" do
+    @describetag live: false
 
-    test "single keywords search" do
+    test "should perform keywords query" do
       {_status, resp} = Hui.search("*")
       resp_h = resp.body |> Poison.decode!
       assert length(resp_h["response"]["docs"]) >= 0
       assert String.match?(resp.request_url, ~r/q=*/)
+    end
+
+    test "should query with other Solr parameters" do
+      solr_params = [q: "*", rows: 10, facet: true, fl: "*"]
+      {_status, resp} = Hui.search(solr_params)
+
+      resp_h = resp.body |> Poison.decode!
+      assert length(resp_h["response"]["docs"]) >= 0
+      assert String.match?(resp.request_url, ~r/q=%2A&rows=10&facet=true&fl=%2A/)
     end
 
   end
