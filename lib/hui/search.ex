@@ -1,6 +1,8 @@
 defmodule Hui.Search do
   @moduledoc """
-  ...
+  
+  Hui.Search provide various underpinning functions such as `search/1`, `search/2` for querying Solr.
+
   ### Other low-level HTTP client features
 
   Under the hood, Hui uses `HTTPoison` - an HTTP client to interact with Solr.
@@ -22,5 +24,14 @@ defmodule Hui.Search do
   """
 
   use HTTPoison.Base 
+
+  @default_url %Hui.URL{ url: Application.get_env(:hui, :urls)[:default] }
+
+  @doc "Issues a simple query (`q=query`) request to the default Solr URL"
+  def search(query) when is_bitstring(query), do: search(@default_url |> Hui.URL.select_path, query)
+  def search(_query), do: nil
+
+  @doc "Issues a simple query (`q=query`) request to a Solr url"
+  def search(url, query), do: get( url <> "?q=" <> URI.encode(query))
 
 end

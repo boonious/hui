@@ -1,0 +1,344 @@
+{
+  "responseHeader": {
+    "zkConnected": true,
+    "status": 0,
+    "QTime": 9,
+    "params": {
+      "q": "*"
+    }
+  },
+  "response": {
+    "numFound": 47,
+    "start": 0,
+    "maxScore": 1.0,
+    "docs": [
+      {
+        "id": "/opt/solr-7.4.0/docs/index.html",
+        "stream_size": [
+          839
+        ],
+        "x_parsed_by": [
+          "org.apache.tika.parser.DefaultParser",
+          "org.apache.tika.parser.html.HtmlParser"
+        ],
+        "stream_content_type": [
+          "text/html"
+        ],
+        "dc_title": [
+          "Apache Solr 7.4.0 Documentation"
+        ],
+        "content_encoding": [
+          "UTF-8"
+        ],
+        "content_type_hint": [
+          "text/html; charset=UTF-8"
+        ],
+        "resourcename": [
+          "/opt/solr-7.4.0/docs/index.html"
+        ],
+        "title": [
+          "Apache Solr 7.4.0 Documentation"
+        ],
+        "content_type": [
+          "text/html; charset=UTF-8"
+        ],
+        "dc_title_str": [
+          "Apache Solr 7.4.0 Documentation"
+        ],
+        "x_parsed_by_str": [
+          "org.apache.tika.parser.DefaultParser",
+          "org.apache.tika.parser.html.HtmlParser"
+        ],
+        "content_type_str": [
+          "text/html; charset=UTF-8"
+        ],
+        "content_type_hint_str": [
+          "text/html; charset=UTF-8"
+        ],
+        "resourcename_str": [
+          "/opt/solr-7.4.0/docs/index.html"
+        ],
+        "stream_content_type_str": [
+          "text/html"
+        ],
+        "title_str": [
+          "Apache Solr 7.4.0 Documentation"
+        ],
+        "_version_": 1609424409081151488,
+        "content_encoding_str": [
+          "UTF-8"
+        ]
+      },
+      {
+        "id": "GB18030TEST",
+        "name": [
+          "Test with some GB18030 encoded characters"
+        ],
+        "features": [
+          "No accents here",
+          "这是一个功能",
+          "This is a feature (translated)",
+          "这份文件是很有光泽",
+          "This document is very shiny (translated)"
+        ],
+        "price": [
+          0.0
+        ],
+        "inStock": [
+          true
+        ],
+        "name_str": [
+          "Test with some GB18030 encoded characters"
+        ],
+        "features_str": [
+          "No accents here",
+          "This document is very shiny (translated)",
+          "This is a feature (translated)",
+          "这份文件是很有光泽",
+          "这是一个功能"
+        ],
+        "_version_": 1609424474270072832
+      },
+      {
+        "id": "IW-02",
+        "name": [
+          "iPod & iPod Mini USB 2.0 Cable"
+        ],
+        "manu": [
+          "Belkin"
+        ],
+        "manu_id_s": "belkin",
+        "cat": [
+          "electronics",
+          "connector"
+        ],
+        "features": [
+          "car power adapter for iPod, white"
+        ],
+        "weight": [
+          2.0
+        ],
+        "price": [
+          11.5
+        ],
+        "popularity": [
+          1
+        ],
+        "inStock": [
+          false
+        ],
+        "store": [
+          "37.7752,-122.4232"
+        ],
+        "manufacturedate_dt": "2006-02-14T23:55:59Z",
+        "manu_str": [
+          "Belkin"
+        ],
+        "name_str": [
+          "iPod & iPod Mini USB 2.0 Cable"
+        ],
+        "features_str": [
+          "car power adapter for iPod, white"
+        ],
+        "store_str": [
+          "37.7752,-122.4232"
+        ],
+        "_version_": 1609424475159265280,
+        "cat_str": [
+          "connector",
+          "electronics"
+        ]
+      },
+      {
+        "id": "MA147LL/A",
+        "name": [
+          "Apple 60 GB iPod with Video Playback Black"
+        ],
+        "manu": [
+          "Apple Computer Inc."
+        ],
+        "manu_id_s": "apple",
+        "cat": [
+          "electronics",
+          "music"
+        ],
+        "features": [
+          "iTunes, Podcasts, Audiobooks",
+          "Stores up to 15,000 songs, 25,000 photos, or 150 hours of video",
+          "2.5-inch, 320x240 color TFT LCD display with LED backlight",
+          "Up to 20 hours of battery life",
+          "Plays AAC, MP3, WAV, AIFF, Audible, Apple Lossless, H.264 video",
+          "Notes, Calendar, Phone book, Hold button, Date display, Photo wallet, Built-in games, JPEG photo playback, Upgradeable firmware, USB 2.0 compatibility, Playback speed control, Rechargeable capability, Battery level indication"
+        ],
+        "includes": [
+          "earbud headphones, USB cable"
+        ],
+        "weight": [
+          5.5
+        ],
+        "price": [
+          399.0
+        ],
+        "popularity": [
+          10
+        ],
+        "inStock": [
+          true
+        ],
+        "store": [
+          "37.7752,-100.0232"
+        ],
+        "manufacturedate_dt": "2005-10-12T08:00:00Z",
+        "manu_str": [
+          "Apple Computer Inc."
+        ],
+        "name_str": [
+          "Apple 60 GB iPod with Video Playback Black"
+        ],
+        "includes_str": [
+          "earbud headphones, USB cable"
+        ],
+        "features_str": [
+          "2.5-inch, 320x240 color TFT LCD display with LED backlight",
+          "Notes, Calendar, Phone book, Hold button, Date display, Photo wallet, Built-in games, JPEG photo playback, Upgradeable firmware, USB 2.0 compatibility, Playback speed control, Rechargeable capability, Battery level indication",
+          "Plays AAC, MP3, WAV, AIFF, Audible, Apple Lossless, H.264 video",
+          "Stores up to 15,000 songs, 25,000 photos, or 150 hours of video",
+          "Up to 20 hours of battery life",
+          "iTunes, Podcasts, Audiobooks"
+        ],
+        "store_str": [
+          "37.7752,-100.0232"
+        ],
+        "_version_": 1609424475504246784,
+        "cat_str": [
+          "electronics",
+          "music"
+        ]
+      },
+      {
+        "id": "adata",
+        "compName_s": "A-Data Technology",
+        "address_s": "46221 Landing Parkway Fremont, CA 94538",
+        "_version_": 1609424475516829696
+      },
+      {
+        "id": "asus",
+        "compName_s": "ASUS Computer",
+        "address_s": "800 Corporate Way Fremont, CA 94539",
+        "_version_": 1609424475517878272
+      },
+      {
+        "id": "belkin",
+        "compName_s": "Belkin",
+        "address_s": "12045 E. Waterfront Drive Playa Vista, CA 90094",
+        "_version_": 1609424475518926848
+      },
+      {
+        "id": "maxtor",
+        "compName_s": "Maxtor Corporation",
+        "address_s": "920 Disc Drive Scotts Valley, CA 95066",
+        "_version_": 1609424475521024000
+      },
+      {
+        "id": "TWINX2048-3200PRO",
+        "name": [
+          "CORSAIR  XMS 2GB (2 x 1GB) 184-Pin DDR SDRAM Unbuffered DDR 400 (PC 3200) Dual Channel Kit System Memory - Retail"
+        ],
+        "manu": [
+          "Corsair Microsystems Inc."
+        ],
+        "manu_id_s": "corsair",
+        "cat": [
+          "electronics",
+          "memory"
+        ],
+        "features": [
+          "CAS latency 2,  2-3-3-6 timing, 2.75v, unbuffered, heat-spreader"
+        ],
+        "price": [
+          185.0
+        ],
+        "popularity": [
+          5
+        ],
+        "inStock": [
+          true
+        ],
+        "store": [
+          "37.7752,-122.4232"
+        ],
+        "manufacturedate_dt": "2006-02-13T15:26:37Z",
+        "payloads": [
+          "electronics|6.0 memory|3.0"
+        ],
+        "manu_str": [
+          "Corsair Microsystems Inc."
+        ],
+        "name_str": [
+          "CORSAIR  XMS 2GB (2 x 1GB) 184-Pin DDR SDRAM Unbuffered DDR 400 (PC 3200) Dual Channel Kit System Memory - Retail"
+        ],
+        "features_str": [
+          "CAS latency 2,  2-3-3-6 timing, 2.75v, unbuffered, heat-spreader"
+        ],
+        "store_str": [
+          "37.7752,-122.4232"
+        ],
+        "payloads_str": [
+          "electronics|6.0 memory|3.0"
+        ],
+        "_version_": 1609424475750662144,
+        "cat_str": [
+          "electronics",
+          "memory"
+        ]
+      },
+      {
+        "id": "VS1GB400C3",
+        "name": [
+          "CORSAIR ValueSelect 1GB 184-Pin DDR SDRAM Unbuffered DDR 400 (PC 3200) System Memory - Retail"
+        ],
+        "manu": [
+          "Corsair Microsystems Inc."
+        ],
+        "manu_id_s": "corsair",
+        "cat": [
+          "electronics",
+          "memory"
+        ],
+        "price": [
+          74.99
+        ],
+        "popularity": [
+          7
+        ],
+        "inStock": [
+          true
+        ],
+        "store": [
+          "37.7752,-100.0232"
+        ],
+        "manufacturedate_dt": "2006-02-13T15:26:37Z",
+        "payloads": [
+          "electronics|4.0 memory|2.0"
+        ],
+        "manu_str": [
+          "Corsair Microsystems Inc."
+        ],
+        "name_str": [
+          "CORSAIR ValueSelect 1GB 184-Pin DDR SDRAM Unbuffered DDR 400 (PC 3200) System Memory - Retail"
+        ],
+        "store_str": [
+          "37.7752,-100.0232"
+        ],
+        "payloads_str": [
+          "electronics|4.0 memory|2.0"
+        ],
+        "_version_": 1609424475751710720,
+        "cat_str": [
+          "electronics",
+          "memory"
+        ]
+      }
+    ]
+  }
+}

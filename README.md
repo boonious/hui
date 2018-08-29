@@ -56,3 +56,11 @@ Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_do
 and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
 be found at [https://hexdocs.pm/hui](https://hexdocs.pm/hui).
 
+## Configuration
+
+A default Solr URL can be specified in the Mix config file, as below:
+
+  ```
+    config hui, urls,
+      default: "http://localhost:8983/solr/gettingstarted"
+  ```
