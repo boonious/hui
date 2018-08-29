@@ -9,6 +9,7 @@ defmodule HuiSearchTest do
   end
 
   describe "http client" do
+
     # malformed Solr endpoints, unable cores or bad query params (404, 400 etc.)
     test "handling errors", context do
       Bypass.expect context.bypass, fn conn ->
@@ -34,6 +35,24 @@ defmodule HuiSearchTest do
       {_status, resp} = Hui.Search.search("http://localhost:#{context.bypass.port}", "*")
       resp_h = resp.body |> Poison.decode!
       assert length(resp_h["response"]["docs"]) > 0
+      assert String.match?(resp.request_url, ~r/q=*/)
+    end
+
+  end
+
+  # tests using live Solr cores/collections that are
+  # excluded by default, use '--include live' or
+  # change tag value to true to run tests
+  #
+  # this required a configured working Solr core/collection
+  # see: Configuration for further details
+  @tag live: false
+  describe "live SOLR API" do
+
+    test "single keywords search" do
+      {_status, resp} = Hui.search("*")
+      resp_h = resp.body |> Poison.decode!
+      assert length(resp_h["response"]["docs"]) >= 0
       assert String.match?(resp.request_url, ~r/q=*/)
     end
 
