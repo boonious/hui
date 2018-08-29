@@ -3,8 +3,9 @@ defmodule Hui.URL do
     Struct and utilities for working with Solr URLs and queries.
 
     Use the `%Hui.URL{url: url, handler: handler}` data struct to specify
-    Solr URLs and request handlers. Functions such as `select_path`,
-    `update_path` return the default paths for a given SOLR url.
+    Solr URLs and request handlers. Functions such as `select_path/1`,
+    `update_path/1` return the default paths for a given SOLR url. 
+    `encode_query/1` encode Solr parameters into query string.
 
   """
 
@@ -15,8 +16,8 @@ defmodule Hui.URL do
   Encodes list (keywords) of Solr parameters into a query string.
 
   Some Solr parameters such as the filter query `fq`, `facet.field` can be set multiple times.
-  These can be specified with a value list (fq: [filter1, filter]). The dot-notabled
-  parameters (facet.field, hl.fl) can be specified with string keys ("facet.field": "type", "hl.fl": "words").
+  These can be specified with a value list (e.g. `fq: [filter1, filter]`). The dot-notated
+  parameters (facet.field, hl.fl) can be specified with string keys (e.g. `"facet.field": "type"`, `"hl.fl": "words"`).
 
   ## Example
 
