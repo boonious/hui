@@ -1,6 +1,8 @@
 defmodule Hui do
+
   @moduledoc """
-  Hui 辉 ("shine" in Chinese) is a client and library for Solr enterprise search platform.
+  Hui 辉 ("shine" in Chinese) is an [Elixir](https://elixir-lang.org) client and library for 
+  [Solr enterprise search platform](http://lucene.apache.org/solr/).
   
   Usage
   
@@ -21,7 +23,7 @@ defmodule Hui do
     Hui.search(q: "loch", rows: 5, facet: true, "facet.field": ["year", "subject"])
   ```
 
-  See `Hui.URL.encode_query/1` for more details on Solr parameter list.
+  See `Hui.URL.encode_query/1` for more details on Solr parameter keywords list.
 
   """
   @type solr_query :: binary | list

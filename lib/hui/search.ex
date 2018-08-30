@@ -1,25 +1,15 @@
 defmodule Hui.Search do
   @moduledoc """
-  
-  Hui.Search provide various underpinning functions including `search/1`, `search/2` for querying Solr.
+
+  Hui.Search module provides various underpinning functions including `search/1`, `search/2` for querying Solr.
 
   ### Other low-level HTTP client features
 
   Under the hood, Hui uses `HTTPoison` - an HTTP client to interact with Solr.
-  The default low-level functions such as `get/1`, `get/3`
-  of HTTPoison remains available via the `Hui.Search` Module.
-  For example, if needs be you could create a "get" direct request to a Solr endpoint
-  using options such as `params` for query parameters:
+  The existing low-level functions of HTTPoison, e.g. `get/1`, `get/3` 
+  remain available as part of this module.
 
-  ```
-      iex> Hui.Search.get("http://localhost:8983/solr/gettingstarted/select?q=test")
-      iex> Hui.Search.get("http://localhost:8983/solr/gettingstarted/select", [], params: [{"q", "*"}])
-  ```
-
-  See [HTTPoison](https://hexdocs.pm/httpoison/HTTPoison.html#content) module
-  and [HTTPoison.request/5](https://hexdocs.pm/httpoison/HTTPoison.html#request/5)
-  for more details on how to issue HTTP requests and other availlable options in addition 
-  to `params`.
+  See the rest of the documentation for more details.
 
   """
 
@@ -40,7 +30,7 @@ defmodule Hui.Search do
     Hui.Search.search(q: "loch", rows: 5, fq: ["type:illustration", "format:image/jpeg"])
   ```
 
-  See `Hui.URL.encode_query/1` for more details on Solr parameter list.
+  See `Hui.URL.encode_query/1` for more details on Solr parameter keywords list.
 
   """
   @spec search(solr_query) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
@@ -59,7 +49,7 @@ defmodule Hui.Search do
     Hui.Search.search("http://localhost:8983/solr/gettingstarted/select", q: "loch", rows: 5)
   ```
 
-  See `Hui.URL.encode_query/1` for more details on Solr parameter list.
+  See `Hui.URL.encode_query/1` for more details on Solr parameter keywords list.
 
   """
   @spec search(url, solr_query) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}

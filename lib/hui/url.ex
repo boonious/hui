@@ -1,11 +1,9 @@
 defmodule Hui.URL do
   @moduledoc """
-    Struct and utilities for working with Solr URLs and queries.
+  Struct and utilities for working with Solr URLs and parameters.
 
-    Use the `%Hui.URL{url: url, handler: handler}` data struct to specify
-    Solr URLs and request handlers. Functions such as `select_path/1`,
-    `update_path/1` return the default paths for a given SOLR url. 
-    `encode_query/1` encode Solr parameters into query string.
+  Use the `%Hui.URL{url: url, handler: handler}` struct to specify
+  Solr URLs and request handlers.
 
   """
 
@@ -16,8 +14,9 @@ defmodule Hui.URL do
   Encodes list (keywords) of Solr parameters into a query string.
 
   Some Solr parameters such as the filter query `fq`, `facet.field` can be set multiple times.
-  These can be specified with a value list (e.g. `fq: [filter1, filter]`). The dot-notated
-  parameters (facet.field, hl.fl) can be specified with string keys (e.g. `"facet.field": "type"`, `"hl.fl": "words"`).
+  These can be specified in a list (e.g. `fq: [filter1, filter]`). Dot-notated
+  parameters (facet.field, hl.fl) can be specified with string keys, 
+  e.g. `"facet.field": "type"`, `"hl.fl": "words"`.
 
   ## Example
 
@@ -38,11 +37,11 @@ defmodule Hui.URL do
   def encode_query(enumerable) when is_list(enumerable), do: Enum.map_join(enumerable, "&", &encode/1)
   def encode_query(_), do: ""
 
-  @doc "Returns the default select path of a Solr core / collection of a `Hui.URL` struct."
+  @doc "Returns the default select path of a Solr core / collection from the given `Hui.URL` struct."
   @spec select_path(t) :: binary
   def select_path(%__MODULE__{url: url, handler: _handler}), do: "#{url}/select"
 
-  @doc "Returns the default update path of a Solr core / collection of a `Hui.URL` struct."
+  @doc "Returns the default update path of a Solr core / collection from the given `Hui.URL` struct."
   @spec update_path(t) :: binary
   def update_path(%__MODULE__{url: url, handler: _handler}), do: "#{url}/update"
 

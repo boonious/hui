@@ -1,43 +1,62 @@
-# Hui
+# Hui 辉
 
-Hui (辉 "shine" in Chinese) is an Elixir client and library for interfacing with Solr enterprise search platform
+Hui 辉 ("shine" in Chinese) is an [Elixir](https://elixir-lang.org) client and library for 
+[Solr enterprise search platform](http://lucene.apache.org/solr/).
 
 ## Usage
+
+A typical Hui use case is to provide search queries of a default Solr core or collection (distributed search data)
+which may be configured as part of any [Elixir](https://elixir-lang.org) or
+[Phoenix](https://phoenixframework.org) application - see `Configuration` below.
+
+The query may involve a search string or a [keywords list](https://elixir-lang.org/getting-started/keywords-and-maps.html#keyword-lists) 
+of Solr parameters, invoking the comprehensive and powerful search related
+features of Solr such as faceting, highlighting and "more-like-this".
+
+```
+  Hui.search("scott")
+  Hui.search(q: "loch", rows: 5, fq: ["type:illustration", "format:image/jpeg"])
+```
+
+See `Hui.search/1` and [Solr reference guide](http://lucene.apache.org/solr/guide/7_4/searching.html)
+for more details on available search parameters. 
+
+### Software library
+
+See `API reference` for available modules which can be used for developing Solr 
+search application in Elixir and Phoenix.
+
+### Parsing Solr results
+
+Hui currently returns Solr results as `HTTPoison.Response` struct which contains the raw Solr response (body).
+**Note**: upcoming releases of Hui will provide features for parsing and working with response 
+data in various formats.
+
+```
+  {:ok,
+   %HTTPoison.Response{
+    body: "...[Solr reponse]..",
+    headers: [
+      {"Content-Type", "application/json;charset=utf-8"},
+      {"Content-Length", "4005"}
+    ],
+    request_url: "http://localhost:8983/solr/gettingstarted/select?q=%2A",
+    status_code: 200
+   }
+  }
+```
+The response needs to be decoded accordingly using relevant parsers such as `Poison` for JSON response.
+
+```
+  {status, resp} = Hui.search(solr_params)
+  solr_response = resp.body |> Poison.decode!
+```
 
 ### Other low-level HTTP client features
 
 Under the hood, Hui uses `HTTPoison` - an HTTP client to interact with Solr.
-The default low-level functions such as `get/1`, `get/3`
-of HTTPoison remains available via the `Hui.Search` Module.
-For example, if needs be you could create a "get" direct request to a Solr endpoint
-using options such as `params` for query parameters:
-
-```
-    iex> Hui.Search.get("http://localhost:8983/solr/gettingstarted/select?q=test")
-    iex> Hui.Search.get("http://localhost:8983/solr/gettingstarted/select", [], params: [{"q", "*"}])
-``` 
-
-The request returns a `HTTPoison.Response` containing raw Solr response (body) that needs 
-to be decoded accordingly using relevant parsers, e.g. `Poison` for JSON response.
-
-```
-    {:ok,
-     %HTTPoison.Response{ 
-      body: "...",
-      headers: [
-        {"Content-Type", "application/json;charset=utf-8"},
-        {"Content-Length", "4005"}
-      ],
-      request_url: "http://localhost:8983/solr/gettingstarted/select?q=%2A",
-      status_code: 200
-     }
-    }
-```
-
-See [HTTPoison](https://hexdocs.pm/httpoison/HTTPoison.html#content) module
-and [HTTPoison.request/5](https://hexdocs.pm/httpoison/HTTPoison.html#request/5)
-for more details on how to issue HTTP requests and other availlable options in addition 
-to `params`.
+The existing low-level functions of HTTPoison e.g. `get/1`, `get/3`
+remain available in the `Hui.Search` module.
 
 ## Installation
 
@@ -58,7 +77,7 @@ be found at [https://hexdocs.pm/hui](https://hexdocs.pm/hui).
 
 ## Configuration
 
-A default Solr URL can be specified in the Mix config file, as below:
+A default Solr core or collection URL can be specified in the application configuration as below:
 
   ```
     config hui, urls,
