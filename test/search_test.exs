@@ -52,8 +52,26 @@ defmodule HuiSearchTest do
       assert String.match?(resp.request_url, ~r/q=%2A&rows=10&fq=cat%3Aelectronics&fq=popularity%3A%5B0\+TO\+%2A%5D/)
     end
 
-    test "should handle malformed and unsupported queries" do
-      assert {:error, "malformed query or URL"} = Hui.search(nil)
+    test "should work with Hui.URL struct", context do
+      Bypass.expect context.bypass, fn conn ->
+        Plug.Conn.resp(conn, 200, context.simple_search_response_sample)
+      end
+
+      solr_params = [suggest: true, "suggest.dictionary": "mySuggester", "suggest.q": "el"]
+      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}/solr/newspapers", handler: "suggest"}
+      {_status, resp} = Hui.search(url, solr_params)
+
+      experted_request_url = Hui.URL.to_string(url) <> "?" <> Hui.URL.encode_query(solr_params)
+      assert experted_request_url == resp.request_url
+    end
+
+    test "should handle bad URL" do
+      # need fixing
+      assert true
+    end
+
+    test "should handle malformed queries" do
+      assert {:error, "malformed query or URL"} == Hui.search(nil)
     end
 
   end

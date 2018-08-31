@@ -1,29 +1,41 @@
 # Hui 辉
 
-Hui 辉 ("shine" in Chinese) is an [Elixir](https://elixir-lang.org) client and library for 
+Hui 辉 ("shine" in Chinese) is an Elixir client and library for
 [Solr enterprise search platform](http://lucene.apache.org/solr/).
 
 ## Usage
 
-A typical Hui use case is to provide search queries of a default Solr core or collection (distributed search data)
-which may be configured as part of any [Elixir](https://elixir-lang.org) or
-[Phoenix](https://phoenixframework.org) application - see `Configuration` below.
+Hui provides capability for any [Elixir](https://elixir-lang.org) or
+[Phoenix](https://phoenixframework.org) application to query and interact with Solr data.
+The data can be contained within a core (or index) held on a single server or a collection
+which typically distributed across many servers.
 
-The query may involve a search string or a [keywords list](https://elixir-lang.org/getting-started/keywords-and-maps.html#keyword-lists) 
-of Solr parameters, invoking the comprehensive and powerful search related
-features of Solr such as faceting, highlighting and "more-like-this".
+### Example
 
 ```
-  Hui.search("scott")
+  Hui.search("scott") # keywords search
   Hui.search(q: "loch", rows: 5, fq: ["type:illustration", "format:image/jpeg"])
 ```
 
-See `Hui.search/1` and [Solr reference guide](http://lucene.apache.org/solr/guide/7_4/searching.html)
-for more details on available search parameters. 
+The above examples query a pre-configured default Solr endpoint - see `Configuration` below.
+The query may involves search words (string) or a [keywords list](https://elixir-lang.org/getting-started/keywords-and-maps.html#keyword-lists) 
+of Solr parameters, invoking the comprehensive and powerful features of Solr.
+
+For any endpoint and request handlers defined in binary or struct format:
+
+```
+  Hui.search("http://localhost:8983/solr/collection", q: "loch")
+  
+  url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "suggest"}
+  Hui.search(url, suggest: true, "suggest.dictionary": "mySuggester", "suggest.q": "el")
+```
+
+See `Hui.search/1`, `Hui.search/2` and [Solr reference guide](http://lucene.apache.org/solr/guide/7_4/searching.html)
+for more details on available search parameters.
 
 ### Software library
 
-See `API reference` for available modules which can be used for developing Solr 
+See `API reference` for available modules which can also be used for developing Solr
 search application in Elixir and Phoenix.
 
 ### Parsing Solr results
