@@ -36,7 +36,7 @@ defmodule Hui.Search do
   def search(_query), do: {:error, @error_msg}
 
   @doc """
-  Issues a search query to a Solr URL specified in %Hui.URL{} struct.
+  Issues a search query to a Solr URL specified in `t:Hui.URL.t/0` struct.
 
   The query contains a comprehensive keywords list of Solr parameters.
 

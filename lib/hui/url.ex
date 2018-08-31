@@ -2,7 +2,7 @@ defmodule Hui.URL do
   @moduledoc """
   Struct and utilities for working with Solr URLs and parameters.
 
-  Use the `%Hui.URL{url: url, handler: handler}` struct to specify
+  Use the module `t:Hui.URL.t/0` struct to specify
   Solr core or collection URLs with request handlers.
 
   """
@@ -11,7 +11,7 @@ defmodule Hui.URL do
   @type t :: %__MODULE__{url: nil | binary, handler: nil | binary}
 
   @doc """
-  Returns any configured Solr url as `Hui.URL` struct.
+  Returns any configured Solr url as `t:Hui.URL.t/0` struct.
 
   ```
       iex> Hui.URL.default_url!
@@ -70,7 +70,7 @@ defmodule Hui.URL do
   def encode_query(enumerable) when is_list(enumerable), do: Enum.map_join(enumerable, "&", &encode/1)
   def encode_query(_), do: ""
 
-  @doc "Returns the string representation of the given `Hui.URL` struct."
+  @doc "Returns the string representation of the given `t:Hui.URL.t/0` struct."
   @spec to_string(t) :: binary
   def to_string(%__MODULE__{url: url, handler: handler}), do: "#{url}/#{handler}"
 
