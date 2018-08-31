@@ -1,7 +1,6 @@
 defmodule HuiSearchTest do
   use ExUnit.Case, async: true
   doctest Hui
-  doctest Hui.URL
 
   setup do
     resp = File.read!("./test/data/simple_search_response.json")
@@ -16,13 +15,13 @@ defmodule HuiSearchTest do
       Bypass.expect context.bypass, fn conn ->
         Plug.Conn.resp(conn, 404, "")
       end
-      {_, resp} = Hui.Search.search("http://localhost:#{context.bypass.port}", q: "http test")
+      {_, resp} = Hui.search("http://localhost:#{context.bypass.port}", q: "http test")
       assert 404 = resp.status_code
     end
 
     test "should handle unreachable host or offline server", context do
       Bypass.down(context.bypass)
-      assert {:error, %HTTPoison.Error{id: nil, reason: :econnrefused}} = Hui.Search.search("http://localhost:#{context.bypass.port}", "http test")
+      assert {:error, %HTTPoison.Error{id: nil, reason: :econnrefused}} = Hui.search("http://localhost:#{context.bypass.port}", q: "http test")
     end
 
   end
@@ -34,7 +33,7 @@ defmodule HuiSearchTest do
       Bypass.expect context.bypass, fn conn ->
         Plug.Conn.resp(conn, 200, context.simple_search_response_sample)
       end
-      {_status, resp} = Hui.Search.search("http://localhost:#{context.bypass.port}", q: "*")
+      {_status, resp} = Hui.search("http://localhost:#{context.bypass.port}", q: "*")
       resp_h = resp.body |> Poison.decode!
       assert length(resp_h["response"]["docs"]) > 0
       assert String.match?(resp.request_url, ~r/q=*/)
@@ -47,14 +46,14 @@ defmodule HuiSearchTest do
 
       solr_params = [q: "*", rows: 10, fq: ["cat:electronics", "popularity:[0 TO *]"] ]
 
-      {_status, resp} = Hui.Search.search("http://localhost:#{context.bypass.port}", solr_params)
+      {_status, resp} = Hui.search("http://localhost:#{context.bypass.port}", solr_params)
       resp_h = resp.body |> Poison.decode!
       assert length(resp_h["response"]["docs"]) > 0
       assert String.match?(resp.request_url, ~r/q=%2A&rows=10&fq=cat%3Aelectronics&fq=popularity%3A%5B0\+TO\+%2A%5D/)
     end
 
     test "should handle malformed and unsupported queries" do
-      assert {:error, "unsupported or malformed query"} = Hui.search(nil)
+      assert {:error, "malformed query or URL"} = Hui.search(nil)
     end
 
   end

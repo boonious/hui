@@ -30,4 +30,6 @@ defmodule Hui do
   @spec search(solr_query) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
   def search(query), do: Hui.Search.search(query)
 
+  def search(url, query) when is_binary(url), do: Hui.Search.search(%Hui.URL{url: url}, query)
+
 end

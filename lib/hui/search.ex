@@ -15,53 +15,49 @@ defmodule Hui.Search do
 
   use HTTPoison.Base 
 
-  @default_url %Hui.URL{ url: Application.get_env(:hui, :urls)[:default] }
-  @type solr_query :: binary | list
-  @type url :: binary
+  @default_url Hui.URL.default_url!
+  @error_msg "malformed query or URL"
 
   @doc """
   Issues a search query to the default Solr URL.
 
-  The query can be a search string or a comprehensive keywords list of Solr parameters.
+  The query contains a comprehensive keywords list of Solr parameters.
   
   ## Example
   ```
-    Hui.Search.search("loch")
     Hui.Search.search(q: "loch", rows: 5, fq: ["type:illustration", "format:image/jpeg"])
   ```
 
   See `Hui.URL.encode_query/1` for more details on Solr parameter keywords list.
 
   """
-  @spec search(solr_query) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
-  def search(query) when is_bitstring(query), do: search(@default_url |> Hui.URL.select_path, q: query)
-  def search(query) when is_list(query), do: search(@default_url |> Hui.URL.select_path, query)
-  def search(_query), do: {:error, "unsupported or malformed query"}
+  @spec search(list) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
+  def search(query) when is_list(query), do: search(@default_url, query)
+  def search(_query), do: {:error, @error_msg}
 
   @doc """
-  Issues a search query to a Solr URL.
+  Issues a search query to a Solr URL specified in %Hui.URL{} struct.
 
-  The query can be a search string or a comprehensive keywords list of Solr parameters.
+  The query contains a comprehensive keywords list of Solr parameters.
 
   ## Example
   ```
-    Hui.Search.search("http://localhost:8983/solr/gettingstarted/select", "loch")
-    Hui.Search.search("http://localhost:8983/solr/gettingstarted/select", q: "loch", rows: 5)
+    url = %Hul.URL{url: solr_endpoint}
+    Hui.Search.search(url, q: "loch", rows: 5)
   ```
 
   See `Hui.URL.encode_query/1` for more details on Solr parameter keywords list.
 
   """
-  @spec search(url, solr_query) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
-  def search(url, query) when is_binary(query), do: exec_search(url, Hui.URL.encode_query(q: query))
-  def search(url, query) when is_list(query) do
+  @spec search(struct, list) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
+  def search(%Hui.URL{url: url, handler: handler}, query), do: exec_search("#{url}/#{handler}", query)
+  def search(_, _), do: {:error, @error_msg}
+
+  defp exec_search(url, query) do
     cond do
-      Keyword.keyword?(query) -> exec_search(url, Hui.URL.encode_query(query))
-      true -> {:error, "unsupported or malformed query"}
+      Keyword.keyword?(query) -> get( url <> "?" <> Hui.URL.encode_query(query) )
+      true -> {:error, @error_msg}
     end
   end
-
-  defp exec_search(url, query) when is_binary(query), do: get( url <> "?" <> query )
-
 
 end
