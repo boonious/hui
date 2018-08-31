@@ -64,11 +64,11 @@ If [available in Hex](https://hex.pm/docs/publish), the package can be installed
 by adding `hui` to your list of dependencies in `mix.exs`:
 
 ```elixir
-def deps do
-  [
-    {:hui, "~> 0.1.0"}
-  ]
-end
+  def deps do
+    [
+      {:hui, "~> 0.1.0"}
+    ]
+  end
 ```
 
 Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
@@ -77,9 +77,25 @@ be found at [https://hexdocs.pm/hui](https://hexdocs.pm/hui).
 
 ## Configuration
 
-A default Solr core or collection URL can be specified in the application configuration as below:
+If your application only provides services to a single Solr core or collection. 
+A default URL may be specified in the application configuration as below:
 
   ```
-    config hui, urls,
-      default: "http://localhost:8983/solr/gettingstarted"
+    config hui, default_url,
+      url: "http://localhost:8983/solr/gettingstarted",
+      handler: "select" # optional
   ```
+
+- `url`: Typical Solr endpoint including the core or collection name. This could also be a load balancer
+endpoint fronting several upstream servers
+- `handler`: name of a handler that processes requests (per endpoint).
+
+Solr provides [a variety of request
+handlers](http://lucene.apache.org/solr/guide/7_4/overview-of-searching-in-solr.html#overview-of-searching-in-solr)
+for many purposes (search, autosuggest, spellcheck, indexing etc.). The handlers are configured
+in different custom or normative names in
+[Solr configuration](http://lucene.apache.org/solr/guide/7_4/requesthandlers-and-searchcomponents-in-solrconfig.html#requesthandlers-and-searchcomponents-in-solrconfig),
+e.g. "select" for search queries.
+
+Hui sends queries to the default URL if it exists (when none is supplied programmtically).
+

@@ -3,12 +3,45 @@ defmodule Hui.URL do
   Struct and utilities for working with Solr URLs and parameters.
 
   Use the `%Hui.URL{url: url, handler: handler}` struct to specify
-  Solr URLs and request handlers.
+  Solr core or collection URLs with request handlers.
 
   """
 
-  defstruct [:url, :handler ]
+  defstruct [:url, handler: "select"]
   @type t :: %__MODULE__{url: nil | binary, handler: nil | binary}
+
+  @doc """
+  Returns any configured Solr url as `Hui.URL` struct.
+
+  ```
+      iex> Hui.URL.default_url!
+      %Hui.URL{handler: "select", url: "http://localhost:8983/solr/gettingstarted"}
+  ```
+
+  A default URL may be specified in the application configuration as below:
+
+  ```
+    config hui, default_url,
+      url: "http://localhost:8983/solr/gettingstarted",
+      handler: "select" # optional
+  ```
+
+  - `url`: Typical Solr endpoint including the core or collection name. This could also be a load balancer
+  endpoint fronting several upstream servers
+  - `handler`: name of a handler that processes requests (per endpoint).
+
+
+  """
+  @spec default_url! :: t | nil
+  def default_url! do
+    {x, y} = {Application.get_env(:hui, :default_url)[:url], Application.get_env(:hui, :default_url)[:handler]}
+    case {x,y} do
+      {nil, nil} -> nil
+      {nil, _} -> nil
+      {_, nil} -> %Hui.URL{url: x}
+      {_, _} -> %Hui.URL{url: x, handler: y}
+    end
+  end
 
   @doc """
   Encodes list (keywords) of Solr parameters into a query string.
@@ -37,14 +70,6 @@ defmodule Hui.URL do
   def encode_query(enumerable) when is_list(enumerable), do: Enum.map_join(enumerable, "&", &encode/1)
   def encode_query(_), do: ""
 
-  @doc "Returns the default select path of a Solr core / collection from the given `Hui.URL` struct."
-  @spec select_path(t) :: binary
-  def select_path(%__MODULE__{url: url, handler: _handler}), do: "#{url}/select"
-
-  @doc "Returns the default update path of a Solr core / collection from the given `Hui.URL` struct."
-  @spec update_path(t) :: binary
-  def update_path(%__MODULE__{url: url, handler: _handler}), do: "#{url}/update"
-
   @doc "Returns the string representation of the given `Hui.URL` struct."
   @spec to_string(t) :: binary
   def to_string(%__MODULE__{url: url, handler: handler}), do: "#{url}/#{handler}"
@@ -52,7 +77,7 @@ defmodule Hui.URL do
   defp encode({k,v}) when is_list(v), do: Enum.map_join(v, "&", &encode({k,&1}))
   defp encode({k,v}) when is_binary(v), do: "#{k}=#{URI.encode_www_form(v)}"
   defp encode({k,v}), do: "#{k}=#{v}"
-  defp encode(v), do: v
   defp encode([]), do: ""
+  defp encode(v), do: v
 
 end
