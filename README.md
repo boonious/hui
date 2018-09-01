@@ -17,11 +17,11 @@ which typically distributed across many servers.
   Hui.search(q: "loch", rows: 5, fq: ["type:illustration", "format:image/jpeg"])
 ```
 
-The above examples query a pre-configured default Solr endpoint - see `Configuration` below.
-The query may involves search words (string) or a [keywords list](https://elixir-lang.org/getting-started/keywords-and-maps.html#keyword-lists) 
+The above queries the default Solr endpoint - see `Configuration` below.
+A query may involves search words (string) or a [keywords list](https://elixir-lang.org/getting-started/keywords-and-maps.html#keyword-lists)
 of Solr parameters, invoking the comprehensive and powerful features of Solr.
 
-For any endpoint and request handlers defined in binary or struct format:
+Queries may also be issued to other endpoints and request handlers, defined in binary or struct format:
 
 ```
   Hui.search("http://localhost:8983/solr/collection", q: "loch")
@@ -89,25 +89,29 @@ be found at [https://hexdocs.pm/hui](https://hexdocs.pm/hui).
 
 ## Configuration
 
-If your application only provides services to a single Solr core or collection. 
-A default URL may be specified in the application configuration as below:
+A default Solr endpoint may be specified in the application configuration as below:
 
-  ```
-    config hui, default_url,
-      url: "http://localhost:8983/solr/gettingstarted",
-      handler: "select" # optional
-  ```
+```
+  config :hui, :default_url,
+    url: "http://localhost:8983/solr/gettingstarted",
+    handler: "select" # optional
+```
 
-- `url`: Typical Solr endpoint including the core or collection name. This could also be a load balancer
-endpoint fronting several upstream servers
-- `handler`: name of a handler that processes requests (per endpoint).
+See `Hui.URL.default_url!/0`.
 
-Solr provides [a variety of request
+Solr provides [various request
 handlers](http://lucene.apache.org/solr/guide/7_4/overview-of-searching-in-solr.html#overview-of-searching-in-solr)
 for many purposes (search, autosuggest, spellcheck, indexing etc.). The handlers are configured
 in different custom or normative names in
 [Solr configuration](http://lucene.apache.org/solr/guide/7_4/requesthandlers-and-searchcomponents-in-solrconfig.html#requesthandlers-and-searchcomponents-in-solrconfig),
 e.g. "select" for search queries.
 
-Hui sends queries to the default URL if it exists (when none is supplied programmtically).
+Multiple endpoints with different Solr request handlers can be configured in Hui with an arbitrary config key (e.g. `:suggester`):
 
+```
+  config :hui, :suggester,
+    url: "http://localhost:8983/solr/collection",
+    handler: "suggest"
+```
+
+Use the config key in `Hui.search/2` to send queries to the endpoint or retrieve from configuration e.g. `Hui.URL.config_url(:suggester)`.

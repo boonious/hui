@@ -11,35 +11,58 @@ defmodule Hui.URL do
   @type t :: %__MODULE__{url: nil | binary, handler: nil | binary}
 
   @doc """
-  Returns any configured Solr url as `t:Hui.URL.t/0` struct.
+  Returns a configured default Solr endpoint as `t:Hui.URL.t/0` struct.
 
-  ```
       iex> Hui.URL.default_url!
       %Hui.URL{handler: "select", url: "http://localhost:8983/solr/gettingstarted"}
-  ```
 
-  A default URL may be specified in the application configuration as below:
+  The default endpoint can be specified in application configuration as below:
 
   ```
-    config hui, default_url,
+    config :hui, :default_url,
       url: "http://localhost:8983/solr/gettingstarted",
       handler: "select" # optional
   ```
 
-  - `url`: Typical Solr endpoint including the core or collection name. This could also be a load balancer
-  endpoint fronting several upstream servers
-  - `handler`: name of a handler that processes requests (per endpoint).
-
+  - `url`: typical endpoint including the core or collection name. This may also be a load balancer
+  endpoint fronting several Solr upstreams.
+  - `handler`: name of a request handler that processes requests.
 
   """
   @spec default_url! :: t | nil
   def default_url! do
-    {x, y} = {Application.get_env(:hui, :default_url)[:url], Application.get_env(:hui, :default_url)[:handler]}
+    {status, default_url} = config_url(:default_url)
+    case status do
+      :ok -> default_url
+      :error -> nil
+    end
+  end
+
+  @doc """
+  Retrieve url configuration as `t:Hui.URL.t/0` struct.
+
+  ## Example
+
+      iex> Hui.URL.config_url(:suggester)
+      {:ok, %Hui.URL{handler: "suggest", url: "http://localhost:8983/solr/collection"}}
+
+  The above retrieves the following endpoint configuration e.g. from `config.exs`:
+
+  ```
+    config :hui, :suggester,
+      url: "http://localhost:8983/solr/collection",
+      handler: "suggest"
+  ```
+
+  """
+  @spec config_url(atom) :: {:ok, t} | {:error, binary} | nil
+  def config_url(config_key) do
+    {x, y} = {Application.get_env(:hui, config_key)[:url], Application.get_env(:hui, config_key)[:handler]}
     case {x,y} do
-      {nil, nil} -> nil
-      {nil, _} -> nil
-      {_, nil} -> %Hui.URL{url: x}
-      {_, _} -> %Hui.URL{url: x, handler: y}
+      {nil, nil} -> {:error, "URL not found in configuration"}
+      {nil, _} -> {:error, "URL not found in configuration"}
+      {_, nil} -> {:ok, %Hui.URL{url: x}}
+      {_, _} -> {:ok, %Hui.URL{url: x, handler: y}}
     end
   end
 
@@ -70,7 +93,7 @@ defmodule Hui.URL do
   def encode_query(enumerable) when is_list(enumerable), do: Enum.map_join(enumerable, "&", &encode/1)
   def encode_query(_), do: ""
 
-  @doc "Returns the string representation of the given `t:Hui.URL.t/0` struct."
+  @doc "Returns the string representation (URL path) of the given `t:Hui.URL.t/0` struct."
   @spec to_string(t) :: binary
   def to_string(%__MODULE__{url: url, handler: handler}), do: "#{url}/#{handler}"
 
