@@ -18,7 +18,7 @@ which typically distributed across many servers.
 ```
 
 The above queries the default Solr endpoint - see `Configuration` below.
-A query may involves search words (string) or a [keywords list](https://elixir-lang.org/getting-started/keywords-and-maps.html#keyword-lists)
+A query may involves search words (string) or a [Keyword list](https://elixir-lang.org/getting-started/keywords-and-maps.html#keyword-lists)
 of Solr parameters, invoking the comprehensive and powerful features of Solr.
 
 Queries may also be issued to other endpoints and request handlers defined in various formats:

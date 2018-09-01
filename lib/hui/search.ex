@@ -21,14 +21,14 @@ defmodule Hui.Search do
   @doc """
   Issues a search query to the default Solr URL.
 
-  The query contains a comprehensive keywords list of Solr parameters.
+  The query contains a comprehensive keyword list of Solr parameters.
   
   ## Example
   ```
     Hui.Search.search(q: "loch", rows: 5, fq: ["type:illustration", "format:image/jpeg"])
   ```
 
-  See `Hui.URL.default_url!/0` and `Hui.URL.encode_query/1` for more details on Solr parameter keywords list.
+  See `Hui.URL.default_url!/0` and `Hui.URL.encode_query/1` for more details on Solr parameter keyword list.
 
   """
   @spec search(list) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
@@ -38,7 +38,7 @@ defmodule Hui.Search do
   @doc """
   Issues a search query to a given Solr URL.
 
-  The query contains a comprehensive keywords list of Solr parameters.
+  The query contains a comprehensive keyword list of Solr parameters.
 
   ## Example
 
@@ -56,7 +56,7 @@ defmodule Hui.Search do
     Hui.search(url, suggest: true, "suggest.dictionary": "mySuggester", "suggest.q": "el")
   ```
 
-  See `Hui.URL.configured_url/1` and `Hui.URL.encode_query/1` for more details on Solr parameter keywords list.
+  See `Hui.URL.configured_url/1` and `Hui.URL.encode_query/1` for more details on Solr parameter keyword list.
 
   """
   @spec search(struct|atom, list) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}

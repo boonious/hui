@@ -16,7 +16,7 @@ defmodule Hui do
   @doc """
   Issue a search query to the default Solr endpoint.
 
-  The query can be a search string or a keywords list of Solr parameters.
+  The query can be a search string or a keyword list of Solr parameters.
 
   ### Example
 
@@ -26,7 +26,7 @@ defmodule Hui do
     Hui.search(q: "loch", rows: 5, facet: true, "facet.field": ["year", "subject"])
   ```
 
-  See `Hui.URL.default_url!/0` and `Hui.URL.encode_query/1` for more details on Solr parameter keywords list.
+  See `Hui.URL.default_url!/0` and `Hui.URL.encode_query/1` for more details on Solr parameter keyword list.
 
   """
 
@@ -41,7 +41,7 @@ defmodule Hui do
   a specific URL and request handler. A key referring to an endpoint in configuration
   can also be used.
   
-  The query is a keywords list of Solr parameters.
+  The query is a keyword list of Solr parameters.
 
   ### Example
 
@@ -55,7 +55,7 @@ defmodule Hui do
     Hui.search(url, q: "edinburgh", rows: 10)
   ```
 
-  See `Hui.URL.configured_url/1` amd `Hui.URL.encode_query/1` for more details on Solr parameter keywords list.
+  See `Hui.URL.configured_url/1` amd `Hui.URL.encode_query/1` for more details on Solr parameter keyword list.
 
   """
   @spec search(solr_url, list) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
