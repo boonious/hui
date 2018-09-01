@@ -18,6 +18,9 @@ defmodule Hui.Search do
   @default_url Hui.URL.default_url!
   @error_msg "malformed query or URL"
 
+  @type solr_params :: Keyword.t
+  @type solr_url :: atom | Hui.URL.t
+
   @doc """
   Issues a search query to the default Solr URL.
 
@@ -31,7 +34,7 @@ defmodule Hui.Search do
   See `Hui.URL.default_url!/0` and `Hui.URL.encode_query/1` for more details on Solr parameter keyword list.
 
   """
-  @spec search(list) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
+  @spec search(solr_params) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
   def search(query) when is_list(query), do: search(@default_url, query)
   def search(_query), do: {:error, @error_msg}
 
@@ -59,7 +62,7 @@ defmodule Hui.Search do
   See `Hui.URL.configured_url/1` and `Hui.URL.encode_query/1` for more details on Solr parameter keyword list.
 
   """
-  @spec search(struct|atom, list) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
+  @spec search(solr_url, solr_params) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
   def search(%Hui.URL{url: url, handler: handler}, query), do: exec_search("#{url}/#{handler}", query)
   def search(url, query) when is_atom(url) do
     {status, url_m} = Hui.URL.configured_url(url)

@@ -10,8 +10,8 @@ defmodule Hui do
 
   """
 
-  @type solr_query :: binary | list
-  @type solr_url :: binary | atom | struct
+  @type query :: binary | Hui.Search.solr_params
+  @type url :: binary | Hui.Search.solr_url
 
   @doc """
   Issue a search query to the default Solr endpoint.
@@ -30,7 +30,7 @@ defmodule Hui do
 
   """
 
-  @spec search(solr_query) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
+  @spec search(query) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
   def search(query) when is_binary(query), do: Hui.Search.search(q: query)
   def search(query), do: Hui.Search.search(query)
 
@@ -58,7 +58,7 @@ defmodule Hui do
   See `Hui.URL.configured_url/1` amd `Hui.URL.encode_query/1` for more details on Solr parameter keyword list.
 
   """
-  @spec search(solr_url, list) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
+  @spec search(url, Hui.Search.solr_params) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
   def search(url, query) when is_binary(url), do: Hui.Search.search(%Hui.URL{url: url}, query)
   def search(url, query) when is_map(url) or is_atom(url), do: Hui.Search.search(url, query)
   def search(_, _), do: {:error, "malformed query or URL"}
