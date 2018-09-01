@@ -73,11 +73,7 @@ defmodule Hui.Search do
   end
   def search(_, _), do: {:error, @error_msg}
 
-  defp exec_search(url, query) do
-    cond do
-      Keyword.keyword?(query) -> get( url <> "?" <> Hui.URL.encode_query(query) )
-      true -> {:error, @error_msg}
-    end
-  end
+  defp exec_search(url, [head|tail]) when is_tuple(head), do: get( url <> "?" <> Hui.URL.encode_query([head] ++ tail) )
+  defp exec_search(_,_), do: {:error, @error_msg}
 
 end
