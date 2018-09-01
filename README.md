@@ -21,16 +21,23 @@ The above queries the default Solr endpoint - see `Configuration` below.
 A query may involves search words (string) or a [keywords list](https://elixir-lang.org/getting-started/keywords-and-maps.html#keyword-lists)
 of Solr parameters, invoking the comprehensive and powerful features of Solr.
 
-Queries may also be issued to other endpoints and request handlers, defined in binary or struct format:
+Queries may also be issued to other endpoints and request handlers defined in various formats:
 
 ```
+  # URL binary string
   Hui.search("http://localhost:8983/solr/collection", q: "loch")
   
+  # URL in a struct
   url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "suggest"}
   Hui.search(url, suggest: true, "suggest.dictionary": "mySuggester", "suggest.q": "el")
+
+  # URL key referring to an endpoint in configuration - see "Configuration"
+  url = :library
+  Hui.search(url, q: "edinburgh", rows: 10)
+
 ```
 
-See `Hui.search/1`, `Hui.search/2` and [Solr reference guide](http://lucene.apache.org/solr/guide/7_4/searching.html)
+See `Hui.search/1`, `Hui.search/2` in API reference and [Solr reference guide](http://lucene.apache.org/solr/guide/7_4/searching.html)
 for more details on available search parameters.
 
 ### Software library
@@ -106,7 +113,7 @@ in different custom or normative names in
 [Solr configuration](http://lucene.apache.org/solr/guide/7_4/requesthandlers-and-searchcomponents-in-solrconfig.html#requesthandlers-and-searchcomponents-in-solrconfig),
 e.g. "select" for search queries.
 
-Multiple endpoints with different Solr request handlers can be configured in Hui with an arbitrary config key (e.g. `:suggester`):
+Multiple different endpoints and request handlers can be configured in Hui with arbitrary config keys (e.g. `:suggester`):
 
 ```
   config :hui, :suggester,
@@ -114,4 +121,4 @@ Multiple endpoints with different Solr request handlers can be configured in Hui
     handler: "suggest"
 ```
 
-Use the config key in `Hui.search/2` to send queries to the endpoint or retrieve from configuration e.g. `Hui.URL.config_url(:suggester)`.
+Use the config key in `Hui.search/2` to send queries to the endpoint or retrieve from configuration e.g. `Hui.URL.configured_url(:suggester)`.

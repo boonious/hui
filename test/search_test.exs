@@ -26,8 +26,8 @@ defmodule HuiSearchTest do
 
   end
 
-  describe "simple search" do
-    # test for Hui.search(query)
+  describe "search" do
+    # tests for Hui.search(query)
 
     test "should perform keywords query", context do
       Bypass.expect context.bypass, fn conn ->
@@ -54,13 +54,26 @@ defmodule HuiSearchTest do
 
     test "should work with Hui.URL struct", context do
       Bypass.expect context.bypass, fn conn ->
-        Plug.Conn.resp(conn, 200, context.simple_search_response_sample)
+        Plug.Conn.resp(conn, 200, "")
       end
 
       solr_params = [suggest: true, "suggest.dictionary": "mySuggester", "suggest.q": "el"]
       url = %Hui.URL{url: "http://localhost:#{context.bypass.port}/solr/newspapers", handler: "suggest"}
       {_status, resp} = Hui.search(url, solr_params)
 
+      experted_request_url = Hui.URL.to_string(url) <> "?" <> Hui.URL.encode_query(solr_params)
+      assert experted_request_url == resp.request_url
+    end
+
+    test "should work with configured URL via a config key" do
+      bypass = Bypass.open(port: 8984)
+      Bypass.expect bypass, fn conn ->
+        Plug.Conn.resp(conn, 200, "")
+      end
+
+      solr_params = [q: "edinburgh", rows: 10]
+      {_, url} = Hui.URL.configured_url(:library)
+      {_status, resp} = Hui.search(:library, solr_params)
       experted_request_url = Hui.URL.to_string(url) <> "?" <> Hui.URL.encode_query(solr_params)
       assert experted_request_url == resp.request_url
     end

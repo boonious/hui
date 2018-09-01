@@ -11,10 +11,10 @@ defmodule Hui do
   """
 
   @type solr_query :: binary | list
-  @type solr_url :: binary | struct
+  @type solr_url :: binary | atom | struct
 
   @doc """
-  Issue a search query to a pre-configured default Solr endpoint.
+  Issue a search query to the default Solr endpoint.
 
   The query can be a search string or a keywords list of Solr parameters.
 
@@ -38,7 +38,10 @@ defmodule Hui do
   Issue a search query to a Solr endpoint.
 
   The endpoint can either be a string URL or `t:Hui.URL.t/0` struct which defines
-  a specific URL and request handler. The query is a keywords list of Solr parameters.
+  a specific URL and request handler. A key referring to an endpoint in configuration
+  can also be used.
+  
+  The query is a keywords list of Solr parameters.
 
   ### Example
 
@@ -47,14 +50,17 @@ defmodule Hui do
 
     url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "suggest"}
     Hui.search(url, suggest: true, "suggest.dictionary": "mySuggester", "suggest.q": "el")
+
+    url = :library
+    Hui.search(url, q: "edinburgh", rows: 10)
   ```
 
-  See `Hui.URL.encode_query/1` for more details on Solr parameter keywords list.
+  See `Hui.URL.configured_url/1` amd `Hui.URL.encode_query/1` for more details on Solr parameter keywords list.
 
   """
   @spec search(solr_url, list) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
   def search(url, query) when is_binary(url), do: Hui.Search.search(%Hui.URL{url: url}, query)
-  def search(url, query) when is_map(url), do: Hui.Search.search(url, query)
+  def search(url, query) when is_map(url) or is_atom(url), do: Hui.Search.search(url, query)
   def search(_, _), do: {:error, "malformed query or URL"}
 
 end

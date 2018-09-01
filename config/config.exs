@@ -12,3 +12,7 @@ config :hui, :default_url, # default endpoint
 config :hui, :suggester,
   url: "http://localhost:8983/solr/collection",
   handler: "suggest"
+
+config :hui, :library,
+  url: "http://localhost:8984/solr/articles",
+  handler: "dismax"

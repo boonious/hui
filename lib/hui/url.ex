@@ -31,7 +31,7 @@ defmodule Hui.URL do
   """
   @spec default_url! :: t | nil
   def default_url! do
-    {status, default_url} = config_url(:default_url)
+    {status, default_url} = configured_url(:default_url)
     case status do
       :ok -> default_url
       :error -> nil
@@ -43,7 +43,7 @@ defmodule Hui.URL do
 
   ## Example
 
-      iex> Hui.URL.config_url(:suggester)
+      iex> Hui.URL.configured_url(:suggester)
       {:ok, %Hui.URL{handler: "suggest", url: "http://localhost:8983/solr/collection"}}
 
   The above retrieves the following endpoint configuration e.g. from `config.exs`:
@@ -55,8 +55,8 @@ defmodule Hui.URL do
   ```
 
   """
-  @spec config_url(atom) :: {:ok, t} | {:error, binary} | nil
-  def config_url(config_key) do
+  @spec configured_url(atom) :: {:ok, t} | {:error, binary} | nil
+  def configured_url(config_key) do
     {x, y} = {Application.get_env(:hui, config_key)[:url], Application.get_env(:hui, config_key)[:handler]}
     case {x,y} do
       {nil, nil} -> {:error, "URL not found in configuration"}

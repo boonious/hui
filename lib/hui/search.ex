@@ -28,7 +28,7 @@ defmodule Hui.Search do
     Hui.Search.search(q: "loch", rows: 5, fq: ["type:illustration", "format:image/jpeg"])
   ```
 
-  See `Hui.URL.encode_query/1` for more details on Solr parameter keywords list.
+  See `Hui.URL.default_url!/0` and `Hui.URL.encode_query/1` for more details on Solr parameter keywords list.
 
   """
   @spec search(list) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
@@ -36,21 +36,38 @@ defmodule Hui.Search do
   def search(_query), do: {:error, @error_msg}
 
   @doc """
-  Issues a search query to a Solr URL specified in `t:Hui.URL.t/0` struct.
+  Issues a search query to a given Solr URL.
 
   The query contains a comprehensive keywords list of Solr parameters.
 
   ## Example
+
+  The URL can be specified as `t:Hui.URL.t/0`.
+
   ```
-    url = %Hul.URL{url: solr_endpoint}
+    url = %Hul.URL{url: "http://..."}
     Hui.Search.search(url, q: "loch", rows: 5)
   ```
 
-  See `Hui.URL.encode_query/1` for more details on Solr parameter keywords list.
+  A key for application-configured URL may also be used.
+    
+  ```
+    url = :suggester
+    Hui.search(url, suggest: true, "suggest.dictionary": "mySuggester", "suggest.q": "el")
+  ```
+
+  See `Hui.URL.configured_url/1` and `Hui.URL.encode_query/1` for more details on Solr parameter keywords list.
 
   """
-  @spec search(struct, list) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
+  @spec search(struct|atom, list) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
   def search(%Hui.URL{url: url, handler: handler}, query), do: exec_search("#{url}/#{handler}", query)
+  def search(url, query) when is_atom(url) do
+    {status, url_m} = Hui.URL.configured_url(url)
+    case status do
+      :ok -> exec_search(url_m|>Hui.URL.to_string, query)
+      :error -> {:error, "URL not configured"}
+    end
+  end
   def search(_, _), do: {:error, @error_msg}
 
   defp exec_search(url, query) do

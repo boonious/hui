@@ -2,13 +2,13 @@ defmodule Hui.MixProject do
   use Mix.Project
 
   @description """
-    Hui is an Elixir client and library for interfacing with Solr enterprise search platform
+    Hui is an Elixir client and library for Solr enterprise search platform
   """
 
   def project do
     [
       app: :hui,
-      version: "0.2.0",
+      version: "0.3.0",
       elixir: "~> 1.6",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
@@ -16,6 +16,7 @@ defmodule Hui.MixProject do
       # Docs
       name: "Hui",
       description: @description,
+      package: package(),
       source_url: "https://github.com/boonious/hui",
       homepage_url: "https://github.com/boonious/hui",
       docs: [
@@ -42,4 +43,17 @@ defmodule Hui.MixProject do
       {:bypass, "~> 0.8", only: :test}
     ]
   end
+
+  defp package do
+    [
+      name: "hui",
+      maintainers: ["Boon Low"],
+      licenses: ["Apache 2.0"],
+      links: %{
+        Changelog: "https://github.com/boonious/boonious/blob/master/CHANGELOG.md",
+        GitHub: "https://github.com/boonious/hui"
+      }
+    ]
+  end
+
 end
