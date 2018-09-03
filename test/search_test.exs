@@ -27,7 +27,7 @@ defmodule HuiSearchTest do
   end
 
   describe "search" do
-    # tests for Hui.search(query)
+    # tests for Hui.search(query), Hui.Search.search/2
 
     test "should perform keywords query", context do
       Bypass.expect context.bypass, fn conn ->
@@ -52,7 +52,7 @@ defmodule HuiSearchTest do
       assert String.match?(resp.request_url, ~r/q=%2A&rows=10&fq=cat%3Aelectronics&fq=popularity%3A%5B0\+TO\+%2A%5D/)
     end
 
-    test "should work with Hui.URL struct", context do
+    test "should work with %Hui.URL{}", context do
       Bypass.expect context.bypass, fn conn ->
         Plug.Conn.resp(conn, 200, "")
       end
@@ -63,6 +63,32 @@ defmodule HuiSearchTest do
 
       experted_request_url = Hui.URL.to_string(url) <> "?" <> Hui.URL.encode_query(solr_params)
       assert experted_request_url == resp.request_url
+    end
+
+    test "should facilitate HTTP headers setting via %Hui.URL{}", context do
+      test_header = {"accept", "application/json"}
+      Bypass.expect context.bypass, fn conn ->
+         assert Enum.member?(conn.req_headers, test_header)
+         Plug.Conn.resp(conn, 200, "")
+      end
+      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", headers: [test_header]}
+      Hui.search(url, q: "*")
+      Hui.Search.search(url, q: "*")
+    end
+
+    test "should facilitate HTTPoison options setting via %Hui.URL{}", context do
+      # test with the HTTPoison "timeout" option, "0" setting mimicking a request timeout
+      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}/", options: [timeout: 0]}
+      assert {:error, %HTTPoison.Error{id: nil, reason: :connect_timeout}} = Hui.search(url, q: "*")
+      assert {:error, %HTTPoison.Error{id: nil, reason: :connect_timeout}} = Hui.Search.search(url, q: "*")
+
+      # test with the low-level HTTPoison "params" option, for appending additional query string params
+      Bypass.expect context.bypass, fn conn -> Plug.Conn.resp(conn, 200, "") end
+      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}/", options: [params: [test: "from_test"]]}
+      {_status, resp} = Hui.search(url, q: "*")
+      assert String.match?(resp.request_url, ~r/test=from_test/)
+      {_status, resp} = Hui.Search.search(url, q: "*")
+      assert String.match?(resp.request_url, ~r/test=from_test/)
     end
 
     test "should work with configured URL via a config key" do

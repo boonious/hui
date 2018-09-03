@@ -29,7 +29,6 @@ defmodule Hui do
   See `Hui.URL.default_url!/0` and `Hui.URL.encode_query/1` for more details on Solr parameter keyword list.
 
   """
-
   @spec search(query) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
   def search(query) when is_binary(query), do: Hui.Search.search(q: query)
   def search(query), do: Hui.Search.search(query)
@@ -48,14 +47,26 @@ defmodule Hui do
   ```
     Hui.search("http://localhost:8983/solr/collection", q: "loch")
 
-    url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "suggest"}
-    Hui.search(url, suggest: true, "suggest.dictionary": "mySuggester", "suggest.q": "el")
-
     url = :library
     Hui.search(url, q: "edinburgh", rows: 10)
+
+    url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "suggest"}
+    Hui.search(url, suggest: true, "suggest.dictionary": "mySuggester", "suggest.q": "el")
   ```
 
   See `Hui.URL.configured_url/1` amd `Hui.URL.encode_query/1` for more details on Solr parameter keyword list.
+
+  `t:Hui.URL.t/0` struct also enables HTTP headers and HTTPoison options to be specified
+  in keyword lists. HTTPoison options provide further controls for a request, e.g. `timeout`, `recv_timeout`,
+  `max_redirect`, `params` etc.
+
+  ```
+    # setting up a header and a 10s receiving connection timeout
+    url = %Hui.URL{url: "..", headers: [{"accept", "application/json"}], options: [recv_timeout: 10000]}
+    Hui.search(url, q: "solr rocks")
+  ```
+
+  See `HTTPoison.request/5` for more details on HTTPoison options.
 
   """
   @spec search(url, Hui.Search.solr_params) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}

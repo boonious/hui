@@ -7,8 +7,10 @@ defmodule Hui.URL do
 
   """
 
-  defstruct [:url, handler: "select"]
-  @type t :: %__MODULE__{url: nil | binary, handler: nil | binary}
+  defstruct [:url, handler: "select", headers: [], options: []]
+  @type headers :: HTTPoison.Base.headers
+  @type options :: Keyword.t
+  @type t :: %__MODULE__{url: nil | binary, handler: nil | binary, headers: nil | headers, options: nil | options}
 
   @doc """
   Returns a configured default Solr endpoint as `t:Hui.URL.t/0` struct.

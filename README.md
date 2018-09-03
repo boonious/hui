@@ -26,19 +26,31 @@ Queries may also be issued to other endpoints and request handlers defined in va
 ```
   # URL binary string
   Hui.search("http://localhost:8983/solr/collection", q: "loch")
-  
-  # URL in a struct
-  url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "suggest"}
-  Hui.search(url, suggest: true, "suggest.dictionary": "mySuggester", "suggest.q": "el")
 
   # URL key referring to an endpoint in configuration - see "Configuration"
   url = :library
   Hui.search(url, q: "edinburgh", rows: 10)
 
+  # URL in a struct
+  url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "suggest"}
+  Hui.search(url, suggest: true, "suggest.dictionary": "mySuggester", "suggest.q": "el")
+  # this sends http://http://localhost:8983/solr/collection/suggest?suggest=true&suggest.dictionary=mySuggester&suggest.q=el
+
 ```
 
 See `Hui.search/1`, `Hui.search/2` in API reference and [Solr reference guide](http://lucene.apache.org/solr/guide/7_4/searching.html)
 for more details on available search parameters.
+
+### HTTP headers and options
+HTTP headers and options can be specified in keyword lists via the `t:Hui.URL.t/0` struct.
+
+```
+  # setting up a header and a 10s receiving connection timeout
+  url = %Hui.URL{url: "..", headers: [{"accept", "application/json"}], options: [recv_timeout: 10000]}
+  Hui.search(url, q: "solr rocks")
+```
+
+See `Hui.search/2` for more details.
 
 ### Software library
 
