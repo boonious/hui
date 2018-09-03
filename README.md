@@ -1,5 +1,4 @@
-# Hui 辉
-
+# Hui 辉 [![Build Status](https://travis-ci.org/boonious/hui.svg?branch=master)](https://travis-ci.org/boonious/hui) [![Hex pm](http://img.shields.io/hexpm/v/hui.svg?style=flat)](https://hex.pm/packages/hui)
 Hui 辉 ("shine" in Chinese) is a [Solr](http://lucene.apache.org/solr/) client and library for Elixir.
 
 ## Usage
@@ -89,20 +88,20 @@ remain available in the `Hui.Search` module.
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
+Hui is [available in Hex](https://hex.pm/packages/hui), the package can be installed
 by adding `hui` to your list of dependencies in `mix.exs`:
 
 ```elixir
   def deps do
     [
-      {:hui, "~> 0.1.0"}
+      {:hui, "~> 0.4.0"}
     ]
   end
 ```
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/hui](https://hexdocs.pm/hui).
+Then run `$ mix deps.get`.
+
+Documentation can be found at [https://hexdocs.pm/hui](https://hexdocs.pm/hui).
 
 ## Configuration
 
