@@ -21,7 +21,7 @@ defmodule Hui.URL do
   The default endpoint can be specified in application configuration as below:
 
   ```
-    config :hui, :default_url,
+    config :hui, :default,
       url: "http://localhost:8983/solr/gettingstarted",
       handler: "select" # optional
   ```
@@ -33,7 +33,7 @@ defmodule Hui.URL do
   """
   @spec default_url! :: t | nil
   def default_url! do
-    {status, default_url} = configured_url(:default_url)
+    {status, default_url} = configured_url(:default)
     case status do
       :ok -> default_url
       :error -> nil
