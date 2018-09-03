@@ -6,7 +6,7 @@ defmodule Hui do
   
   Usage
   
-  - Searching Solr: `search/1`, `search/2`
+  - Searching Solr: `q/1`, `search/2`
 
   """
 
@@ -16,28 +16,29 @@ defmodule Hui do
   @doc """
   Issue a search query to the default Solr endpoint.
 
-  The query can be a search string or a keyword list of Solr parameters.
+  The query can either be a search string or a keyword list of Solr parameters.
+  This function is a shortcut for `search/2` with `:default` as URL key.
 
   ### Example
 
   ```
-    Hui.search("scott") # keyword search
-    Hui.search(q: "loch", fq: ["type:illustration", "format:image/jpeg"])
-    Hui.search(q: "loch", rows: 5, facet: true, "facet.field": ["year", "subject"])
+    Hui.q("scott") # keyword search
+    Hui.q(q: "loch", fq: ["type:illustration", "format:image/jpeg"])
+    Hui.q(q: "loch", rows: 5, facet: true, "facet.field": ["year", "subject"])
   ```
 
   See `Hui.URL.default_url!/0` and `Hui.URL.encode_query/1` for more details on Solr parameter keyword list.
 
   """
-  @spec search(query) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
-  def search(query) when is_binary(query), do: Hui.Search.search(q: query)
-  def search(query), do: Hui.Search.search(query)
+  @spec q(query) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
+  def q(query) when is_binary(query), do: search(:default, q: query)
+  def q(query), do: search(:default, query)
 
   @doc """
-  Issue a search query to a Solr endpoint.
+  Issue a search query to a specific Solr endpoint.
 
   The endpoint can either be a string URL or `t:Hui.URL.t/0` struct which defines
-  a specific URL and request handler. A key referring to an endpoint in configuration
+  a specific URL and request handler. A key referring to a configured endpoint
   can also be used.
   
   The query is a keyword list of Solr parameters.

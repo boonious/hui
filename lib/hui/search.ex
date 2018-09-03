@@ -1,7 +1,9 @@
 defmodule Hui.Search do
   @moduledoc """
 
-  Hui.Search module provides various underpinning functions including `search/1`, `search/2` for querying Solr.
+  Hui.Search module provides various underpinning functions for querying Solr, including:
+  
+  - `search/2`
 
   ### Other low-level HTTP client features
 
@@ -15,33 +17,14 @@ defmodule Hui.Search do
 
   use HTTPoison.Base 
 
-  @default_url Hui.URL.default_url!
   @error_msg "malformed query or URL"
-
   @type solr_params :: Keyword.t
-  @type solr_url :: atom | Hui.URL.t
+  @type solr_url :: :default | atom | Hui.URL.t
 
   @doc """
-  Issues a search query to the default Solr URL.
+  Issues a search query to a specific Solr endpoint.
 
-  The query contains a comprehensive keyword list of Solr parameters.
-  
-  ## Example
-  ```
-    Hui.Search.search(q: "loch", rows: 5, fq: ["type:illustration", "format:image/jpeg"])
-  ```
-
-  See `Hui.URL.default_url!/0` and `Hui.URL.encode_query/1` for more details on Solr parameter keyword list.
-
-  """
-  @spec search(solr_params) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
-  def search(query) when is_list(query), do: search(@default_url, query)
-  def search(_query), do: {:error, @error_msg}
-
-  @doc """
-  Issues a search query to a given Solr URL.
-
-  The query contains a comprehensive keyword list of Solr parameters.
+  The query is a comprehensive keyword list of Solr parameters.
 
   ## Example
 
@@ -53,7 +36,7 @@ defmodule Hui.Search do
     # the above sends http://.../select?q=loch&rows=5
   ```
 
-  A key for application-configured URL may also be used.
+  A key for application-configured endpoint may also be used.
     
   ```
     url = :suggester
