@@ -50,7 +50,7 @@ defmodule Hui.MixProject do
       maintainers: ["Boon Low"],
       licenses: ["Apache 2.0"],
       links: %{
-        Changelog: "https://github.com/boonious/boonious/blob/master/CHANGELOG.md",
+        Changelog: "https://github.com/boonious/hui/blob/master/CHANGELOG.md",
         GitHub: "https://github.com/boonious/hui"
       }
     ]
