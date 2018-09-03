@@ -2,7 +2,7 @@ defmodule Hui.MixProject do
   use Mix.Project
 
   @description """
-    Hui is an Elixir client and library for Solr enterprise search platform
+    Hui 辉 is a Solr client and library for Elixir
   """
 
   def project do
