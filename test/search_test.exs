@@ -110,7 +110,14 @@ defmodule HuiSearchTest do
     end
 
     test "should handle malformed queries" do
-      assert {:error, "malformed query or URL"} == Hui.search(nil)
+      assert {:error, "malformed query or URL"} == Hui.q(nil)
+      assert {:error, "malformed query or URL"} == Hui.search(:default, nil)
+      assert {:error, "malformed query or URL"} == Hui.Search.search(:default, nil)
+    end
+
+    test "should handle missing URL" do
+      assert {:error, "URL not configured"} == Hui.search(nil, nil)
+      assert {:error, "URL not configured"} == Hui.Search.search(nil, nil)
     end
 
   end
@@ -125,7 +132,7 @@ defmodule HuiSearchTest do
     @describetag live: false
 
     test "should perform keywords query" do
-      {_status, resp} = Hui.search("*")
+      {_status, resp} = Hui.q("*")
       resp_h = resp.body |> Poison.decode!
       assert length(resp_h["response"]["docs"]) >= 0
       assert String.match?(resp.request_url, ~r/q=*/)
@@ -133,7 +140,7 @@ defmodule HuiSearchTest do
 
     test "should query with other Solr parameters" do
       solr_params = [q: "*", rows: 10, facet: true, fl: "*"]
-      {_status, resp} = Hui.search(solr_params)
+      {_status, resp} = Hui.q(solr_params)
 
       resp_h = resp.body |> Poison.decode!
       assert length(resp_h["response"]["docs"]) >= 0
