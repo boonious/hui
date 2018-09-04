@@ -131,3 +131,7 @@ Additional endpoints and request handlers can be configured in Hui using arbitra
 ```
 
 Use the config key in `Hui.search/2` to send queries to the endpoint or retrieve URL settings from configuration e.g. `Hui.URL.configured_url/1`.
+
+## License
+
+Hui is released under Apache 2 License. Check the [LICENSE](https://github.com/boonious/hui/blob/master/LICENSE) file for more information.
