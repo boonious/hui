@@ -4,8 +4,9 @@ defmodule HuiSearchTest do
 
   setup do
     resp = File.read!("./test/data/simple_search_response.json")
+    resp_xml = File.read!("./test/data/simple_search_response.xml")
     bypass = Bypass.open
-    {:ok, bypass: bypass, simple_search_response_sample: resp}
+    {:ok, bypass: bypass, simple_search_response_sample: resp, simple_search_response_sample_xml: resp_xml}
   end
 
   describe "http client" do
@@ -34,8 +35,7 @@ defmodule HuiSearchTest do
         Plug.Conn.resp(conn, 200, context.simple_search_response_sample)
       end
       {_status, resp} = Hui.search("http://localhost:#{context.bypass.port}", q: "*")
-      resp_h = resp.body |> Poison.decode!
-      assert length(resp_h["response"]["docs"]) > 0
+      assert length(resp.body["response"]["docs"]) > 0
       assert String.match?(resp.request_url, ~r/q=*/)
     end
 
@@ -47,8 +47,7 @@ defmodule HuiSearchTest do
       solr_params = [q: "*", rows: 10, fq: ["cat:electronics", "popularity:[0 TO *]"] ]
 
       {_status, resp} = Hui.search("http://localhost:#{context.bypass.port}", solr_params)
-      resp_h = resp.body |> Poison.decode!
-      assert length(resp_h["response"]["docs"]) > 0
+      assert length(resp.body["response"]["docs"]) > 0
       assert String.match?(resp.request_url, ~r/q=%2A&rows=10&fq=cat%3Aelectronics&fq=popularity%3A%5B0\+TO\+%2A%5D/)
     end
 
@@ -109,6 +108,25 @@ defmodule HuiSearchTest do
       assert true
     end
 
+    test "should decode and return raw JSON Solr response as Map", context do
+      Bypass.expect context.bypass, fn conn ->
+        Plug.Conn.resp(conn, 200, context.simple_search_response_sample)
+      end
+
+      {_status, resp} = Hui.search("http://localhost:#{context.bypass.port}", q: "*")
+      assert is_map(resp.body)
+    end
+
+    test "should not decode and just return raw XML Solr response as text", context do
+      Bypass.expect context.bypass, fn conn ->
+        Plug.Conn.resp(conn, 200, context.simple_search_response_sample_xml)
+      end
+
+      {_status, resp} = Hui.search("http://localhost:#{context.bypass.port}", q: "*")
+      refute is_map(resp.body)
+      assert is_binary(resp.body)
+    end
+
     test "should handle malformed queries" do
       assert {:error, "malformed query or URL"} == Hui.q(nil)
       assert {:error, "malformed query or URL"} == Hui.search(:default, nil)
@@ -133,8 +151,7 @@ defmodule HuiSearchTest do
 
     test "should perform keywords query" do
       {_status, resp} = Hui.q("*")
-      resp_h = resp.body |> Poison.decode!
-      assert length(resp_h["response"]["docs"]) >= 0
+      assert length(resp.body["response"]["docs"]) >= 0
       assert String.match?(resp.request_url, ~r/q=*/)
     end
 
@@ -142,8 +159,7 @@ defmodule HuiSearchTest do
       solr_params = [q: "*", rows: 10, facet: true, fl: "*"]
       {_status, resp} = Hui.q(solr_params)
 
-      resp_h = resp.body |> Poison.decode!
-      assert length(resp_h["response"]["docs"]) >= 0
+      assert length(resp.body["response"]["docs"]) >= 0
       assert String.match?(resp.request_url, ~r/q=%2A&rows=10&facet=true&fl=%2A/)
     end
 

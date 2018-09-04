@@ -1,0 +1,332 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<response>
+
+<lst name="responseHeader">
+  <bool name="zkConnected">true</bool>
+  <int name="status">0</int>
+  <int name="QTime">4</int>
+  <lst name="params">
+    <str name="q">*</str>
+    <str name="wt">xml</str>
+  </lst>
+</lst>
+<result name="response" numFound="47" start="0" maxScore="1.0">
+  <doc>
+    <str name="id">/opt/solr-7.4.0/docs/index.html</str>
+    <arr name="stream_size">
+      <long>839</long>
+    </arr>
+    <arr name="x_parsed_by">
+      <str>org.apache.tika.parser.DefaultParser</str>
+      <str>org.apache.tika.parser.html.HtmlParser</str>
+    </arr>
+    <arr name="stream_content_type">
+      <str>text/html</str>
+    </arr>
+    <arr name="dc_title">
+      <str>Apache Solr 7.4.0 Documentation</str>
+    </arr>
+    <arr name="content_encoding">
+      <str>UTF-8</str>
+    </arr>
+    <arr name="content_type_hint">
+      <str>text/html; charset=UTF-8</str>
+    </arr>
+    <arr name="resourcename">
+      <str>/opt/solr-7.4.0/docs/index.html</str>
+    </arr>
+    <arr name="title">
+      <str>Apache Solr 7.4.0 Documentation</str>
+    </arr>
+    <arr name="content_type">
+      <str>text/html; charset=UTF-8</str>
+    </arr>
+    <arr name="dc_title_str">
+      <str>Apache Solr 7.4.0 Documentation</str>
+    </arr>
+    <arr name="x_parsed_by_str">
+      <str>org.apache.tika.parser.DefaultParser</str>
+      <str>org.apache.tika.parser.html.HtmlParser</str>
+    </arr>
+    <arr name="content_type_str">
+      <str>text/html; charset=UTF-8</str>
+    </arr>
+    <arr name="content_type_hint_str">
+      <str>text/html; charset=UTF-8</str>
+    </arr>
+    <arr name="resourcename_str">
+      <str>/opt/solr-7.4.0/docs/index.html</str>
+    </arr>
+    <arr name="stream_content_type_str">
+      <str>text/html</str>
+    </arr>
+    <arr name="title_str">
+      <str>Apache Solr 7.4.0 Documentation</str>
+    </arr>
+    <long name="_version_">1609424409081151488</long>
+    <arr name="content_encoding_str">
+      <str>UTF-8</str>
+    </arr></doc>
+  <doc>
+    <str name="id">GB18030TEST</str>
+    <arr name="name">
+      <str>Test with some GB18030 encoded characters</str>
+    </arr>
+    <arr name="features">
+      <str>No accents here</str>
+      <str>这是一个功能</str>
+      <str>This is a feature (translated)</str>
+      <str>这份文件是很有光泽</str>
+      <str>This document is very shiny (translated)</str>
+    </arr>
+    <arr name="price">
+      <double>0.0</double>
+    </arr>
+    <arr name="inStock">
+      <bool>true</bool>
+    </arr>
+    <arr name="name_str">
+      <str>Test with some GB18030 encoded characters</str>
+    </arr>
+    <arr name="features_str">
+      <str>No accents here</str>
+      <str>This document is very shiny (translated)</str>
+      <str>This is a feature (translated)</str>
+      <str>这份文件是很有光泽</str>
+      <str>这是一个功能</str>
+    </arr>
+    <long name="_version_">1609424474270072832</long></doc>
+  <doc>
+    <str name="id">IW-02</str>
+    <arr name="name">
+      <str>iPod &amp; iPod Mini USB 2.0 Cable</str>
+    </arr>
+    <arr name="manu">
+      <str>Belkin</str>
+    </arr>
+    <str name="manu_id_s">belkin</str>
+    <arr name="cat">
+      <str>electronics</str>
+      <str>connector</str>
+    </arr>
+    <arr name="features">
+      <str>car power adapter for iPod, white</str>
+    </arr>
+    <arr name="weight">
+      <double>2.0</double>
+    </arr>
+    <arr name="price">
+      <double>11.5</double>
+    </arr>
+    <arr name="popularity">
+      <long>1</long>
+    </arr>
+    <arr name="inStock">
+      <bool>false</bool>
+    </arr>
+    <arr name="store">
+      <str>37.7752,-122.4232</str>
+    </arr>
+    <date name="manufacturedate_dt">2006-02-14T23:55:59Z</date>
+    <arr name="manu_str">
+      <str>Belkin</str>
+    </arr>
+    <arr name="name_str">
+      <str>iPod &amp; iPod Mini USB 2.0 Cable</str>
+    </arr>
+    <arr name="features_str">
+      <str>car power adapter for iPod, white</str>
+    </arr>
+    <arr name="store_str">
+      <str>37.7752,-122.4232</str>
+    </arr>
+    <long name="_version_">1609424475159265280</long>
+    <arr name="cat_str">
+      <str>connector</str>
+      <str>electronics</str>
+    </arr></doc>
+  <doc>
+    <str name="id">MA147LL/A</str>
+    <arr name="name">
+      <str>Apple 60 GB iPod with Video Playback Black</str>
+    </arr>
+    <arr name="manu">
+      <str>Apple Computer Inc.</str>
+    </arr>
+    <str name="manu_id_s">apple</str>
+    <arr name="cat">
+      <str>electronics</str>
+      <str>music</str>
+    </arr>
+    <arr name="features">
+      <str>iTunes, Podcasts, Audiobooks</str>
+      <str>Stores up to 15,000 songs, 25,000 photos, or 150 hours of video</str>
+      <str>2.5-inch, 320x240 color TFT LCD display with LED backlight</str>
+      <str>Up to 20 hours of battery life</str>
+      <str>Plays AAC, MP3, WAV, AIFF, Audible, Apple Lossless, H.264 video</str>
+      <str>Notes, Calendar, Phone book, Hold button, Date display, Photo wallet, Built-in games, JPEG photo playback, Upgradeable firmware, USB 2.0 compatibility, Playback speed control, Rechargeable capability, Battery level indication</str>
+    </arr>
+    <arr name="includes">
+      <str>earbud headphones, USB cable</str>
+    </arr>
+    <arr name="weight">
+      <double>5.5</double>
+    </arr>
+    <arr name="price">
+      <double>399.0</double>
+    </arr>
+    <arr name="popularity">
+      <long>10</long>
+    </arr>
+    <arr name="inStock">
+      <bool>true</bool>
+    </arr>
+    <arr name="store">
+      <str>37.7752,-100.0232</str>
+    </arr>
+    <date name="manufacturedate_dt">2005-10-12T08:00:00Z</date>
+    <arr name="manu_str">
+      <str>Apple Computer Inc.</str>
+    </arr>
+    <arr name="name_str">
+      <str>Apple 60 GB iPod with Video Playback Black</str>
+    </arr>
+    <arr name="includes_str">
+      <str>earbud headphones, USB cable</str>
+    </arr>
+    <arr name="features_str">
+      <str>2.5-inch, 320x240 color TFT LCD display with LED backlight</str>
+      <str>Notes, Calendar, Phone book, Hold button, Date display, Photo wallet, Built-in games, JPEG photo playback, Upgradeable firmware, USB 2.0 compatibility, Playback speed control, Rechargeable capability, Battery level indication</str>
+      <str>Plays AAC, MP3, WAV, AIFF, Audible, Apple Lossless, H.264 video</str>
+      <str>Stores up to 15,000 songs, 25,000 photos, or 150 hours of video</str>
+      <str>Up to 20 hours of battery life</str>
+      <str>iTunes, Podcasts, Audiobooks</str>
+    </arr>
+    <arr name="store_str">
+      <str>37.7752,-100.0232</str>
+    </arr>
+    <long name="_version_">1609424475504246784</long>
+    <arr name="cat_str">
+      <str>electronics</str>
+      <str>music</str>
+    </arr></doc>
+  <doc>
+    <str name="id">adata</str>
+    <str name="compName_s">A-Data Technology</str>
+    <str name="address_s">46221 Landing Parkway Fremont, CA 94538</str>
+    <long name="_version_">1609424475516829696</long></doc>
+  <doc>
+    <str name="id">asus</str>
+    <str name="compName_s">ASUS Computer</str>
+    <str name="address_s">800 Corporate Way Fremont, CA 94539</str>
+    <long name="_version_">1609424475517878272</long></doc>
+  <doc>
+    <str name="id">belkin</str>
+    <str name="compName_s">Belkin</str>
+    <str name="address_s">12045 E. Waterfront Drive Playa Vista, CA 90094</str>
+    <long name="_version_">1609424475518926848</long></doc>
+  <doc>
+    <str name="id">maxtor</str>
+    <str name="compName_s">Maxtor Corporation</str>
+    <str name="address_s">920 Disc Drive Scotts Valley, CA 95066</str>
+    <long name="_version_">1609424475521024000</long></doc>
+  <doc>
+    <str name="id">TWINX2048-3200PRO</str>
+    <arr name="name">
+      <str>CORSAIR  XMS 2GB (2 x 1GB) 184-Pin DDR SDRAM Unbuffered DDR 400 (PC 3200) Dual Channel Kit System Memory - Retail</str>
+    </arr>
+    <arr name="manu">
+      <str>Corsair Microsystems Inc.</str>
+    </arr>
+    <str name="manu_id_s">corsair</str>
+    <arr name="cat">
+      <str>electronics</str>
+      <str>memory</str>
+    </arr>
+    <arr name="features">
+      <str>CAS latency 2,  2-3-3-6 timing, 2.75v, unbuffered, heat-spreader</str>
+    </arr>
+    <arr name="price">
+      <double>185.0</double>
+    </arr>
+    <arr name="popularity">
+      <long>5</long>
+    </arr>
+    <arr name="inStock">
+      <bool>true</bool>
+    </arr>
+    <arr name="store">
+      <str>37.7752,-122.4232</str>
+    </arr>
+    <date name="manufacturedate_dt">2006-02-13T15:26:37Z</date>
+    <arr name="payloads">
+      <str>electronics|6.0 memory|3.0</str>
+    </arr>
+    <arr name="manu_str">
+      <str>Corsair Microsystems Inc.</str>
+    </arr>
+    <arr name="name_str">
+      <str>CORSAIR  XMS 2GB (2 x 1GB) 184-Pin DDR SDRAM Unbuffered DDR 400 (PC 3200) Dual Channel Kit System Memory - Retail</str>
+    </arr>
+    <arr name="features_str">
+      <str>CAS latency 2,  2-3-3-6 timing, 2.75v, unbuffered, heat-spreader</str>
+    </arr>
+    <arr name="store_str">
+      <str>37.7752,-122.4232</str>
+    </arr>
+    <arr name="payloads_str">
+      <str>electronics|6.0 memory|3.0</str>
+    </arr>
+    <long name="_version_">1609424475750662144</long>
+    <arr name="cat_str">
+      <str>electronics</str>
+      <str>memory</str>
+    </arr></doc>
+  <doc>
+    <str name="id">VS1GB400C3</str>
+    <arr name="name">
+      <str>CORSAIR ValueSelect 1GB 184-Pin DDR SDRAM Unbuffered DDR 400 (PC 3200) System Memory - Retail</str>
+    </arr>
+    <arr name="manu">
+      <str>Corsair Microsystems Inc.</str>
+    </arr>
+    <str name="manu_id_s">corsair</str>
+    <arr name="cat">
+      <str>electronics</str>
+      <str>memory</str>
+    </arr>
+    <arr name="price">
+      <double>74.99</double>
+    </arr>
+    <arr name="popularity">
+      <long>7</long>
+    </arr>
+    <arr name="inStock">
+      <bool>true</bool>
+    </arr>
+    <arr name="store">
+      <str>37.7752,-100.0232</str>
+    </arr>
+    <date name="manufacturedate_dt">2006-02-13T15:26:37Z</date>
+    <arr name="payloads">
+      <str>electronics|4.0 memory|2.0</str>
+    </arr>
+    <arr name="manu_str">
+      <str>Corsair Microsystems Inc.</str>
+    </arr>
+    <arr name="name_str">
+      <str>CORSAIR ValueSelect 1GB 184-Pin DDR SDRAM Unbuffered DDR 400 (PC 3200) System Memory - Retail</str>
+    </arr>
+    <arr name="store_str">
+      <str>37.7752,-100.0232</str>
+    </arr>
+    <arr name="payloads_str">
+      <str>electronics|4.0 memory|2.0</str>
+    </arr>
+    <long name="_version_">1609424475751710720</long>
+    <arr name="cat_str">
+      <str>electronics</str>
+      <str>memory</str>
+    </arr></doc>
+</result>
+</response>

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.1 (2018-09-04)
+
+* Decode and return Solr JSON response as Map
+
 ## 0.4.0 (2018-09-03)
 
 * Support HTTP headers and options specification

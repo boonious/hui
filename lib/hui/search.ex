@@ -70,6 +70,17 @@ defmodule Hui.Search do
   end
   def search(_, _), do: {:error, @error_msg}
 
+  # decode JSON data and return other response format
+  # raw text
+  def process_response_body(""), do: ""
+  def process_response_body(body) do
+    {status, solr_results} = Poison.decode body
+    case status do
+      :ok -> solr_results
+      :error -> body
+    end
+  end
+
   defp exec_search(%Hui.URL{} = url_struct, [head|tail]) when is_tuple(head) do 
     url = Hui.URL.to_string(url_struct)
     get( url <> "?" <> Hui.URL.encode_query([head] ++ tail), url_struct.headers, url_struct.options )

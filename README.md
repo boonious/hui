@@ -56,9 +56,7 @@ search application in Elixir and Phoenix.
 
 ### Parsing Solr results
 
-Hui currently returns Solr results as `HTTPoison.Response` struct which contains the raw Solr response (body).
-**Note**: upcoming releases of Hui will provide features for parsing and working with response 
-data in various formats.
+Hui returns Solr results as `HTTPoison.Response` struct which contains the Solr response (body).
 
 ```elixir
   {:ok,
@@ -73,12 +71,20 @@ data in various formats.
    }
   }
 ```
-The response needs to be decoded accordingly using relevant parsers such as `Poison` for JSON response.
+
+JSON response is parsed and decoded as
+[Map](https://elixir-lang.org/getting-started/keywords-and-maps.html#maps).
+It is accessible via the `body` key.
 
 ```elixir
-  {status, resp} = Hui.search(solr_params)
-  solr_response = resp.body |> Poison.decode!
+  {status, resp} = Hui.q(solr_params)
+
+  # getting a list of Solr documents (in Map)
+  solr_docs = resp.body["response"]["docs"]
+  total_hits = resp.body["response"]["numFound"]
 ```
+
+**Note**: for other response formats such as XML, raw response (text) is currently being returned.
 
 ### Other low-level HTTP client features
 
