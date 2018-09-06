@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.2 (2018-09-06)
+
+* Enable HTTP headers and options per endpoint configuration
+
 ## 0.4.1 (2018-09-04)
 
 * Decode and return Solr JSON response as Map
