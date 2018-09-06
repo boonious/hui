@@ -16,19 +16,23 @@ defmodule Hui.URL do
   Returns a configured default Solr endpoint as `t:Hui.URL.t/0` struct.
 
       iex> Hui.URL.default_url!
-      %Hui.URL{handler: "select", url: "http://localhost:8983/solr/gettingstarted"}
+      %Hui.URL{handler: "select", url: "http://localhost:8983/solr/gettingstarted", headers: [{"accept", "application/json"}], options: [recv_timeout: 10000]}
 
   The default endpoint can be specified in application configuration as below:
 
   ```
     config :hui, :default,
       url: "http://localhost:8983/solr/gettingstarted",
-      handler: "select" # optional
+      handler: "select", # optional
+      headers: [{"accept", "application/json"}],
+      options: [recv_timeout: 10000]
   ```
 
   - `url`: typical endpoint including the core or collection name. This may also be a load balancer
   endpoint fronting several Solr upstreams.
   - `handler`: name of a request handler that processes requests.
+  - `headers`: HTTP headers.
+  - `options`: HTTPoison options.
 
   """
   @spec default_url! :: t | nil
@@ -59,12 +63,14 @@ defmodule Hui.URL do
   """
   @spec configured_url(atom) :: {:ok, t} | {:error, binary} | nil
   def configured_url(config_key) do
-    {x, y} = {Application.get_env(:hui, config_key)[:url], Application.get_env(:hui, config_key)[:handler]}
-    case {x,y} do
-      {nil, nil} -> {:error, "URL not found in configuration"}
+    url = Application.get_env(:hui, config_key)[:url]
+    handler = Application.get_env(:hui, config_key)[:handler]
+    headers = if Application.get_env(:hui, config_key)[:headers], do: Application.get_env(:hui, config_key)[:headers], else: []
+    options = if Application.get_env(:hui, config_key)[:options], do: Application.get_env(:hui, config_key)[:options], else: []
+    case {url,handler} do
       {nil, _} -> {:error, "URL not found in configuration"}
-      {_, nil} -> {:ok, %Hui.URL{url: x}}
-      {_, _} -> {:ok, %Hui.URL{url: x, handler: y}}
+      {_, nil} -> {:ok, %Hui.URL{url: url, headers: headers, options: options}}
+      {_, _} -> {:ok, %Hui.URL{url: url, handler: handler, headers: headers, options: options}}
     end
   end
 

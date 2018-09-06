@@ -47,7 +47,9 @@ HTTP headers and options can be specified via the `t:Hui.URL.t/0` struct.
   Hui.search(url, q: "solr rocks")
 ```
 
-See `Hui.search/2` for more details.
+See `Hui.search/2` for more details. 
+
+Headers and options for a specific endpoint may also be configured - see "Configuration".
 
 ### Software library
 
@@ -100,7 +102,7 @@ by adding `hui` to your list of dependencies in `mix.exs`:
 ```elixir
   def deps do
     [
-      {:hui, "~> 0.4.0"}
+      {:hui, "~> 0.4.2"}
     ]
   end
 ```
@@ -116,8 +118,12 @@ A default Solr endpoint may be specified in the application configuration as bel
 ```elixir
   config :hui, :default,
     url: "http://localhost:8983/solr/gettingstarted",
-    handler: "select" # optional
+    handler: "select", # optional
+    headers: [{"accept", "application/json"}], # optional
+    options: [recv_timeout: 10000] # optional
 ```
+
+HTTP headers and options may also be configured.
 
 See `Hui.URL.default_url!/0`.
 

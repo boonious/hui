@@ -4,7 +4,9 @@ use Mix.Config
 #
 config :hui, :default, # default endpoint
   url: "http://localhost:8983/solr/gettingstarted", # core or collection endpoint
-  handler: "select" # optional
+  handler: "select", # optional
+  headers: [{"accept", "application/json"}], # optional
+  options: [recv_timeout: 10000] # optional
 
 # Additional Solr endpoints may be configured using any config key, e.g. :suggester.
 # Use Hui.URL.config_url(:suggester) function to retrieve the corresponding URL struct
