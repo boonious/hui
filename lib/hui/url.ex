@@ -98,17 +98,24 @@ defmodule Hui.URL do
 
   """
   @spec encode_query(term) :: binary
-  def encode_query(enumerable) when is_list(enumerable), do: Enum.map_join(enumerable, "&", &encode/1)
+  def encode_query(enumerable) when is_list(enumerable), do: Enum.reject(enumerable, &invalid_param?/1) |> Enum.map_join("&", &encode/1)
   def encode_query(_), do: ""
 
   @doc "Returns the string representation (URL path) of the given `t:Hui.URL.t/0` struct."
   @spec to_string(t) :: binary
   def to_string(%__MODULE__{url: url, handler: handler}), do: "#{url}/#{handler}"
 
-  defp encode({k,v}) when is_list(v), do: Enum.map_join(v, "&", &encode({k,&1}))
+  defp encode({k,v}) when is_list(v), do: Enum.reject(v, &invalid_param?/1) |> Enum.map_join("&", &encode({k,&1}))
   defp encode({k,v}) when is_binary(v), do: "#{k}=#{URI.encode_www_form(v)}"
   defp encode({k,v}), do: "#{k}=#{v}"
   defp encode([]), do: ""
   defp encode(v), do: v
+
+  # kv pairs with empty, nil or [] values
+  defp invalid_param?(""), do: true
+  defp invalid_param?(nil), do: true
+  defp invalid_param?([]), do: true
+  defp invalid_param?(x) when is_tuple(x), do: is_nil(elem(x,1)) or elem(x,1) == "" or elem(x, 1) == []
+  defp invalid_param?(_x), do: false
 
 end
