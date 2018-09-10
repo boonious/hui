@@ -115,7 +115,7 @@ defmodule Hui.URL do
   defp invalid_param?(""), do: true
   defp invalid_param?(nil), do: true
   defp invalid_param?([]), do: true
-  defp invalid_param?(x) when is_tuple(x), do: is_nil(elem(x,1)) or elem(x,1) == "" or elem(x, 1) == []
+  defp invalid_param?(x) when is_tuple(x), do: is_nil(elem(x,1)) or elem(x,1) == "" or elem(x, 1) == [] or elem(x,0) == :__struct__
   defp invalid_param?(_x), do: false
 
 end

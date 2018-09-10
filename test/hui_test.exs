@@ -1,6 +1,8 @@
 defmodule HuiTest do
   use ExUnit.Case, async: true
   doctest Hui.URL
+  doctest Hui.Q
+  doctest Hui.F
 
   describe "Hui.URL" do
 
@@ -47,5 +49,23 @@ defmodule HuiTest do
     end
 
   end
+
+  describe "query structs (Hui.Q)" do
+
+    test "provide 'q' query setting" do
+      x = %Hui.Q{q: "hui solr client"}
+      assert "hui solr client" = x.q
+      x = %Hui.Q{q: "{!q.op=AND df=title}solr rocks"}
+      assert "{!q.op=AND df=title}solr rocks" = x.q
+    end
+
+    test "can be encoded into URL request string format" do
+      x = %Hui.Q{fl: "id,title", q: "loch", fq: ["type:image/jpeg", "year:2001"]}
+      assert "fl=id%2Ctitle&fq=type%3Aimage%2Fjpeg&fq=year%3A2001&q=loch" = x |> Hui.Q.encode_query
+    end
+
+  end
+
+
 
 end
