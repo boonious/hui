@@ -109,6 +109,8 @@ defmodule Hui.URL do
 
   """
   @spec encode_query(term) :: binary
+  def encode_query([{:__struct__, Hui.Q} | tail]), do: tail |> encode_query
+  def encode_query([{:__struct__, Hui.F} | tail]), do: Enum.map(tail, &prefix(&1)) |> encode_query
   def encode_query(enumerable) when is_list(enumerable), do: Enum.reject(enumerable, &invalid_param?/1) |> Enum.map_join("&", &encode/1)
   def encode_query(_), do: ""
 
@@ -128,5 +130,12 @@ defmodule Hui.URL do
   defp invalid_param?([]), do: true
   defp invalid_param?(x) when is_tuple(x), do: is_nil(elem(x,1)) or elem(x,1) == "" or elem(x, 1) == [] or elem(x,0) == :__struct__
   defp invalid_param?(_x), do: false
+
+  # translate kv pair to Solr prefix syntax, e.g. `field: "year"` to `"facet.field": "year"`
+  defp prefix({k,v}) when k == :facet, do: {k,v}
+  defp prefix({k,v}, prefix \\ "facet") do
+   new_key = "#{prefix}.#{k}"
+   {new_key |> String.to_atom, v}
+  end
 
 end
