@@ -55,7 +55,7 @@ defmodule Hui.Q do
   @typedoc """
     Query or facet struct.
   """
-  @type query_struct :: t | Hui.F.t
+  @type query_struct :: t | Hui.F.t | Hui.F.Range.t | Hui.F.Interval.t
 
   @doc """
   Encodes query (`t:t/0`) and facet (`t:Hui.F.t/0`) structs into a query string.
@@ -121,6 +121,8 @@ defmodule Hui.Q do
   @spec encode_query(query_struct) :: binary
   def encode_query(%__MODULE__{} = query_struct), do: Hui.URL.encode_query(query_struct |> Map.to_list)
   def encode_query(%Hui.F{} = query_struct), do: Hui.URL.encode_query(query_struct |> Map.to_list)
+  def encode_query(%Hui.F.Range{} = query_struct), do: Hui.URL.encode_query(query_struct |> Map.to_list)
+  def encode_query(%Hui.F.Interval{} = query_struct), do: Hui.URL.encode_query(query_struct |> Map.to_list)
   def encode_query(_query_struct), do: ""
 
 end

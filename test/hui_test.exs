@@ -150,6 +150,22 @@ defmodule HuiTest do
       assert "facet=true&facet.field=type&facet.field=year&facet.query=year%3A%5B2000+TO+NOW%5D" = %Hui.F{field: ["type", "year"], query: "year:[2000 TO NOW]"} |> Hui.Q.encode_query
     end
 
+    test "range can be encoded into URL query string" do
+      x = %Hui.F.Range{range: "year", "range.gap": "+10YEARS", "range.start": 1700, "range.end": 1799}
+      assert "facet.range=year&facet.range.end=1799&facet.range.gap=%2B10YEARS&facet.range.start=1700" = x |> Hui.Q.encode_query
+
+      y = %Hui.F{field: "type", range: x}
+      assert "facet=true&facet.field=type&facet.range=year&facet.range.end=1799&facet.range.gap=%2B10YEARS&facet.range.start=1700" = y |> Hui.Q.encode_query
+    end
+
+    test "interval can be encoded into URL query string" do
+      x = %Hui.F.Interval{interval: "price", "interval.set": ["[0,10]", "(10,100]"]}
+      assert "facet.interval=price&facet.interval.set=%5B0%2C10%5D&facet.interval.set=%2810%2C100%5D" = x |> Hui.Q.encode_query
+
+      y = %Hui.F{field: "type", interval: x}
+      assert "facet=true&facet.field=type&facet.interval=price&facet.interval.set=%5B0%2C10%5D&facet.interval.set=%2810%2C100%5D" = y |> Hui.Q.encode_query
+    end
+
   end
 
 

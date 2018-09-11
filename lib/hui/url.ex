@@ -111,6 +111,9 @@ defmodule Hui.URL do
   @spec encode_query(term) :: binary
   def encode_query([{:__struct__, Hui.Q} | tail]), do: tail |> encode_query
   def encode_query([{:__struct__, Hui.F} | tail]), do: Enum.map(tail, &prefix(&1)) |> encode_query
+  def encode_query([{:__struct__, Hui.F.Range} | tail]), do: Enum.map(tail, &prefix(&1)) |> encode_query
+  def encode_query([{:__struct__, Hui.F.Interval} | tail]), do: Enum.map(tail, &prefix(&1)) |> encode_query
+
   def encode_query(enumerable) when is_list(enumerable), do: Enum.reject(enumerable, &invalid_param?/1) |> Enum.map_join("&", &encode/1)
   def encode_query(_), do: ""
 
@@ -120,6 +123,9 @@ defmodule Hui.URL do
 
   defp encode({k,v}) when is_list(v), do: Enum.reject(v, &invalid_param?/1) |> Enum.map_join("&", &encode({k,&1}))
   defp encode({k,v}) when is_binary(v), do: "#{k}=#{URI.encode_www_form(v)}"
+
+  # when value is a struct, e.g. %Hui.F.Range/Interval{}
+  defp encode({_k,v}) when is_map(v), do: Hui.Q.encode_query(v)
   defp encode({k,v}), do: "#{k}=#{v}"
   defp encode([]), do: ""
   defp encode(v), do: v
@@ -132,6 +138,7 @@ defmodule Hui.URL do
   defp invalid_param?(_x), do: false
 
   # translate kv pair to Solr prefix syntax, e.g. `field: "year"` to `"facet.field": "year"`
+  defp prefix({:per_field,_v}), do: nil
   defp prefix({k,v}) when k == :facet, do: {k,v}
   defp prefix({k,v}, prefix \\ "facet") do
    new_key = "#{prefix}.#{k}"
