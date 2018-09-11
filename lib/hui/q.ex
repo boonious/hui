@@ -84,6 +84,7 @@ defmodule Hui.Q do
       "fl=id%2Ctitle&fq=type%3Aimage&q=edinburgh&rows=15"
 
   """
+  @spec encode_query(t) :: binary
   def encode_query(query_struct) when is_map(query_struct), do: Hui.URL.encode_query(query_struct |> Map.to_list)
 
 end
