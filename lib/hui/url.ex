@@ -10,6 +10,23 @@ defmodule Hui.URL do
   defstruct [:url, handler: "select", headers: [], options: []]
   @type headers :: HTTPoison.Base.headers
   @type options :: Keyword.t
+
+  @typedoc """
+  Use this struct specify a Solr endpoint, request handler, optional HTTP headers and options.
+
+  ## Example
+
+  ```
+    %Hui.URL{handler: "suggest", url: "http://localhost:8983/solr/collection"}
+  ```
+
+  - `url`: typical endpoint including the core or collection name. This may also be a load balancer
+  endpoint fronting several Solr upstreams.
+  - `handler`: name of a Solr request handler that processes requests.
+  - `headers`: HTTP headers.
+  - `options`: [HTTPoison options](https://hexdocs.pm/httpoison/HTTPoison.html#request/5).
+
+  """
   @type t :: %__MODULE__{url: nil | binary, handler: nil | binary, headers: nil | headers, options: nil | options}
 
   @doc """
@@ -27,12 +44,6 @@ defmodule Hui.URL do
       headers: [{"accept", "application/json"}],
       options: [recv_timeout: 10000]
   ```
-
-  - `url`: typical endpoint including the core or collection name. This may also be a load balancer
-  endpoint fronting several Solr upstreams.
-  - `handler`: name of a request handler that processes requests.
-  - `headers`: HTTP headers.
-  - `options`: HTTPoison options.
 
   """
   @spec default_url! :: t | nil
