@@ -3,6 +3,8 @@ defmodule HuiTest do
   doctest Hui.URL
   doctest Hui.Q
   doctest Hui.F
+  doctest Hui.F.Range
+  doctest Hui.F.Interval
 
   describe "Hui.URL" do
 
@@ -50,7 +52,33 @@ defmodule HuiTest do
 
   end
 
-  describe "query structs (Hui.Q)" do
+  describe "query struct Hui.Q" do
+
+    test "parameter setting" do
+      assert %Hui.Q{
+        cache: nil,
+        debug: nil,
+        debugQuery: nil,
+        defType: nil,
+        df: nil,
+        echoParams: nil,
+        explainOther: nil,
+        facet: nil,
+        fl: "id,title",
+        fq: ["type:image"],
+        logParamsList: nil,
+        omitHeader: nil,
+        q: "edinburgh",
+        "q.op": nil,
+        rows: 15,
+        segmentTerminateEarly: nil,
+        sort: nil,
+        sow: nil,
+        start: nil,
+        timeAllowed: nil,
+        wt: nil
+      } = %Hui.Q{q: "edinburgh", fl: "id,title", fq: ["type:image"], rows: 15}
+    end
 
     test "provide 'q' query setting" do
       x = %Hui.Q{q: "hui solr client"}
@@ -66,6 +94,59 @@ defmodule HuiTest do
 
   end
 
+  describe "facet struct Hui.F" do
+
+    test "parameter setting" do
+      assert %Hui.F{
+        contains: nil,
+        "contains.ignoreCase": nil,
+        "enum.cache.minDf": nil,
+        excludeTerms: nil,
+        exists: nil,
+        facet: true,
+        field: ["type", "year"],
+        interval: nil,
+        limit: nil,
+        matches: nil,
+        method: nil,
+        mincount: nil,
+        missing: nil,
+        offset: nil,
+        "overrequest.count": nil,
+        "overrequest.ratio": nil,
+        pivot: [],
+        "pivot.mincount": nil,
+        prefix: nil,
+        query: "year:[2000 TO NOW]",
+        range: nil,
+        sort: nil,
+        threads: nil
+      } = %Hui.F{field: ["type", "year"], query: "year:[2000 TO NOW]"}
+    end
+
+    test "range parameter setting" do
+      assert %Hui.F.Range{
+        per_field: false,
+        range: "year",
+        "range.end": 1799,
+        "range.gap": "+10YEARS",
+        "range.hardend": nil,
+        "range.include": nil,
+        "range.method": nil,
+        "range.other": nil,
+        "range.start": 1700
+      } = %Hui.F.Range{range: "year", "range.gap": "+10YEARS", "range.start": 1700, "range.end": 1799}
+    end
+
+    test "interval parameter setting" do
+      assert %Hui.F.Interval{
+        interval: "price",
+        "interval.set": ["[0,10]", "(10,100]"],
+        per_field: false
+      } = %Hui.F.Interval{interval: "price", "interval.set": ["[0,10]", "(10,100]"]}
+    end
+
+  end
 
 
 end
