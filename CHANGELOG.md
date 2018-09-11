@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.0 (2018-09-11)
+
+* Introduce struct modules for standard query and faceting parameters
+
 ## 0.4.2 (2018-09-06)
 
 * Enable HTTP headers and options per endpoint configuration

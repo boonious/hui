@@ -53,7 +53,8 @@ Headers and options for a specific endpoint may also be configured - see "Config
 
 ### Software library
 
-See `API reference` for available modules which can also be used for developing Solr
+See [API reference](https://hexdocs.pm/hui/api-reference.html#content) for 
+available modules and data structures which can also be used for developing Solr
 search application in Elixir and Phoenix.
 
 ### Parsing Solr results
