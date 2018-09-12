@@ -15,6 +15,8 @@ defmodule Hui.F do
   @typedoc """
   Struct for faceting parameters.
 
+  `Hui.URL.encode_query/1` renders this struct into URL query string.
+
   ## Example
 
       iex> %Hui.F{field: ["type", "year"], query: "year:[2000 TO NOW]"}

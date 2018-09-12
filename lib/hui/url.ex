@@ -176,16 +176,17 @@ defmodule Hui.URL do
   @spec encode_query(url_params) :: binary
   def encode_query(%Hui.Q{} = url_params), do: encode_query(url_params |> Map.to_list)
   def encode_query(%Hui.F{} = url_params), do: encode_query(url_params |> Map.to_list)
-  def encode_query(%Hui.F.Range{} = url_params), do: encode_query(url_params |> Map.to_list)
-  def encode_query(%Hui.F.Interval{} = url_params), do: encode_query(url_params |> Map.to_list)
+
+  def encode_query(%Hui.F.Range{} = url_params), do: encode_query(url_params |> Map.to_list, "facet.range", url_params.range, url_params.per_field)
+  def encode_query(%Hui.F.Interval{} = url_params), do: encode_query(url_params |> Map.to_list, "facet.interval", url_params.interval, url_params.per_field)
 
   def encode_query([{:__struct__, Hui.Q} | tail]), do: tail |> encode_query
-  def encode_query([{:__struct__, Hui.F} | tail]), do: Enum.map(tail, &prefix(&1)) |> encode_query
-  def encode_query([{:__struct__, Hui.F.Range} | tail]), do: Enum.map(tail, &prefix(&1)) |> encode_query
-  def encode_query([{:__struct__, Hui.F.Interval} | tail]), do: Enum.map(tail, &prefix(&1)) |> encode_query
+  def encode_query([{:__struct__, Hui.F} | tail]), do: Enum.map(tail, &prefix/1) |> encode_query
 
   def encode_query(enumerable) when is_list(enumerable), do: Enum.reject(enumerable, &invalid_param?/1) |> Enum.map_join("&", &encode/1)
   def encode_query(_), do: ""
+
+  def encode_query([{:__struct__, _struct} | tail], prefix, field, per_field), do: Enum.map(tail, &prefix(&1, prefix, field, per_field)) |> encode_query
 
   @doc "Returns the string representation (URL path) of the given `t:Hui.URL.t/0` struct."
   @spec to_string(t) :: binary
@@ -194,8 +195,9 @@ defmodule Hui.URL do
   defp encode({k,v}) when is_list(v), do: Enum.reject(v, &invalid_param?/1) |> Enum.map_join("&", &encode({k,&1}))
   defp encode({k,v}) when is_binary(v), do: "#{k}=#{URI.encode_www_form(v)}"
 
-  # when value is a struct, e.g. %Hui.F.Range/Interval{}
+  # when value is a also struct, e.g. %Hui.F.Range/Interval{}
   defp encode({_k,v}) when is_map(v), do: encode_query(v)
+
   defp encode({k,v}), do: "#{k}=#{v}"
   defp encode([]), do: ""
   defp encode(v), do: v
@@ -207,12 +209,18 @@ defmodule Hui.URL do
   defp invalid_param?(x) when is_tuple(x), do: is_nil(elem(x,1)) or elem(x,1) == "" or elem(x, 1) == [] or elem(x,0) == :__struct__
   defp invalid_param?(_x), do: false
 
-  # translate kv pair to Solr prefix syntax, e.g. `field: "year"` to `"facet.field": "year"`
-  defp prefix({:per_field,_v}), do: nil
+  # render kv pairs according to Solr prefix /per field syntax
+  # e.g. `field: "year"` to `"facet.field": "year"`, `f.[field].facet.gap`
   defp prefix({k,v}) when k == :facet, do: {k,v}
-  defp prefix({k,v}, prefix \\ "facet") do
-   new_key = "#{prefix}.#{k}"
-   {new_key |> String.to_atom, v}
+  defp prefix({k,v}, prefix \\ "facet", field \\ "", per_field \\ false) do
+    case {k,prefix} do
+      {:facet, _} -> {:facet, v}
+      {:range, "facet.range"} -> {:"facet.range", v} # render the same way despite per field setting
+      {:method, "facet.range"} -> {:"facet.range.method", v} # ditto
+      {:interval, "facet.interval"} -> {:"facet.interval", v} # ditto
+      {:per_field, _} -> {k, nil} # do not render this field
+      {_, _} -> if per_field, do: {:"f.#{field}.#{prefix}.#{k}", v}, else: {:"#{prefix}.#{k}", v}
+    end
   end
 
 end

@@ -57,6 +57,72 @@ See [API reference](https://hexdocs.pm/hui/api-reference.html#content) for
 available modules and data structures which can also be used for developing Solr
 search application in Elixir and Phoenix.
 
+The following [structs](https://elixir-lang.org/getting-started/structs.html) modules
+can be used to generate and encode Solr parameters in more **idiomatic** and **structured** ways.
+
+- Standard and common query struct: `Hui.Q`
+- Faceting struct: `Hui.F`, `Hui.F.Range`, `Hui.F.Interval`
+- *structs for other request handlers are forthcoming*
+
+For example, instead of prefixing and repeating `fq=filter`, `facet.field=fieldname`, `facet.range.gap=10`,
+multiple filter and facet fields can be specified using
+`fq: ["field1", "field2"]`, `field: ["field1", "field2"]`, `gap: 10` Elixir codes.
+
+"Per-field" faceting for multiple ranges and intervals can be specified in a succinct and unified
+way e.g. `gap` instead of the long-winded `f.[fieldname].facet.range.gap` (per field) or `facet.range.gap`
+(single field range). Per-field use case for a facet can easily be set (or unset) through the `per_field`
+field - see below.
+
+```elixir
+  x = %Hui.Q{q: "loch", fq: ["type:image/jpeg", "year:2001"], fl: "id,title", rows: 20}
+  x |> Hui.URL.encode_query
+  # -> "fl=id%2Ctitle&fq=type%3Aimage%2Fjpeg&fq=year%3A2001&q=loch&rows=20"
+
+  x = %Hui.F{field: ["type", "year", "subject"], query: "edited:true"}
+  x |> Hui.URL.encode_query
+  # -> "facet=true&facet.field=type&facet.field=year&facet.field=subject&facet.query=edited%3Atrue"
+  # there's no need to set "facet: true" as it is implied and a default setting in the struct
+
+  # a unified way to specify per-field or singe-field range
+  x = %Hui.F.Range{range: "age", gap: 10, start: 0, end: 100}
+  x |> Hui.URL.encode_query
+  # -> "facet.range.end=100&facet.range.gap=10&facet.range=age&facet.range.start=0"
+  x = %{x | per_field: true} # toggle per field faceting
+  x |> Hui.URL.encode_query
+  # -> "f.age.facet.range.end=100&f.age.facet.range.gap=10&facet.range=age&f.age.facet.range.start=0"
+```
+
+The structs also provide a binding and introspection of available fields.
+
+```elixir
+  iex> %Hui.F{field: ["type", "year"], query: "year:[2000 TO NOW]"}
+  %Hui.F{
+    contains: nil,
+    "contains.ignoreCase": nil,
+    "enum.cache.minDf": nil,
+    excludeTerms: nil,
+    exists: nil,
+    facet: true,
+    field: ["type", "year"],
+    interval: nil,
+    limit: nil,
+    matches: nil,
+    method: nil,
+    mincount: nil,
+    missing: nil,
+    offset: nil,
+    "overrequest.count": nil,
+    "overrequest.ratio": nil,
+    pivot: [],
+    "pivot.mincount": nil,
+    prefix: nil,
+    query: "year:[2000 TO NOW]",
+    range: nil,
+    sort: nil,
+    threads: nil
+  }
+```
+
 ### Parsing Solr results
 
 Hui returns Solr results as `HTTPoison.Response` struct which contains the Solr response (body).
@@ -103,7 +169,7 @@ by adding `hui` to your list of dependencies in `mix.exs`:
 ```elixir
   def deps do
     [
-      {:hui, "~> 0.4.2"}
+      {:hui, "~> 0.5.1"}
     ]
   end
 ```

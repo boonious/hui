@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.1 (2018-09-12)
+
+* URL encoder renders faceting structs to string according to Solr prefix syntax e.g. "field" -> "facet.field"
+* URL encoder for "per field" faceting (ranges, intervals) use cases, e.g. "gap" -> "f.[field].range.gap"
+* Consolidate URL.encode_query/1; deprecate Q.encode_query
+* Improve succinctness of range and interval faceting struct: remove redundant words, e.g. "range.start", "range.end" -> "start", "end" etc.
+
 ## 0.5.0 (2018-09-11)
 
 * Introduce struct modules for standard query and faceting parameters
