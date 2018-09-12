@@ -1,16 +1,8 @@
 defmodule Hui.F.Range do
   @moduledoc """
   Struct and functions related to [range faceting](http://lucene.apache.org/solr/guide/7_4/faceting.html#range-faceting) parameters.
-  """
 
-  defstruct [:range, :"range.start", :"range.end", :"range.gap"]
-         ++ [:"range.hardend", :"range.include", :"range.other", :"range.method", per_field: false]
-
-  @typedoc """
-  Use this struct to specify range faceting parameters in conjunction with
-  the main `t:Hui.F.t/0` struct.
-
-  ## Example
+  ### Example
       iex> x = %Hui.F.Range{range: "year", "range.gap": "+10YEARS", "range.start": 1700, "range.end": 1799}
       %Hui.F.Range{
         per_field: false,
@@ -23,7 +15,7 @@ defmodule Hui.F.Range do
         "range.other": nil,
         "range.start": 1700
       }
-      iex> %Hui.F{range: x, field: ["type", "year"], query: "year:[2000 TO NOW]"}
+      iex> y = %Hui.F{range: x, field: ["type", "year"], query: "year:[2000 TO NOW]"}
       %Hui.F{
         contains: nil,
         "contains.ignoreCase": nil,
@@ -59,6 +51,17 @@ defmodule Hui.F.Range do
         sort: nil,
         threads: nil
       }
+      iex> y |> Hui.Q.encode_query # render struct into URL query string with `facet` prefixes
+      "facet=true&facet.field=type&facet.field=year&facet.query=year%3A%5B2000+TO+NOW%5D&facet.range=year&facet.range.end=1799&facet.range.gap=%2B10YEARS&facet.range.start=1700"
+  """
+  defstruct [:range, :"range.start", :"range.end", :"range.gap"]
+         ++ [:"range.hardend", :"range.include", :"range.other", :"range.method", per_field: false]
+
+  @typedoc """
+  Use this struct to specify range faceting parameters in conjunction with
+  the main `t:Hui.F.t/0` struct.
+
+  See `Hui.Q.encode_query/1` for rendering the struct into URL query string.
   """
   @type t :: %__MODULE__{range: binary, "range.start": binary, "range.end": binary, "range.gap": binary,
                          "range.hardend": boolean, "range.include": binary,
