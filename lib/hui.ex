@@ -4,10 +4,10 @@ defmodule Hui do
   Hui 辉 ("shine" in Chinese) is an [Elixir](https://elixir-lang.org) client and library for 
   [Solr enterprise search platform](http://lucene.apache.org/solr/).
   
-  Usage
+  ### Usage
   
   - Searching Solr: `q/1`, `search/2`
-
+  - [More usage](https://hexdocs.pm/hui/readme.html#usage)
   """
 
   @type query :: binary | Hui.Search.solr_params
