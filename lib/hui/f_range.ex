@@ -51,17 +51,17 @@ defmodule Hui.F.Range do
         sort: nil,
         threads: nil
       }
-      iex> y |> Hui.Q.encode_query # render struct into URL query string with `facet` prefixes
+      iex> y |> Hui.URL.encode_query # render struct into URL query string with `facet` prefixes
       "facet=true&facet.field=type&facet.field=year&facet.query=year%3A%5B2000+TO+NOW%5D&facet.range=year&facet.range.end=1799&facet.range.gap=%2B10YEARS&facet.range.start=1700"
   """
   defstruct [:range, :"range.start", :"range.end", :"range.gap"]
          ++ [:"range.hardend", :"range.include", :"range.other", :"range.method", per_field: false]
 
   @typedoc """
-  Use this struct to specify range faceting parameters in conjunction with
-  the main `t:Hui.F.t/0` struct.
+  Struct for range faceting parameters, use in conjunction with
+  the main faceting `t:Hui.F.t/0` struct (range).
 
-  See `Hui.Q.encode_query/1` for rendering the struct into URL query string.
+  `Hui.URL.encode_query/1` renders this struct into URL query string.
   """
   @type t :: %__MODULE__{range: binary, "range.start": binary, "range.end": binary, "range.gap": binary,
                          "range.hardend": boolean, "range.include": binary,

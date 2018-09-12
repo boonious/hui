@@ -13,7 +13,7 @@ defmodule Hui.F do
          ++ [:interval, :range]
 
   @typedoc """
-  Use this struct to specify faceting parameters.
+  Struct for faceting parameters.
 
   ## Example
 

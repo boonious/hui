@@ -4,7 +4,6 @@ defmodule Hui.URL do
 
   Use the module `t:Hui.URL.t/0` struct to specify
   Solr core or collection URLs with request handlers.
-
   """
 
   defstruct [:url, handler: "select", headers: [], options: []]
@@ -12,7 +11,7 @@ defmodule Hui.URL do
   @type options :: Keyword.t
 
   @typedoc """
-  Use this struct specify a Solr endpoint, request handler, optional HTTP headers and options.
+  Struct for a Solr endpoint with a request handler and any associated HTTP headers and options.
 
   ## Example
 
@@ -28,6 +27,11 @@ defmodule Hui.URL do
 
   """
   @type t :: %__MODULE__{url: nil | binary, handler: nil | binary, headers: nil | headers, options: nil | options}
+
+  @typedoc """
+  Solr parameters as keyword list or structs.
+  """
+  @type url_params :: Keyword.t | Hui.Q.t | Hui.F.t | Hui.F.Range.t | Hui.F.Interval.t
 
   @doc """
   Returns a configured default Solr endpoint as `t:Hui.URL.t/0` struct.
@@ -86,14 +90,14 @@ defmodule Hui.URL do
   end
 
   @doc """
-  Encodes list (keywords) of Solr parameters into a query string.
+  Encodes keyword list or structs of Solr parameters into a query string.
 
-  Some Solr parameters such as the filter query `fq`, `facet.field` can be set multiple times.
+  Solr parameters such as the filter query `fq`, `facet.field` can be set multiple times.
   These can be specified in a list (e.g. `fq: [filter1, filter]`). Dot-notated
   parameters (facet.field, hl.fl) can be specified with string keys, 
   e.g. `"facet.field": "type"`, `"hl.fl": "words"`.
 
-  ## Example
+  ## Example - keyword list
 
       iex> Hui.URL.encode_query(q: "loch", start: 10, rows: 10)
       "q=loch&start=10&rows=10"
@@ -106,9 +110,75 @@ defmodule Hui.URL do
 
       iex> Hui.URL.encode_query("not a valid parameter")
       ""
+  
+  ## Example - `t:Hui.Q.t/0` query struct
 
+      iex> x = %Hui.Q{q: "edinburgh", fl: "id,title", fq: ["type:image"], rows: 15}
+      %Hui.Q{
+        cache: nil,
+        debug: nil,
+        debugQuery: nil,
+        defType: nil,
+        df: nil,
+        echoParams: nil,
+        explainOther: nil,
+        facet: nil,
+        fl: "id,title",
+        fq: ["type:image"],
+        logParamsList: nil,
+        omitHeader: nil,
+        q: "edinburgh",
+        "q.op": nil,
+        rows: 15,
+        segmentTerminateEarly: nil,
+        sort: nil,
+        sow: nil,
+        start: nil,
+        timeAllowed: nil,
+        wt: nil
+      }
+      iex> x |> Hui.URL.encode_query
+      "fl=id%2Ctitle&fq=type%3Aimage&q=edinburgh&rows=15"
+
+  ## Example - `t:Hui.F.t/0` faceting struct
+
+      iex> x = %Hui.F{field: ["year", "type"]}
+      %Hui.F{
+        contains: nil,
+        "contains.ignoreCase": nil,
+        "enum.cache.minDf": nil,
+        excludeTerms: nil,
+        exists: nil,
+        facet: true,
+        field: ["year", "type"],
+        interval: nil,
+        limit: nil,
+        matches: nil,
+        method: nil,
+        mincount: nil,
+        missing: nil,
+        offset: nil,
+        "overrequest.count": nil,
+        "overrequest.ratio": nil,
+        pivot: [],
+        "pivot.mincount": nil,
+        prefix: nil,
+        query: [],
+        range: nil,
+        sort: nil,
+        threads: nil
+      }
+      iex> x |> Hui.URL.encode_query
+      "facet=true&facet.field=year&facet.field=type"
+  
+  See `Hui.Q`, `Hui.F`, `Hui.F.Range`, `Hui.F.Interval` for more examples
   """
-  @spec encode_query(term) :: binary
+  @spec encode_query(url_params) :: binary
+  def encode_query(%Hui.Q{} = url_params), do: encode_query(url_params |> Map.to_list)
+  def encode_query(%Hui.F{} = url_params), do: encode_query(url_params |> Map.to_list)
+  def encode_query(%Hui.F.Range{} = url_params), do: encode_query(url_params |> Map.to_list)
+  def encode_query(%Hui.F.Interval{} = url_params), do: encode_query(url_params |> Map.to_list)
+
   def encode_query([{:__struct__, Hui.Q} | tail]), do: tail |> encode_query
   def encode_query([{:__struct__, Hui.F} | tail]), do: Enum.map(tail, &prefix(&1)) |> encode_query
   def encode_query([{:__struct__, Hui.F.Range} | tail]), do: Enum.map(tail, &prefix(&1)) |> encode_query
@@ -125,7 +195,7 @@ defmodule Hui.URL do
   defp encode({k,v}) when is_binary(v), do: "#{k}=#{URI.encode_www_form(v)}"
 
   # when value is a struct, e.g. %Hui.F.Range/Interval{}
-  defp encode({_k,v}) when is_map(v), do: Hui.Q.encode_query(v)
+  defp encode({_k,v}) when is_map(v), do: encode_query(v)
   defp encode({k,v}), do: "#{k}=#{v}"
   defp encode([]), do: ""
   defp encode(v), do: v
