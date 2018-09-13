@@ -13,6 +13,7 @@ defmodule Hui do
   @type query :: Hui.Q.t | Keyword.t
   @type url :: binary | atom | Hui.URL.t
 
+  def q(%Hui.Q{} = q, %Hui.F{} = f), do: search(:default, [q, f])
 
   @doc """
   Issue a search query to the default Solr endpoint.
@@ -43,18 +44,30 @@ defmodule Hui do
   a specific URL and request handler. A key referring to a configured endpoint
   can also be used.
   
-  The query is a keyword list of Solr parameters.
-
-  ### Example
+  The query is a struct (`Hui.Q`) or a keyword list of Solr parameters.
+  
+  ### Example - parameters 
+  
+  ```
+    # structured query with permitted or quality Solr parameters
+    Hui.search(url, %Hui.Q{q: "loch", rows: 5, wt: "xml", fq: ["type:illustration", "format:image/jpeg"]})
+    # a keyword list of arbitrary parameters
+    Hui.search(url, q: "edinburgh", rows: 10)
 
   ```
-    Hui.search("http://localhost:8983/solr/collection", q: "loch")
+ 
+  ### Example - URL endpoints
+
+  ```
+    url = "http://localhost:8983/solr/collection"
+    Hui.search(url, q: "loch")
 
     url = :library
     Hui.search(url, q: "edinburgh", rows: 10)
 
     url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "suggest"}
     Hui.search(url, suggest: true, "suggest.dictionary": "mySuggester", "suggest.q": "el")
+
   ```
 
   See `Hui.URL.configured_url/1` amd `Hui.URL.encode_query/1` for more details on Solr parameter keyword list.
@@ -72,7 +85,8 @@ defmodule Hui do
   See `HTTPoison.request/5` for more details on HTTPoison options.
 
   """
-  @spec search(url, Hui.Search.solr_params) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
+  @spec search(url, query) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
+  def search(url, %Hui.Q{} = q), do: Hui.Search.search(url, [q])
   def search(url, query), do: Hui.Search.search(url, query)
 
 end

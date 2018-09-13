@@ -11,11 +11,12 @@ The data can be contained within a core (index) held on a single server or a dat
 
 ```elixir
   Hui.q("scott") # keywords search
-  Hui.q(%Hui.Q{q: "loch", fq: ["type:illustration", "format:image/jpeg"]}) # structured query
-  Hui.q(q: "loch", rows: 5, fq: ["type:illustration", "format:image/jpeg"])
+  Hui.q(q: "loch", rows: 5) # arbitrary keyword list
+  Hui.q(%Hui.Q{q: "loch", rows: 5, start: 20}) # structured query, against default endpoint
+  Hui.search(url, %Hui.Q{q: "loch", fq: ["type:illustration", "format:image/jpeg"]}) # structured query, against "url"
 ```
 
-The above queries a default Solr endpoint - see `Configuration` below.
+The `q` examples above queries a default Solr endpoint - see `Configuration` below.
 A query may involve search words (string), a [Keyword list](https://elixir-lang.org/getting-started/keywords-and-maps.html#keyword-lists) or
 built-in query [Structs](https://elixir-lang.org/getting-started/structs.html)
 providing a structured way for invoking the comprehensive and powerful features of Solr.
@@ -24,7 +25,7 @@ Queries may also be issued to other specific endpoints and request handlers defi
 
 ```elixir
   # URL binary string
-  Hui.search("http://localhost:8983/solr/collection", q: "loch")
+  Hui.search("http://localhost:8983/solr/collection", %Hui.Q{q: "loch"})
 
   # URL key referring to an endpoint in configuration - see "Configuration"
   url = :library
@@ -89,6 +90,7 @@ field - see below.
   x = %Hui.F.Range{range: "age", gap: 10, start: 0, end: 100}
   x |> Hui.URL.encode_query
   # -> "facet.range.end=100&facet.range.gap=10&facet.range=age&facet.range.start=0"
+
   x = %{x | per_field: true} # toggle per field faceting
   x |> Hui.URL.encode_query
   # -> "f.age.facet.range.end=100&f.age.facet.range.gap=10&facet.range=age&f.age.facet.range.start=0"

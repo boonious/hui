@@ -60,6 +60,9 @@ defmodule HuiSearchTest do
       solr_params = %Hui.Q{q: "*", rows: 10, fq: ["cat:electronics", "popularity:[0 TO *]"]}
       {_status, resp} = Hui.Search.search(url, [solr_params])
       assert String.match?(resp.request_url, ~r/fq=cat%3Aelectronics&fq=popularity%3A%5B0\+TO\+%2A%5D&q=%2A&rows=10/)
+
+      {_status, resp} = Hui.search(url, solr_params)
+      assert String.match?(resp.request_url, ~r/fq=cat%3Aelectronics&fq=popularity%3A%5B0\+TO\+%2A%5D&q=%2A&rows=10/)
     end
 
     test "should query via Hui.F faceting struct", context do
