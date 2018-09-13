@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.2 (2018-09-13)
+
+* New q/2, search/3 features for structured querying and faceting - Solr standard parser
+* search/2, q/1 accepts query struct (Hui.Q) parameters
+* Search.search/2 works with query and faceting structs (Hui.Q, Hui.F) parameters
+
 ## 0.5.1 (2018-09-12)
 
 * URL encoder renders faceting structs to string according to Solr prefix syntax e.g. "field" -> "facet.field"

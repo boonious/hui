@@ -5,7 +5,7 @@ defmodule Hui do
   
   ### Usage
   
-  - Searching Solr: `q/1`, `search/2`
+  - Searching Solr: `q/1`, `q/2`, `search/2`, `search/3`
   - [More usage](https://hexdocs.pm/hui/readme.html#usage)
   """
 
@@ -35,9 +35,9 @@ defmodule Hui do
   def q(query), do: search(:default, query)
 
   @doc """
-  Issue a structured query and faceting query to the default Solr endpoint.
+  Issue a structured query and faceting request to the default Solr endpoint.
 
-  The query consists a query struct (`t:Hui.Q.t/0`) and a faceting struct.
+  The query consists of a query struct (`t:Hui.Q.t/0`) and a faceting struct (`t:Hui.F.t/0`).
 
   ### Example
 
@@ -103,5 +103,58 @@ defmodule Hui do
   @spec search(url, query) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
   def search(url, %Hui.Q{} = q), do: Hui.Search.search(url, [q])
   def search(url, query), do: Hui.Search.search(url, query)
+
+  @doc """
+  Issue a structured query and faceting request to a specific Solr endpoint.
+
+  The endpoint can be a string URL, a `t:Hui.URL.t/0` struct (for HTTP headers and options)
+  which defines a specific URL and request handler or a key referring to a configured endpoint.
+
+  The query consists of a query struct (`t:Hui.Q.t/0`) and a faceting struct (`t:Hui.F.t/0`).
+
+  ### Example
+
+  ```
+    x = %Hui.Q{q: "author:I*", rows: 5}
+    y = %Hui.F{field: ["cat", "author_str"], mincount: 1}
+    Hui.search(:library, x, y)
+
+    x = %Hui.Q{q: "*", rows: 5}
+    range1 = %Hui.F.Range{range: "price", start: 0, end: 100, gap: 10, per_field: true}
+    range2 = %Hui.F.Range{range: "popularity", start: 0, end: 5, gap: 1, per_field: true}
+    y = %Hui.F{field: ["cat", "author_str"], mincount: 1, range: [range1, range2]}
+    Hui.search(:default, x, y)
+  ```
+
+  The above `Hui.search(:default, x, y)` example issues a request that resulted in
+  the following Solr response header showing the corresponding generated and encoded parameters.
+
+  ```json
+  "responseHeader" => %{
+    "QTime" => 106,
+    "params" => %{
+      "f.popularity.facet.range.end" => "5",
+      "f.popularity.facet.range.gap" => "1",
+      "f.popularity.facet.range.start" => "0",
+      "f.price.facet.range.end" => "100",
+      "f.price.facet.range.gap" => "10",
+      "f.price.facet.range.start" => "0",
+      "facet" => "true",
+      "facet.field" => ["cat", "author_str"],
+      "facet.mincount" => "1",
+      "facet.range" => ["price", "popularity"],
+      "q" => "*",
+      "rows" => "5"
+    },
+    "status" => 0,
+    "zkConnected" => true
+  }
+  ```
+
+   See `Hui.Q`, `Hui.F`, `Hui.URL.encode_query/1` for more details on query structs.
+
+  """
+  @spec search(url, Hui.Q.t, Hui.F.t) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
+  def search(url, %Hui.Q{} = q, %Hui.F{} = f), do: Hui.Search.search(url, [q, f])
 
 end

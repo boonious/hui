@@ -76,7 +76,7 @@ defmodule HuiSearchTest do
       {_status, resp} = Hui.Search.search(url, [x, y])
       assert String.match?(resp.request_url, ~r/q=author%3AI%2A&rows=5&facet=true&facet.field=cat&facet.field=author_str&facet.mincount=1/)
 
-      {_status, resp} = Hui.q(x, y)
+      {_status, resp} = Hui.search(url, x, y)
       assert String.match?(resp.request_url, ~r/q=author%3AI%2A&rows=5&facet=true&facet.field=cat&facet.field=author_str&facet.mincount=1/)
     end
 
@@ -244,6 +244,12 @@ defmodule HuiSearchTest do
       assert String.match?(resp.request_url, ~r/q=author%3AI%2A&rows=5&facet=true&facet.field=cat&facet.field=author_str&facet.mincount=1/)
 
       {_status, resp} =  Hui.q(x,y)
+      assert x.q == requested_params["q"]
+      assert x.rows |> to_string == requested_params["rows"]
+      assert "true" == requested_params["facet"]
+      assert String.match?(resp.request_url, ~r/q=author%3AI%2A&rows=5&facet=true&facet.field=cat&facet.field=author_str&facet.mincount=1/)
+
+      {_status, resp} =  Hui.search(:default,x,y)
       assert x.q == requested_params["q"]
       assert x.rows |> to_string == requested_params["rows"]
       assert "true" == requested_params["facet"]

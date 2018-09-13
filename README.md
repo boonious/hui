@@ -14,7 +14,24 @@ The data can be contained within a core (index) held on a single server or a dat
   Hui.q(q: "loch", rows: 5) # arbitrary keyword list
   Hui.q(%Hui.Q{q: "loch", rows: 5, start: 20}) # structured query
   Hui.q(%Hui.Q{q: "author:I*", rows: 5}, %Hui.F{field: ["cat", "author_str"], mincount: 1})
-  Hui.search(url, %Hui.Q{q: "loch", fq: ["type:illustration", "format:image/jpeg"]}) # structured query, against "url"
+
+  Hui.search(:library, %Hui.Q{q: "loch", fq: ["type:illustration", "format:image/jpeg"]})
+
+  # more elaborated search
+  x = %Hui.Q{q: "*", rows: 5}
+  range1 = %Hui.F.Range{range: "price", start: 0, end: 100, gap: 10, per_field: true}
+  range2 = %Hui.F.Range{range: "popularity", start: 0, end: 5, gap: 1, per_field: true}
+  y = %Hui.F{field: ["cat", "author_str"], mincount: 1, range: [range1, range2]}
+  Hui.search(:library, x, y)
+  # this generates a request with the following query string
+  #
+  # q=%2A&rows=5&facet=true&facet.field=cat&facet.field=author_str&facet.mincount=1&
+  # f.price.facet.range.end=100&f.price.facet.range.gap=10&facet.range=price&
+  # f.price.facet.range.start=0&f.popularity.facet.range.end=5&
+  # f.popularity.facet.range.gap=1&
+  # facet.range=popularity&f.popularity.facet.range.start=0
+
+
 ```
 
 The `q` examples above queries a default Solr endpoint - see `Configuration` below.
@@ -174,7 +191,7 @@ by adding `hui` to your list of dependencies in `mix.exs`:
 ```elixir
   def deps do
     [
-      {:hui, "~> 0.5.1"}
+      {:hui, "~> 0.5.2"}
     ]
   end
 ```
