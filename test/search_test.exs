@@ -69,11 +69,15 @@ defmodule HuiSearchTest do
       Bypass.expect context.bypass, fn conn ->
         Plug.Conn.resp(conn, 200, context.simple_search_response_sample)
       end
+      x = %Hui.Q{q: "author:I*", rows: 5, echoParams: "explicit"}
+      y = %Hui.F{field: ["cat", "author_str"], mincount: 1}
 
       url = %Hui.URL{url: "http://localhost:#{context.bypass.port}"}
-      solr_params = [%Hui.Q{q: "*", rows: 10}, %Hui.F{field: ["type", "year"], query: ["type:image"]}]
-      {_status, resp} = Hui.Search.search(url, solr_params)
-      assert String.match?(resp.request_url, ~r/q=%2A&rows=10&facet=true&facet.field=type&facet.field=year&facet.query=type%3Aimage/)
+      {_status, resp} = Hui.Search.search(url, [x, y])
+      assert String.match?(resp.request_url, ~r/q=author%3AI%2A&rows=5&facet=true&facet.field=cat&facet.field=author_str&facet.mincount=1/)
+
+      {_status, resp} = Hui.q(x, y)
+      assert String.match?(resp.request_url, ~r/q=author%3AI%2A&rows=5&facet=true&facet.field=cat&facet.field=author_str&facet.mincount=1/)
     end
 
     test "should work with %Hui.URL{}", context do
@@ -214,18 +218,36 @@ defmodule HuiSearchTest do
       assert solr_params.rows |> to_string == requested_params["rows"]
       assert solr_params.fq == requested_params["fq"]
       assert String.match?(resp.request_url, ~r/fq=cat%3Aelectronics&fq=popularity%3A%5B0\+TO\+%2A%5D&q=%2A&rows=10/)
+
+      {_status, resp} = Hui.search(:default, solr_params)
+      assert solr_params.q == requested_params["q"]
+      assert solr_params.rows |> to_string == requested_params["rows"]
+      assert solr_params.fq == requested_params["fq"]
+      assert String.match?(resp.request_url, ~r/fq=cat%3Aelectronics&fq=popularity%3A%5B0\+TO\+%2A%5D&q=%2A&rows=10/)
+
+      {_status, resp} = Hui.q(solr_params)
+      assert solr_params.q == requested_params["q"]
+      assert solr_params.rows |> to_string == requested_params["rows"]
+      assert solr_params.fq == requested_params["fq"]
+      assert String.match?(resp.request_url, ~r/fq=cat%3Aelectronics&fq=popularity%3A%5B0\+TO\+%2A%5D&q=%2A&rows=10/)
     end
 
     test "should query via Hui.F faceting struct" do
-      x = %Hui.Q{q: "*", rows: 10, echoParams: "explicit"}
-      y = %Hui.F{field: ["cat", "author"]}
+      x = %Hui.Q{q: "author:I*", rows: 5, echoParams: "explicit"}
+      y = %Hui.F{field: ["cat", "author_str"], mincount: 1}
       solr_params = [x, y]
       {_status, resp} = Hui.Search.search(:default, solr_params)
       requested_params = resp.body["responseHeader"]["params"]
       assert x.q == requested_params["q"]
       assert x.rows |> to_string == requested_params["rows"]
       assert "true" == requested_params["facet"]
-      assert String.match?(resp.request_url, ~r/q=%2A&rows=10&facet=true&facet.field=cat&facet.field=author/)
+      assert String.match?(resp.request_url, ~r/q=author%3AI%2A&rows=5&facet=true&facet.field=cat&facet.field=author_str&facet.mincount=1/)
+
+      {_status, resp} =  Hui.q(x,y)
+      assert x.q == requested_params["q"]
+      assert x.rows |> to_string == requested_params["rows"]
+      assert "true" == requested_params["facet"]
+      assert String.match?(resp.request_url, ~r/q=author%3AI%2A&rows=5&facet=true&facet.field=cat&facet.field=author_str&facet.mincount=1/)
     end
 
   end

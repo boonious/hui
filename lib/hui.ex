@@ -1,5 +1,4 @@
 defmodule Hui do
-
   @moduledoc """
   Hui 辉 ("shine" in Chinese) is an [Elixir](https://elixir-lang.org) client and library for 
   [Solr enterprise search platform](http://lucene.apache.org/solr/).
@@ -12,8 +11,6 @@ defmodule Hui do
 
   @type query :: Hui.Q.t | Keyword.t
   @type url :: binary | atom | Hui.URL.t
-
-  def q(%Hui.Q{} = q, %Hui.F{} = f), do: search(:default, [q, f])
 
   @doc """
   Issue a search query to the default Solr endpoint.
@@ -36,6 +33,24 @@ defmodule Hui do
   def q(query) when is_binary(query), do: search(:default, q: query)
   def q(%Hui.Q{} = q), do: search(:default, [q])
   def q(query), do: search(:default, query)
+
+  @doc """
+  Issue a structured query and faceting query to the default Solr endpoint.
+
+  The query consists a query struct (`t:Hui.Q.t/0`) and a faceting struct.
+
+  ### Example
+
+  ```
+    Hui.q(%Hui.Q{q: "author:I*", rows: 5}, %Hui.F{field: ["cat", "author_str"], mincount: 1})
+  ```
+
+   See `Hui.Q`, `Hui.F`, `Hui.URL.encode_query/1` for more details on query structs.
+
+  """
+
+  @spec q(Hui.Q.t, Hui.F.t) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
+  def q(%Hui.Q{} = q, %Hui.F{} = f), do: search(:default, [q, f])
 
   @doc """
   Issue a search query to a specific Solr endpoint.

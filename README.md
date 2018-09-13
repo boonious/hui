@@ -12,7 +12,8 @@ The data can be contained within a core (index) held on a single server or a dat
 ```elixir
   Hui.q("scott") # keywords search
   Hui.q(q: "loch", rows: 5) # arbitrary keyword list
-  Hui.q(%Hui.Q{q: "loch", rows: 5, start: 20}) # structured query, against default endpoint
+  Hui.q(%Hui.Q{q: "loch", rows: 5, start: 20}) # structured query
+  Hui.q(%Hui.Q{q: "author:I*", rows: 5}, %Hui.F{field: ["cat", "author_str"], mincount: 1})
   Hui.search(url, %Hui.Q{q: "loch", fq: ["type:illustration", "format:image/jpeg"]}) # structured query, against "url"
 ```
 
