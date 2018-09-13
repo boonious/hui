@@ -71,8 +71,6 @@ defmodule Hui do
 
   """
   @spec search(url, Hui.Search.solr_params) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
-  def search(url, query) when is_binary(url), do: Hui.Search.search(%Hui.URL{url: url}, query)
-  def search(url, query) when is_map(url) or is_atom(url), do: Hui.Search.search(url, query)
-  def search(_, _), do: {:error, "malformed query or URL"}
+  def search(url, query), do: Hui.Search.search(url, query)
 
 end

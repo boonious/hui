@@ -18,7 +18,7 @@ defmodule Hui.Search do
   use HTTPoison.Base 
 
   @error_msg "malformed query or URL"
-  @type solr_params :: Keyword.t :: list(Hui.Q.t | Hui.F.t)
+  @type solr_params :: Keyword.t | list(Hui.Q.t | Hui.F.t)
   @type solr_url :: :default | atom | Hui.URL.t
 
   @doc """
@@ -74,6 +74,7 @@ defmodule Hui.Search do
   """
   @spec search(solr_url, solr_params) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
   def search(%Hui.URL{} = url_struct, query), do: exec_search(url_struct, query)
+  def search(url, query) when is_binary(url), do: exec_search(%Hui.URL{url: url}, query)
   def search(url, query) when is_atom(url) do
     {status, url_struct} = Hui.URL.configured_url(url)
     case status do
