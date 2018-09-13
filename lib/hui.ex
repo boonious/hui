@@ -10,28 +10,30 @@ defmodule Hui do
   - [More usage](https://hexdocs.pm/hui/readme.html#usage)
   """
 
-  @type query :: binary | Hui.Search.solr_params
-  @type url :: binary | Hui.Search.solr_url
+  @type query :: Hui.Q.t | Keyword.t
+  @type url :: binary | atom | Hui.URL.t
+
 
   @doc """
   Issue a search query to the default Solr endpoint.
 
-  The query can either be a search string or a keyword list of Solr parameters.
+  The query can be a string, a keyword list or query struct (`t:Hui.Q.t/0`).
   This function is a shortcut for `search/2` with `:default` as URL key.
 
   ### Example
 
   ```
     Hui.q("scott") # keyword search
-    Hui.q(q: "loch", fq: ["type:illustration", "format:image/jpeg"])
+    Hui.q(%Hui.Q{q: "loch", fq: ["type:illustration", "format:image/jpeg"]})
     Hui.q(q: "loch", rows: 5, facet: true, "facet.field": ["year", "subject"])
   ```
 
-  See `Hui.URL.default_url!/0` and `Hui.URL.encode_query/1` for more details on Solr parameter keyword list.
+  See `Hui.URL.default_url!/0` and `Hui.URL.encode_query/1` for more details on Solr parameter structs and keyword list.
 
   """
-  @spec q(query) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
+  @spec q(binary | query) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
   def q(query) when is_binary(query), do: search(:default, q: query)
+  def q(%Hui.Q{} = q), do: search(:default, [q])
   def q(query), do: search(:default, query)
 
   @doc """

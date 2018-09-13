@@ -11,12 +11,14 @@ The data can be contained within a core (index) held on a single server or a dat
 
 ```elixir
   Hui.q("scott") # keywords search
+  Hui.q(%Hui.Q{q: "loch", fq: ["type:illustration", "format:image/jpeg"]}) # structured query
   Hui.q(q: "loch", rows: 5, fq: ["type:illustration", "format:image/jpeg"])
 ```
 
 The above queries a default Solr endpoint - see `Configuration` below.
-A query may involve search words (string) or a [Keyword list](https://elixir-lang.org/getting-started/keywords-and-maps.html#keyword-lists)
-of Solr parameters, invoking the comprehensive and powerful features of Solr.
+A query may involve search words (string), a [Keyword list](https://elixir-lang.org/getting-started/keywords-and-maps.html#keyword-lists) or
+built-in query [Structs](https://elixir-lang.org/getting-started/structs.html)
+providing a structured way for invoking the comprehensive and powerful features of Solr.
 
 Queries may also be issued to other specific endpoints and request handlers defined in various formats:
 
