@@ -168,11 +168,25 @@ defmodule HuiSearchTest do
   #
   # this required a configured working Solr core/collection
   # see: Configuration for further details
-  describe "live SOLR API" do
+  describe "live SOLR API, search" do
     @describetag live: false
 
     test "should perform keywords query" do
       {_status, resp} = Hui.q("*")
+      assert length(resp.body["response"]["docs"]) >= 0
+      assert String.match?(resp.request_url, ~r/q=*/)
+
+      {_status, resp} = Hui.search(:default, q: "*")
+      assert length(resp.body["response"]["docs"]) >= 0
+      assert String.match?(resp.request_url, ~r/q=*/)
+    end
+
+    test "should work with other URL endpoint access types" do
+      {_status, resp} = Hui.search("http://localhost:8983/solr/gettingstarted", q: "*")
+      assert length(resp.body["response"]["docs"]) >= 0
+      assert String.match?(resp.request_url, ~r/q=*/)
+
+      {_status, resp} = Hui.search(%Hui.URL{url: "http://localhost:8983/solr/gettingstarted"}, q: "*")
       assert length(resp.body["response"]["docs"]) >= 0
       assert String.match?(resp.request_url, ~r/q=*/)
     end
@@ -180,7 +194,11 @@ defmodule HuiSearchTest do
     test "should query with other Solr parameters" do
       solr_params = [q: "*", rows: 10, facet: true, fl: "*"]
       {_status, resp} = Hui.q(solr_params)
+      assert length(resp.body["response"]["docs"]) >= 0
+      assert String.match?(resp.request_url, ~r/q=%2A&rows=10&facet=true&fl=%2A/)
 
+      solr_params = [q: "*", rows: 10, facet: true, fl: "*"]
+      {_status, resp} = Hui.search(:default, solr_params)
       assert length(resp.body["response"]["docs"]) >= 0
       assert String.match?(resp.request_url, ~r/q=%2A&rows=10&facet=true&fl=%2A/)
     end
