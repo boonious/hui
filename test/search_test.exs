@@ -51,35 +51,6 @@ defmodule HuiSearchTest do
       assert String.match?(resp.request_url, ~r/q=%2A&rows=10&fq=cat%3Aelectronics&fq=popularity%3A%5B0\+TO\+%2A%5D/)
     end
 
-    test "should query via Hui.Q query struct", context do
-      Bypass.expect context.bypass, fn conn ->
-        Plug.Conn.resp(conn, 200, context.simple_search_response_sample)
-      end
-
-      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}"}
-      solr_params = %Hui.Q{q: "*", rows: 10, fq: ["cat:electronics", "popularity:[0 TO *]"]}
-      {_status, resp} = Hui.Search.search(url, [solr_params])
-      assert String.match?(resp.request_url, ~r/fq=cat%3Aelectronics&fq=popularity%3A%5B0\+TO\+%2A%5D&q=%2A&rows=10/)
-
-      {_status, resp} = Hui.search(url, solr_params)
-      assert String.match?(resp.request_url, ~r/fq=cat%3Aelectronics&fq=popularity%3A%5B0\+TO\+%2A%5D&q=%2A&rows=10/)
-    end
-
-    test "should query via Hui.F faceting struct", context do
-      Bypass.expect context.bypass, fn conn ->
-        Plug.Conn.resp(conn, 200, context.simple_search_response_sample)
-      end
-      x = %Hui.Q{q: "author:I*", rows: 5, echoParams: "explicit"}
-      y = %Hui.F{field: ["cat", "author_str"], mincount: 1}
-
-      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}"}
-      {_status, resp} = Hui.Search.search(url, [x, y])
-      assert String.match?(resp.request_url, ~r/q=author%3AI%2A&rows=5&facet=true&facet.field=cat&facet.field=author_str&facet.mincount=1/)
-
-      {_status, resp} = Hui.search(url, x, y)
-      assert String.match?(resp.request_url, ~r/q=author%3AI%2A&rows=5&facet=true&facet.field=cat&facet.field=author_str&facet.mincount=1/)
-    end
-
     test "should work with %Hui.URL{}", context do
       Bypass.expect context.bypass, fn conn ->
         Plug.Conn.resp(conn, 200, "")
@@ -165,6 +136,40 @@ defmodule HuiSearchTest do
     test "should handle missing URL" do
       assert {:error, "URL not configured"} == Hui.search(nil, nil)
       assert {:error, "URL not configured"} == Hui.Search.search(nil, nil)
+    end
+
+  end
+
+  describe "struct search" do
+    @describetag :struct_search
+
+    test "should query via Hui.Q query struct", context do
+      Bypass.expect context.bypass, fn conn ->
+        Plug.Conn.resp(conn, 200, context.simple_search_response_sample)
+      end
+
+      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}"}
+      solr_params = %Hui.Q{q: "*", rows: 10, fq: ["cat:electronics", "popularity:[0 TO *]"]}
+      {_status, resp} = Hui.Search.search(url, [solr_params])
+      assert String.match?(resp.request_url, ~r/fq=cat%3Aelectronics&fq=popularity%3A%5B0\+TO\+%2A%5D&q=%2A&rows=10/)
+
+      {_status, resp} = Hui.search(url, solr_params)
+      assert String.match?(resp.request_url, ~r/fq=cat%3Aelectronics&fq=popularity%3A%5B0\+TO\+%2A%5D&q=%2A&rows=10/)
+    end
+
+    test "should query via Hui.F faceting struct", context do
+      Bypass.expect context.bypass, fn conn ->
+        Plug.Conn.resp(conn, 200, context.simple_search_response_sample)
+      end
+      x = %Hui.Q{q: "author:I*", rows: 5, echoParams: "explicit"}
+      y = %Hui.F{field: ["cat", "author_str"], mincount: 1}
+
+      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}"}
+      {_status, resp} = Hui.Search.search(url, [x, y])
+      assert String.match?(resp.request_url, ~r/q=author%3AI%2A&rows=5&facet=true&facet.field=cat&facet.field=author_str&facet.mincount=1/)
+
+      {_status, resp} = Hui.search(url, x, y)
+      assert String.match?(resp.request_url, ~r/q=author%3AI%2A&rows=5&facet=true&facet.field=cat&facet.field=author_str&facet.mincount=1/)
     end
 
   end
