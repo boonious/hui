@@ -3,9 +3,10 @@ Hui 辉 ("shine" in Chinese) is a [Solr](http://lucene.apache.org/solr/) client 
 
 ## Usage
 
-Hui enables [Solr](http://lucene.apache.org/solr/) data querying and other forms of interaction (forthcoming)
+Hui enables [Solr](http://lucene.apache.org/solr/) querying and other forms of interaction (forthcoming)
 in [Elixir](https://elixir-lang.org) or [Phoenix](https://phoenixframework.org) applications.
-The data can be contained within a core (index) held on a single server or a data collection in distributed server architecture (cloud).
+Typical Solr data can be contained within a core (index) held on a single server or 
+a data collection in distributed server architecture (cloud).
 
 ### Example
 
@@ -23,8 +24,8 @@ The data can be contained within a core (index) held on a single server or a dat
   range2 = %Hui.F.Range{range: "popularity", start: 0, end: 5, gap: 1, per_field: true}
   y = %Hui.F{field: ["cat", "author_str"], mincount: 1, range: [range1, range2]}
   Hui.search(:library, x, y)
-  # this generates a request with the following query string
-  #
+  # this spawns a request with the following query string
+
   # q=%2A&rows=5&facet=true&facet.field=cat&facet.field=author_str&facet.mincount=1&
   # f.price.facet.range.end=100&f.price.facet.range.gap=10&facet.range=price&
   # f.price.facet.range.start=0&f.popularity.facet.range.end=5&
@@ -34,12 +35,12 @@ The data can be contained within a core (index) held on a single server or a dat
 
 ```
 
-The `q` examples above queries a default Solr endpoint - see `Configuration` below.
-A query may involve search words (string), a [Keyword list](https://elixir-lang.org/getting-started/keywords-and-maps.html#keyword-lists) or
+The `q` examples queries a default endpoint - see `Configuration` below.
+A query could be a string, a [Keyword list](https://elixir-lang.org/getting-started/keywords-and-maps.html#keyword-lists) or
 built-in query [Structs](https://elixir-lang.org/getting-started/structs.html)
 providing a structured way for invoking the comprehensive and powerful features of Solr.
 
-Queries may also be issued to other specific endpoints and request handlers defined in various formats:
+Queries may also be issued to other endpoints and request handlers:
 
 ```elixir
   # URL binary string
@@ -56,7 +57,8 @@ Queries may also be issued to other specific endpoints and request handlers defi
 
 ```
 
-See `Hui.search/2` in API reference and [Solr reference guide](http://lucene.apache.org/solr/guide/7_4/searching.html)
+See the [API reference](https://hexdocs.pm/hui/api-reference.html#content)
+and [Solr reference guide](http://lucene.apache.org/solr/guide/7_4/searching.html)
 for more details on available search parameters.
 
 ### HTTP headers and options
@@ -68,21 +70,18 @@ HTTP headers and options can be specified via the `t:Hui.URL.t/0` struct.
   Hui.search(url, q: "solr rocks")
 ```
 
-See `Hui.search/2` for more details. 
-
 Headers and options for a specific endpoint may also be configured - see "Configuration".
 
 ### Software library
 
-See [API reference](https://hexdocs.pm/hui/api-reference.html#content) for 
-available modules and data structures which can also be used for developing Solr
-search application in Elixir and Phoenix.
+Hui [modules and data structures](https://hexdocs.pm/hui/api-reference.html#content) can be used for building Solr
+application in Elixir and Phoenix.
 
-The following [structs](https://elixir-lang.org/getting-started/structs.html) modules
-can be used to generate and encode Solr parameters in more **idiomatic** and **structured** ways.
+The following struct modules provide an **idiomatic** and **structured** way for
+creating and encoding Solr parameters:
 
-- Standard and common query struct: `Hui.Q`
-- Faceting struct: `Hui.F`, `Hui.F.Range`, `Hui.F.Interval`
+- Standard and common query: `Hui.Q`
+- Faceting: `Hui.F`, `Hui.F.Range`, `Hui.F.Interval`
 - *structs for other request handlers are forthcoming*
 
 For example, instead of prefixing and repeating `fq=filter`, `facet.field=fieldname`, `facet.range.gap=10`,
@@ -90,9 +89,9 @@ multiple filter and facet fields can be specified using
 `fq: ["field1", "field2"]`, `field: ["field1", "field2"]`, `gap: 10` Elixir codes.
 
 "Per-field" faceting for multiple ranges and intervals can be specified in a succinct and unified
-way e.g. `gap` instead of the long-winded `f.[fieldname].facet.range.gap` (per field) or `facet.range.gap`
-(single field range). Per-field use case for a facet can easily be set (or unset) through the `per_field`
-field - see below.
+way, e.g. `gap` instead of the long-winded `f.[fieldname].facet.range.gap` (per field) or `facet.range.gap`
+(single field range). Per-field use case for a facet can easily be set (or unset) with the `per_field`
+key - see below.
 
 ```elixir
   x = %Hui.Q{q: "loch", fq: ["type:image/jpeg", "year:2001"], fl: "id,title", rows: 20}
@@ -114,7 +113,7 @@ field - see below.
   # -> "f.age.facet.range.end=100&f.age.facet.range.gap=10&facet.range=age&f.age.facet.range.start=0"
 ```
 
-The structs also provide a binding and introspection of available fields.
+The structs also provide binding to and introspection of the available fields.
 
 ```elixir
   iex> %Hui.F{field: ["type", "year"], query: "year:[2000 TO NOW]"}
@@ -147,7 +146,7 @@ The structs also provide a binding and introspection of available fields.
 
 ### Parsing Solr results
 
-Hui returns Solr results as `HTTPoison.Response` struct which contains the Solr response (body).
+Hui returns Solr results as `HTTPoison.Response` struct containing the Solr response.
 
 ```elixir
   {:ok,
@@ -163,19 +162,19 @@ Hui returns Solr results as `HTTPoison.Response` struct which contains the Solr 
   }
 ```
 
-JSON response is parsed and decoded as
+JSON response is automatically parsed and decoded as
 [Map](https://elixir-lang.org/getting-started/keywords-and-maps.html#maps).
 It is accessible via the `body` key.
 
 ```elixir
   {status, resp} = Hui.q(solr_params)
 
-  # getting a list of Solr documents (in Map)
+  # getting a list of Solr documents (Map)
   solr_docs = resp.body["response"]["docs"]
   total_hits = resp.body["response"]["numFound"]
 ```
 
-**Note**: for other response formats such as XML, raw response (text) is currently being returned.
+**Note**: other response formats such as XML, are currently being returned in raw text.
 
 ### Other low-level HTTP client features
 
@@ -231,7 +230,8 @@ Additional endpoints and request handlers can be configured in Hui using arbitra
     handler: "suggest"
 ```
 
-Use the config key in `Hui.search/2` to send queries to the endpoint or retrieve URL settings from configuration e.g. `Hui.URL.configured_url/1`.
+Use the config key in functions such as `Hui.search/2`, `Hui.search/3` to send queries to the endpoint 
+or retrieve URL settings from configuration e.g. `Hui.URL.configured_url/1`.
 
 ## License
 
