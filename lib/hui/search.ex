@@ -18,22 +18,35 @@ defmodule Hui.Search do
   use HTTPoison.Base 
 
   @error_msg "malformed query or URL"
-  @type solr_params :: Keyword.t
+  @type solr_params :: Keyword.t :: list(Hui.Q.t | Hui.F.t)
   @type solr_url :: :default | atom | Hui.URL.t
 
   @doc """
   Issues a search query to a specific Solr endpoint.
 
-  The query is a comprehensive keyword list of Solr parameters.
+  The query parameters can be a keyword list or a list of Hui query structs: `t:Hui.Q.t/0`, `t:Hui.F.t/0`.
 
-  ## Example
+  ## Example - parameters
 
+  ```
+    url = "http://..."
+
+    # Parameters can be supplied as a list of keywords, which are unbound and sent to Solr directly
+    Hui.Search.search(url, q: "glen cova", facet: "true", "facet.field": ["type", "year"])
+
+    # Parameters can be a list of query structs
+    Hui.Search.search(url, [%Hui.Q{q: "glen cova"}, %Hui.F{field: ["type", "year"]}])
+  ```
+
+  The use of structs is more idiomatic and succinct. It is bound to qualified Solr fields. See `Hui.Q`, `Hui.F`, `Hui.URL.encode_query/1` for more details
+
+  ## Example - URL endpoints
   The URL can be specified as `t:Hui.URL.t/0`.
 
   ```
     url = %Hul.URL{url: "http://..."}
     Hui.Search.search(url, q: "loch", rows: 5)
-    # the above sends http://.../select?q=loch&rows=5
+    # -> http://.../select?q=loch&rows=5
   ```
 
   A key for application-configured endpoint may also be used.
@@ -44,7 +57,7 @@ defmodule Hui.Search do
     # the above sends http://..configured_url../suggest?suggest=true&suggest.dictionary=mySuggester&suggest.q=el
   ```
 
-  See `Hui.URL.configured_url/1` and `Hui.URL.encode_query/1` for more details on Solr parameter keyword list.
+  See `Hui.URL.configured_url/1` for more details.
 
   `t:Hui.URL.t/0` struct also enables HTTP headers and HTTPoison options to be specified
   in keyword lists. HTTPoison options provide further controls for a request, e.g. `timeout`, `recv_timeout`,
@@ -70,7 +83,7 @@ defmodule Hui.Search do
   end
   def search(_, _), do: {:error, @error_msg}
 
-  # decode JSON data and return other response format
+  # decode JSON data and return other response formats as
   # raw text
   def process_response_body(""), do: ""
   def process_response_body(body) do
@@ -81,9 +94,13 @@ defmodule Hui.Search do
     end
   end
 
-  defp exec_search(%Hui.URL{} = url_struct, [head|tail]) when is_tuple(head) do 
+  defp exec_search(%Hui.URL{} = url_struct, [head|tail]) do
     url = Hui.URL.to_string(url_struct)
-    get( url <> "?" <> Hui.URL.encode_query([head] ++ tail), url_struct.headers, url_struct.options )
+    cond do
+     is_tuple(head) -> get( url <> "?" <> Hui.URL.encode_query([head] ++ tail), url_struct.headers, url_struct.options )
+     is_map(head) ->  get( url <> "?" <> Enum.map_join([head] ++ tail, "&", &Hui.URL.encode_query/1), url_struct.headers, url_struct.options )
+     true -> {:error, @error_msg}
+    end
   end
   defp exec_search(_,_), do: {:error, @error_msg}
 
