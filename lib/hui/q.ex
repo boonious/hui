@@ -21,6 +21,8 @@ defmodule Hui.Q do
         explainOther: nil,
         fl: "id,title",
         fq: ["type:image"],
+        "json.nl": nil,
+        "json.wrf": nil,
         logParamsList: nil,
         omitHeader: nil,
         q: "edinburgh",
@@ -31,13 +33,15 @@ defmodule Hui.Q do
         sow: nil,
         start: nil,
         timeAllowed: nil,
+        tr: nil,
         wt: nil
       }
   """
 
   defstruct [:q, :"q.op", :df, :sow, :defType, :sort, :start, :rows, :fl,
              :debug, :debugQuery, :explainOther, :timeAllowed, :segmentTerminateEarly,
-             :omitHeader, :wt, :cache, :logParamsList, :echoParams, fq: []]
+             :omitHeader, :wt, :cache, :logParamsList, :echoParams,
+             :"json.nl", :"json.wrf", :tr, fq: []]
 
   @typedoc """
   Struct for standard and common request parameters.
@@ -49,6 +53,7 @@ defmodule Hui.Q do
                          debug: binary, debugQuery: boolean, explainOther: binary, timeAllowed: number,
                          segmentTerminateEarly: boolean, omitHeader: boolean, wt: binary,
                          cache: boolean, omitHeader: binary, echoParams: binary,
+                         "json.nl": binary, "json.wrf": binary, tr: binary,
                          fq: binary | list(binary)}
 
 end

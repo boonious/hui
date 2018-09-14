@@ -124,6 +124,8 @@ defmodule Hui.URL do
         explainOther: nil,
         fl: "id,title",
         fq: ["type:image"],
+        "json.nl": nil,
+        "json.wrf": nil,
         logParamsList: nil,
         omitHeader: nil,
         q: "edinburgh",
@@ -134,6 +136,7 @@ defmodule Hui.URL do
         sow: nil,
         start: nil,
         timeAllowed: nil,
+        tr: nil,
         wt: nil
       }
       iex> x |> Hui.URL.encode_query

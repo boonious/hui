@@ -55,28 +55,31 @@ defmodule HuiTest do
   describe "query struct Hui.Q" do
 
     test "parameter setting" do
-      assert %Hui.Q{
-        cache: nil,
-        debug: nil,
-        debugQuery: nil,
-        defType: nil,
-        df: nil,
-        echoParams: nil,
-        explainOther: nil,
-        fl: "id,title",
-        fq: ["type:image"],
-        logParamsList: nil,
-        omitHeader: nil,
-        q: "edinburgh",
-        "q.op": nil,
-        rows: 15,
-        segmentTerminateEarly: nil,
-        sort: nil,
-        sow: nil,
-        start: nil,
-        timeAllowed: nil,
-        wt: nil
-      } = %Hui.Q{q: "edinburgh", fl: "id,title", fq: ["type:image"], rows: 15}
+     %Hui.Q{
+       cache: nil,
+       debug: nil,
+       debugQuery: nil,
+       defType: nil,
+       df: nil,
+       echoParams: nil,
+       explainOther: nil,
+       fl: "id,title",
+       fq: ["type:image"],
+       "json.nl": nil,
+       "json.wrf": nil,
+       logParamsList: nil,
+       omitHeader: nil,
+       q: "edinburgh",
+       "q.op": nil,
+       rows: 15,
+       segmentTerminateEarly: nil,
+       sort: nil,
+       sow: nil,
+       start: nil,
+       timeAllowed: nil,
+       tr: nil,
+       wt: nil
+     } = %Hui.Q{q: "edinburgh", fl: "id,title", fq: ["type:image"], rows: 15}
     end
 
     test "provide 'q' query setting" do
