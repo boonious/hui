@@ -63,7 +63,6 @@ defmodule HuiTest do
         df: nil,
         echoParams: nil,
         explainOther: nil,
-        facet: nil,
         fl: "id,title",
         fq: ["type:image"],
         logParamsList: nil,

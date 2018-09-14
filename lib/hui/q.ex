@@ -19,7 +19,6 @@ defmodule Hui.Q do
         df: nil,
         echoParams: nil,
         explainOther: nil,
-        facet: nil,
         fl: "id,title",
         fq: ["type:image"],
         logParamsList: nil,
@@ -38,8 +37,7 @@ defmodule Hui.Q do
 
   defstruct [:q, :"q.op", :df, :sow, :defType, :sort, :start, :rows, :fl,
              :debug, :debugQuery, :explainOther, :timeAllowed, :segmentTerminateEarly,
-             :omitHeader, :wt, :cache, :logParamsList, :echoParams,
-             :facet, fq: []]
+             :omitHeader, :wt, :cache, :logParamsList, :echoParams, fq: []]
 
   @typedoc """
   Struct for standard and common request parameters.
@@ -50,7 +48,7 @@ defmodule Hui.Q do
                          defType: binary, sort: binary, start: number, rows: integer, fl: binary,
                          debug: binary, debugQuery: boolean, explainOther: binary, timeAllowed: number,
                          segmentTerminateEarly: boolean, omitHeader: boolean, wt: binary,
-                         cache: boolean, omitHeader: binary, echoParams: binary, facet: Hui.F.t,
+                         cache: boolean, omitHeader: binary, echoParams: binary,
                          fq: binary | list(binary)}
 
 end
