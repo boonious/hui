@@ -190,7 +190,7 @@ by adding `hui` to your list of dependencies in `mix.exs`:
 ```elixir
   def deps do
     [
-      {:hui, "~> 0.5.2"}
+      {:hui, "~> 0.5.3"}
     ]
   end
 ```

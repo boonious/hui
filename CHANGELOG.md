@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.3 (2018-09-14)
+
+* Support JSON and XML response writer parameters in Hui.Q struct
+
 ## 0.5.2 (2018-09-13)
 
 * New q/2, search/3 features for structured querying and faceting - Solr standard parser
