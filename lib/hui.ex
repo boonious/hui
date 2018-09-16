@@ -57,14 +57,14 @@ defmodule Hui do
 
   The endpoint can either be a string URL or `t:Hui.URL.t/0` struct which defines
   a specific URL and request handler. A key referring to a configured endpoint
-  can also be used.
+  may also be used.
   
   The query is a struct (`Hui.Q`) or a keyword list of Solr parameters.
   
   ### Example - parameters 
   
   ```
-    # structured query with permitted or quality Solr parameters
+    # structured query with permitted or qualified Solr parameters
     Hui.search(url, %Hui.Q{q: "loch", rows: 5, wt: "xml", fq: ["type:illustration", "format:image/jpeg"]})
     # a keyword list of arbitrary parameters
     Hui.search(url, q: "edinburgh", rows: 10)
@@ -119,6 +119,11 @@ defmodule Hui do
     y = %Hui.F{field: ["cat", "author_str"], mincount: 1}
     Hui.search(:library, x, y)
 
+    # DisMax query
+    x = %Hui.Q{q: "edinburgh", qf: "description^2.3 title", mm: "2<-25% 9<-3", pf: "title", ps: 1, qs: 3, bq: "edited:true"}
+    Hui.search(:library, x, y)
+
+    # more elaborated faceting query
     x = %Hui.Q{q: "*", rows: 5}
     range1 = %Hui.F.Range{range: "price", start: 0, end: 100, gap: 10, per_field: true}
     range2 = %Hui.F.Range{range: "popularity", start: 0, end: 5, gap: 1, per_field: true}

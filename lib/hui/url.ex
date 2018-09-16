@@ -115,6 +115,8 @@ defmodule Hui.URL do
 
       iex> x = %Hui.Q{q: "edinburgh", fl: "id,title", fq: ["type:image"], rows: 15}
       %Hui.Q{
+        bf: nil,
+        bq: nil,
         cache: nil,
         debug: nil,
         debugQuery: nil,
@@ -127,14 +129,21 @@ defmodule Hui.URL do
         "json.nl": nil,
         "json.wrf": nil,
         logParamsList: nil,
+        mm: nil,
         omitHeader: nil,
+        pf: nil,
+        ps: nil,
         q: "edinburgh",
+        "q.alt": nil,
         "q.op": nil,
+        qf: nil,
+        qs: nil,
         rows: 15,
         segmentTerminateEarly: nil,
         sort: nil,
         sow: nil,
         start: nil,
+        tie: nil,
         timeAllowed: nil,
         tr: nil,
         wt: nil
@@ -176,7 +185,7 @@ defmodule Hui.URL do
   See `Hui.Q`, `Hui.F`, `Hui.F.Range`, `Hui.F.Interval` for more examples
   """
   @spec encode_query(url_params) :: binary
-  def encode_query(%Hui.Q{} = url_params), do: encode_query(url_params |> Map.to_list)
+  def encode_query(%Hui.Q{} = url_params), do: encode_query(url_params |> Map.to_list |> Enum.sort)
   def encode_query(%Hui.F{} = url_params), do: encode_query(url_params |> Map.to_list)
 
   def encode_query(%Hui.F.Range{} = url_params), do: encode_query(url_params |> Map.to_list, "facet.range", url_params.range, url_params.per_field)

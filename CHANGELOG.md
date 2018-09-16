@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.4 (2018-09-16)
+
+* Maximum Disjunction (DisMax) query via Hui.Q
+
 ## 0.5.3 (2018-09-14)
 
 * Support JSON and XML response writer parameters in Hui.Q struct
