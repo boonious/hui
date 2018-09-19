@@ -22,7 +22,7 @@ defmodule Hui.MixProject do
       docs: [
         main: "Hui", # The main page in the docs
         #logo: "path/to/logo.png",
-        extras: ["README.md"]
+        extras: ["README.md", "CHANGELOG.md"]
       ]
     ]
   end

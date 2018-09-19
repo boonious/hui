@@ -157,20 +157,6 @@ defmodule HuiSearchTest do
       assert String.match?(resp.request_url, ~r/fq=cat%3Aelectronics&fq=popularity%3A%5B0\+TO\+%2A%5D&q=%2A&rows=10/)
     end
 
-    test "should DisMax query via Hui.Q", context do
-      Bypass.expect context.bypass, fn conn ->
-        Plug.Conn.resp(conn, 200, context.simple_search_response_sample)
-      end
-
-      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}"}
-      solr_params = %Hui.Q{q: "edinburgh", qf: "description^2.3 title", mm: "2<-25% 9<-3", pf: "title", ps: 1, qs: 3, bq: "edited:true"}
-      {_status, resp} = Hui.Search.search(url, [solr_params])
-      assert String.match?(resp.request_url, ~r/bq=edited%3Atrue&mm=2%3C-25%25\+9%3C-3&pf=title&ps=1&q=edinburgh&qf=description%5E2.3\+title&qs=3/)
-
-      {_status, resp} = Hui.search(url, solr_params)
-      assert String.match?(resp.request_url, ~r/bq=edited%3Atrue&mm=2%3C-25%25\+9%3C-3&pf=title&ps=1&q=edinburgh&qf=description%5E2.3\+title&qs=3/)
-    end
-
     test "should query via Hui.F", context do
       Bypass.expect context.bypass, fn conn ->
         Plug.Conn.resp(conn, 200, context.simple_search_response_sample)
@@ -252,35 +238,6 @@ defmodule HuiSearchTest do
       requested_params = resp.body["responseHeader"]["params"]
       assert expected_response_header_params == requested_params
       assert String.match?(resp.request_url, ~r/fq=cat%3Aelectronics&fq=popularity%3A%5B0\+TO\+%2A%5D&q=%2A&rows=10/)
-    end
-
-    test "should DisMax query via Hui.Q struct" do
-      solr_params =  %Hui.Q{q: "edinburgh", qf: "description^2.3 title", mm: "2<-25% 9<-3", pf: "title", ps: 1, qs: 3, bq: "edited:true", echoParams: "explicit"}
-      expected_response_header_params = %{
-        "bq" => "edited:true",
-        "echoParams" => "explicit",
-        "mm" => "2<-25% 9<-3",
-        "pf" => "title",
-        "ps" => "1",
-        "q" => "edinburgh",
-        "qf" => "description^2.3 title",
-        "qs" => "3"
-      }
-
-      {_status, resp} = Hui.Search.search(:default, [solr_params])
-      requested_params = resp.body["responseHeader"]["params"]
-      assert expected_response_header_params == requested_params
-      assert String.match?(resp.request_url, ~r/bq=edited%3Atrue&echoParams=explicit&mm=2%3C-25%25\+9%3C-3&pf=title&ps=1&q=edinburgh&qf=description%5E2.3\+title&qs=3/)
-
-      {_status, resp} = Hui.search(:default, solr_params)
-      requested_params = resp.body["responseHeader"]["params"]
-      assert expected_response_header_params == requested_params
-      assert String.match?(resp.request_url, ~r/bq=edited%3Atrue&echoParams=explicit&mm=2%3C-25%25\+9%3C-3&pf=title&ps=1&q=edinburgh&qf=description%5E2.3\+title&qs=3/)
-
-      {_status, resp} = Hui.q(solr_params)
-      requested_params = resp.body["responseHeader"]["params"]
-      assert expected_response_header_params == requested_params
-      assert String.match?(resp.request_url, ~r/bq=edited%3Atrue&echoParams=explicit&mm=2%3C-25%25\+9%3C-3&pf=title&ps=1&q=edinburgh&qf=description%5E2.3\+title&qs=3/)
     end
 
     test "should query via Hui.F faceting struct" do

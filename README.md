@@ -14,13 +14,9 @@ a data collection in distributed server architecture (cloud).
   Hui.q("scott") # keywords search
   Hui.q(q: "loch", rows: 5) # arbitrary keyword list
   Hui.q(%Hui.Q{q: "loch", rows: 5, start: 20}) # structured query
-  Hui.q(%Hui.Q{q: "author:I*", rows: 5}, %Hui.F{field: ["cat", "author_str"], mincount: 1})
+  Hui.q(%Hui.Q{q: "author:I*", rows: 5}, %Hui.F{field: ["cat", "author_str"], mincount: 1}) # with faceting
 
   Hui.search(:library, %Hui.Q{q: "loch", fq: ["type:illustration", "format:image/jpeg"]})
-
-  # DisMax query
-  x = %Hui.Q{q: "edinburgh", qf: "description^2.3 title", mm: "2<-25% 9<-3", pf: "title", ps: 1, qs: 3, bq: "edited:true"}
-  Hui.search(:library, x)
 
   # more elaborated faceting query
   x = %Hui.Q{q: "*", rows: 5}

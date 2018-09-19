@@ -119,10 +119,6 @@ defmodule Hui do
     y = %Hui.F{field: ["cat", "author_str"], mincount: 1}
     Hui.search(:library, x, y)
 
-    # DisMax query
-    x = %Hui.Q{q: "edinburgh", qf: "description^2.3 title", mm: "2<-25% 9<-3", pf: "title", ps: 1, qs: 3, bq: "edited:true"}
-    Hui.search(:library, x, y)
-
     # more elaborated faceting query
     x = %Hui.Q{q: "*", rows: 5}
     range1 = %Hui.F.Range{range: "price", start: 0, end: 100, gap: 10, per_field: true}

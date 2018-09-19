@@ -9,8 +9,6 @@ defmodule HuiStructTest do
 
     test "set basic parameters" do
      x = %Hui.Q{
-       bf: nil,
-       bq: nil,
        cache: nil,
        debug: nil,
        debugQuery: nil,
@@ -23,64 +21,19 @@ defmodule HuiStructTest do
        "json.nl": nil,
        "json.wrf": nil,
        logParamsList: nil,
-       mm: nil,
        omitHeader: nil,
-       pf: nil,
-       ps: nil,
        q: "edinburgh",
-       "q.alt": nil,
        "q.op": nil,
-       qf: nil,
-       qs: nil,
        rows: 15,
        segmentTerminateEarly: nil,
        sort: nil,
        sow: nil,
        start: nil,
-       tie: nil,
        timeAllowed: nil,
        tr: nil,
        wt: nil
      }
      assert x == %Hui.Q{q: "edinburgh", fl: "id,title", fq: ["type:image"], rows: 15}
-    end
-
-    test "set dismax parameters" do
-     x = %Hui.Q{
-       bf: nil,
-       bq: "edited:true",
-       cache: nil,
-       debug: nil,
-       debugQuery: nil,
-       defType: nil,
-       df: nil,
-       echoParams: nil,
-       explainOther: nil,
-       fl: nil,
-       fq: [],
-       "json.nl": nil,
-       "json.wrf": nil,
-       logParamsList: nil,
-       mm: "2<-25% 9<-3",
-       omitHeader: nil,
-       pf: "title",
-       ps: 1,
-       q: "edinburgh",
-       "q.alt": nil,
-       "q.op": nil,
-       qf: "description^2.3 title",
-       qs: 3,
-       rows: nil,
-       segmentTerminateEarly: nil,
-       sort: nil,
-       sow: nil,
-       start: nil,
-       tie: nil,
-       timeAllowed: nil,
-       tr: nil,
-       wt: nil
-     }
-     assert x == %Hui.Q{q: "edinburgh", qf: "description^2.3 title", mm: "2<-25% 9<-3", pf: "title", ps: 1, qs: 3, bq: "edited:true"}
     end
 
     test "provide 'q' query setting" do
