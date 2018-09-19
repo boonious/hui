@@ -15,7 +15,7 @@ defmodule Hui do
   @doc """
   Issue a search query to the default Solr endpoint.
 
-  The query can be a string, a keyword list or query struct (`t:Hui.Q.t/0`).
+  The query can be a string, a keyword list or query struct.
   This function is a shortcut for `search/2` with `:default` as URL key.
 
   ### Example
@@ -23,11 +23,9 @@ defmodule Hui do
   ```
     Hui.q("scott") # keyword search
     Hui.q(%Hui.Q{q: "loch", fq: ["type:illustration", "format:image/jpeg"]})
+    Hui.q(%Hui.D{q: "edinburgh", qf: "description^2.3 title", mm: "2<-25% 9<-3", pf: "title", ps: 1, qs: 3, bq: "edited:true"})
     Hui.q(q: "loch", rows: 5, facet: true, "facet.field": ["year", "subject"])
   ```
-
-  See `Hui.URL.default_url!/0` and `Hui.URL.encode_query/1` for more details on Solr parameter structs and keyword list.
-
   """
   @spec q(binary | query) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
   def q(query) when is_binary(query), do: search(:default, q: query)
@@ -45,11 +43,7 @@ defmodule Hui do
   ```
     Hui.q(%Hui.Q{q: "author:I*", rows: 5}, %Hui.F{field: ["cat", "author_str"], mincount: 1})
   ```
-
-   See `Hui.Q`, `Hui.F`, `Hui.URL.encode_query/1` for more details on query structs.
-
   """
-
   @spec q(Hui.Q.t, Hui.F.t) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
   def q(%Hui.Q{} = q, %Hui.F{} = f), do: search(:default, [q, f])
 
