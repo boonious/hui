@@ -18,7 +18,7 @@ defmodule Hui.Search do
   use HTTPoison.Base 
 
   @error_msg "malformed query or URL"
-  @type solr_params :: Keyword.t | list(Hui.Q.t | Hui.F.t)
+  @type solr_params :: Keyword.t | list(Hui.Q.t | Hui.D.t | Hui.F.t)
   @type solr_url :: :default | atom | Hui.URL.t
 
   @doc """
@@ -36,6 +36,12 @@ defmodule Hui.Search do
 
     # Parameters can be a list of query structs
     Hui.Search.search(url, [%Hui.Q{q: "glen cova"}, %Hui.F{field: ["type", "year"]}])
+
+    # DisMax query, multiple structs usage
+    x = %Hui.D{q: "edinburgh", qf: "description^2.3 title", mm: "2<-25% 9<-3"}
+    y = %Hui.Q{rows: 10, fq: ["cat:electronics"]}
+    z = %Hui.F{field: ["popularity"]} # faceting
+    Hui.Search.search(url, [x, y, z])
   ```
 
   The use of structs is more idiomatic and succinct. It is bound to qualified Solr fields. See `Hui.Q`, `Hui.F`, `Hui.URL.encode_query/1` for more details

@@ -157,6 +157,20 @@ defmodule HuiSearchTest do
       assert String.match?(resp.request_url, ~r/fq=cat%3Aelectronics&fq=popularity%3A%5B0\+TO\+%2A%5D&q=%2A&rows=10/)
     end
 
+    test "should DisMax query via Hui.D", context do
+      Bypass.expect context.bypass, fn conn ->
+        Plug.Conn.resp(conn, 200, context.simple_search_response_sample)
+      end
+
+      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}"}
+      solr_params = %Hui.D{q: "edinburgh", qf: "description^2.3 title", mm: "2<-25% 9<-3", pf: "title", ps: 1, qs: 3, bq: "edited:true"}
+      {_status, resp} = Hui.Search.search(url, [solr_params])
+      assert String.match?(resp.request_url, ~r/bq=edited%3Atrue&mm=2%3C-25%25\+9%3C-3&pf=title&ps=1&q=edinburgh&qf=description%5E2.3\+title&qs=3/)
+
+      {_status, resp} = Hui.search(url, solr_params)
+      assert String.match?(resp.request_url, ~r/bq=edited%3Atrue&mm=2%3C-25%25\+9%3C-3&pf=title&ps=1&q=edinburgh&qf=description%5E2.3\+title&qs=3/)
+    end
+
     test "should query via Hui.F", context do
       Bypass.expect context.bypass, fn conn ->
         Plug.Conn.resp(conn, 200, context.simple_search_response_sample)
@@ -238,6 +252,61 @@ defmodule HuiSearchTest do
       requested_params = resp.body["responseHeader"]["params"]
       assert expected_response_header_params == requested_params
       assert String.match?(resp.request_url, ~r/fq=cat%3Aelectronics&fq=popularity%3A%5B0\+TO\+%2A%5D&q=%2A&rows=10/)
+    end
+
+    test "should DisMax query via Hui.D struct" do
+      solr_params =  %Hui.D{q: "edinburgh", qf: "description^2.3 title", mm: "2<-25% 9<-3", pf: "title", ps: 1, qs: 3, bq: "edited:true"}
+      solr_params_ext1 = %Hui.Q{rows: 10, fq: ["cat:electronics", "popularity:[0 TO *]"], echoParams: "explicit"}
+      solr_params_ext2 = %Hui.F{field: ["popularity"]}
+
+      expected_query_url = "bq=edited%3Atrue&mm=2%3C-25%25\\\+9%3C-3&pf=title&ps=1&q=edinburgh&qf=description%5E2.3\\\+title&qs=3"
+      expected_query_url_ext = "&echoParams=explicit&fq=cat%3Aelectronics&fq=popularity%3A%5B0\\\+TO\\\+%2A%5D&rows=10&facet=true&facet.field=popularity"
+
+      expected_response_header_params = %{
+        "bq" => "edited:true",
+        "mm" => "2<-25% 9<-3",
+        "pf" => "title",
+        "ps" => "1",
+        "q" => "edinburgh",
+        "qf" => "description^2.3 title",
+        "qs" => "3"
+      }
+
+      {_status, resp} = Hui.Search.search(:default, [solr_params])
+      requested_params = resp.body["responseHeader"]["params"]
+      assert expected_response_header_params == requested_params
+      assert String.match?(resp.request_url, ~r/#{expected_query_url}/)
+
+      {_status, resp} = Hui.search(:default, solr_params)
+      requested_params = resp.body["responseHeader"]["params"]
+      assert expected_response_header_params == requested_params
+      assert String.match?(resp.request_url, ~r/#{expected_query_url}/)
+
+      {_status, resp} = Hui.q(solr_params)
+      requested_params = resp.body["responseHeader"]["params"]
+      assert expected_response_header_params == requested_params
+      assert String.match?(resp.request_url, ~r/#{expected_query_url}/)
+
+      # include extra common and faceting parameters from Hui.Q, Hui.F
+      expected_response_header_params = %{
+        "bq" => "edited:true",
+        "echoParams" => "explicit",
+        "facet" => "true",
+        "facet.field" => "popularity",
+        "fq" => ["cat:electronics", "popularity:[0 TO *]"],
+        "mm" => "2<-25% 9<-3",
+        "pf" => "title",
+        "ps" => "1",
+        "q" => "edinburgh",
+        "qf" => "description^2.3 title",
+        "qs" => "3",
+        "rows" => "10"
+      }
+      {_status, resp} = Hui.Search.search(:default, [solr_params, solr_params_ext1, solr_params_ext2])
+      requested_params = resp.body["responseHeader"]["params"]
+      assert expected_response_header_params == requested_params
+      assert String.match?(resp.request_url, ~r/#{expected_query_url}#{expected_query_url_ext}/)
+
     end
 
     test "should query via Hui.F faceting struct" do

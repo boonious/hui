@@ -31,7 +31,7 @@ defmodule Hui.URL do
   @typedoc """
   Solr parameters as keyword list or structs.
   """
-  @type url_params :: Keyword.t | Hui.Q.t | Hui.F.t | Hui.F.Range.t | Hui.F.Interval.t
+  @type url_params :: Keyword.t | Hui.Q.t | Hui.D.t | Hui.F.t | Hui.F.Range.t | Hui.F.Interval.t
 
   @doc """
   Returns a configured default Solr endpoint as `t:Hui.URL.t/0` struct.
@@ -177,6 +177,7 @@ defmodule Hui.URL do
   """
   @spec encode_query(url_params) :: binary
   def encode_query(%Hui.Q{} = url_params), do: encode_query(url_params |> Map.to_list)
+  def encode_query(%Hui.D{} = url_params), do: encode_query(url_params |> Map.to_list)
   def encode_query(%Hui.F{} = url_params), do: encode_query(url_params |> Map.to_list)
 
   def encode_query(%Hui.F.Range{} = url_params), do: encode_query(url_params |> Map.to_list, "facet.range", url_params.range, url_params.per_field)

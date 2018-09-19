@@ -9,7 +9,7 @@ defmodule Hui do
   - [More usage](https://hexdocs.pm/hui/readme.html#usage)
   """
 
-  @type query :: Hui.Q.t | Keyword.t
+  @type query :: Hui.Q.t | Hui.D.t | Keyword.t
   @type url :: binary | atom | Hui.URL.t
 
   @doc """
@@ -32,6 +32,7 @@ defmodule Hui do
   @spec q(binary | query) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
   def q(query) when is_binary(query), do: search(:default, q: query)
   def q(%Hui.Q{} = q), do: search(:default, [q])
+  def q(%Hui.D{} = q), do: search(:default, [q])
   def q(query), do: search(:default, query)
 
   @doc """
@@ -102,6 +103,7 @@ defmodule Hui do
   """
   @spec search(url, query) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
   def search(url, %Hui.Q{} = q), do: Hui.Search.search(url, [q])
+  def search(url, %Hui.D{} = q), do: Hui.Search.search(url, [q])
   def search(url, query), do: Hui.Search.search(url, query)
 
   @doc """
@@ -117,6 +119,10 @@ defmodule Hui do
   ```
     x = %Hui.Q{q: "author:I*", rows: 5}
     y = %Hui.F{field: ["cat", "author_str"], mincount: 1}
+    Hui.search(:library, x, y)
+
+    # DisMax query
+    x = %Hui.D{q: "edinburgh", qf: "description^2.3 title", mm: "2<-25% 9<-3", pf: "title", ps: 1, qs: 3, bq: "edited:true"}
     Hui.search(:library, x, y)
 
     # more elaborated faceting query
@@ -155,7 +161,8 @@ defmodule Hui do
    See `Hui.Q`, `Hui.F`, `Hui.URL.encode_query/1` for more details on query structs.
 
   """
-  @spec search(url, Hui.Q.t, Hui.F.t) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
+  @spec search(url, (Hui.Q.t| Hui.D.t), Hui.F.t) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
   def search(url, %Hui.Q{} = q, %Hui.F{} = f), do: Hui.Search.search(url, [q, f])
+  def search(url, %Hui.D{} = q, %Hui.F{} = f), do: Hui.Search.search(url, [q, f])
 
 end
