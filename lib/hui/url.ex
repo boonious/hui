@@ -142,7 +142,7 @@ defmodule Hui.URL do
       iex> x |> Hui.URL.encode_query
       "fl=id%2Ctitle&fq=type%3Aimage&q=edinburgh&rows=15"
 
-  ## Example - `t:Hui.F.t/0` faceting struct
+  ## Other Examples - faceting, highlighting structs
 
       iex> x = %Hui.F{field: ["year", "type"]}
       %Hui.F{
@@ -172,19 +172,24 @@ defmodule Hui.URL do
       }
       iex> x |> Hui.URL.encode_query
       "facet=true&facet.field=year&facet.field=type"
-  
+
+      iex> %Hui.H{fl: "title,words", usePhraseHighlighter: true, fragsize: 250, snippets: 3 } |> Hui.URL.encode_query
+      "hl.fl=title%2Cwords&hl.fragsize=250&hl=true&hl.snippets=3&hl.usePhraseHighlighter=true"
+
   See `Hui.Q`, `Hui.F`, `Hui.F.Range`, `Hui.F.Interval` for more examples
   """
   @spec encode_query(url_params) :: binary
   def encode_query(%Hui.Q{} = url_params), do: encode_query(url_params |> Map.to_list)
   def encode_query(%Hui.D{} = url_params), do: encode_query(url_params |> Map.to_list)
   def encode_query(%Hui.F{} = url_params), do: encode_query(url_params |> Map.to_list)
+  def encode_query(%Hui.H{} = url_params), do: encode_query(url_params |> Map.to_list)
 
   def encode_query(%Hui.F.Range{} = url_params), do: encode_query(url_params |> Map.to_list, "facet.range", url_params.range, url_params.per_field)
   def encode_query(%Hui.F.Interval{} = url_params), do: encode_query(url_params |> Map.to_list, "facet.interval", url_params.interval, url_params.per_field)
 
   def encode_query([{:__struct__, Hui.Q} | tail]), do: tail |> encode_query
   def encode_query([{:__struct__, Hui.F} | tail]), do: Enum.map(tail, &prefix/1) |> encode_query
+  def encode_query([{:__struct__, Hui.H} | tail]), do: Enum.map(tail, &prefix(&1, "hl")) |> encode_query
 
   def encode_query(enumerable) when is_list(enumerable), do: Enum.reject(enumerable, &invalid_param?/1) |> Enum.map_join("&", &encode/1)
   def encode_query(_), do: ""
@@ -218,6 +223,7 @@ defmodule Hui.URL do
   defp prefix({k,v}, prefix \\ "facet", field \\ "", per_field \\ false) do
     case {k,prefix} do
       {:facet, _} -> {:facet, v}
+      {:hl, _} -> {:hl, v}
       {:range, "facet.range"} -> {:"facet.range", v} # render the same way despite per field setting
       {:method, "facet.range"} -> {:"facet.range.method", v} # ditto
       {:interval, "facet.interval"} -> {:"facet.interval", v} # ditto

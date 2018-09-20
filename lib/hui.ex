@@ -25,8 +25,7 @@ defmodule Hui do
     Hui.q(%Hui.Q{q: "loch", fq: ["type:illustration", "format:image/jpeg"]})
     Hui.q(q: "loch", rows: 5, facet: true, "facet.field": ["year", "subject"])
 
-    # supply a list of Hui structs for more complex query
-    # e.g. DisMax
+    # supply a list of Hui structs for more complex query, e.g. DisMax
     x = %Hui.D{q: "run", qf: "description^2.3 title", mm: "2<-25% 9<-3", pf: "title", ps: 1, qs: 3}
     y = %Hui.Q{rows: 10, start: 10, fq: ["edited:true"]}
     z = %Hui.F{field: ["cat", "author_str"], mincount: 1}
@@ -58,16 +57,21 @@ defmodule Hui do
   
   ```
     # structured query with permitted or qualified Solr parameters
+    url = "http://localhost:8983/solr/collection"
     Hui.search(url, %Hui.Q{q: "loch", rows: 5, wt: "xml", fq: ["type:illustration", "format:image/jpeg"]})
     # a keyword list of arbitrary parameters
     Hui.search(url, q: "edinburgh", rows: 10)
 
-    # supply a list of Hui structs for more complex query
-    # e.g. DisMax
+    # supply a list of Hui structs for more complex query e.g. DisMax
     x = %Hui.D{q: "run", qf: "description^2.3 title", mm: "2<-25% 9<-3", pf: "title", ps: 1, qs: 3}
     y = %Hui.Q{rows: 10, start: 10, fq: ["edited:true"]}
     z = %Hui.F{field: ["cat", "author_str"], mincount: 1}
     Hui.search(url, [x, y, z])
+
+    # Add results highlighting (snippets) with `Hui.H`
+    x = %Hui.Q{q: "features:photo", rows: 5}
+    y = %Hui.H{fl: "features", usePhraseHighlighter: true, fragsize: 250, snippets: 3 }
+    Hui.search(url, [x, y])
   ```
 
   ### Example - URL endpoints

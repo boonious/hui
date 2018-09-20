@@ -15,14 +15,20 @@ a data collection in distributed server architecture (cloud).
   Hui.q(q: "loch", rows: 5) # arbitrary keyword list
   Hui.q(%Hui.Q{q: "loch", rows: 5, start: 20}) # structured query
   Hui.q(%Hui.Q{q: "author:I*", rows: 5}, %Hui.F{field: ["cat", "author_str"], mincount: 1}) # with faceting
-
+ 
+  # `:library` is a URL reference key - see below
   Hui.search(:library, %Hui.Q{q: "loch", fq: ["type:illustration", "format:image/jpeg"]})
 
-  # DisMax structured query via a list of Hui structs
+  # DisMax structured query via a list of existing Hui structs
   x = %Hui.D{q: "market", qf: "description^2.3 title", mm: "2<-25% 9<-3", pf: "title", ps: 1, qs: 3}
   y = %Hui.Q{rows: 10, start: 10, fq: ["edited:true"]}
   z = %Hui.F{field: ["cat", "author_str"], mincount: 1}
   Hui.search(:library, [x, y, z])
+
+  # Add results highlighting (snippets) with `Hui.H`
+  x = %Hui.Q{q: "features:photo", rows: 5}
+  y = %Hui.H{fl: "features", usePhraseHighlighter: true, fragsize: 250, snippets: 3 } 
+  Hui.search(:library, [x, y])
 
   # more elaborated faceting query
   x = %Hui.Q{q: "*", rows: 5}
@@ -37,7 +43,6 @@ a data collection in distributed server architecture (cloud).
   # f.price.facet.range.start=0&f.popularity.facet.range.end=5&
   # f.popularity.facet.range.gap=1&
   # facet.range=popularity&f.popularity.facet.range.start=0
-
 
 ```
 
@@ -89,6 +94,7 @@ creating and encoding Solr parameters:
 - Standard and common query: `Hui.Q`
 - DisMax query: `Hui.D`
 - Faceting: `Hui.F`, `Hui.F.Range`, `Hui.F.Interval`
+- Highlighting: `Hui.H`
 - *structs for other request handlers are forthcoming*
 
 For example, instead of prefixing and repeating `fq=filter`, `facet.field=fieldname`, `facet.range.gap=10`,

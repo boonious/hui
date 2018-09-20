@@ -173,7 +173,7 @@ defmodule HuiSearchTest do
 
     test "should query via Hui.F", context do
       Bypass.expect context.bypass, fn conn ->
-        Plug.Conn.resp(conn, 200, context.simple_search_response_sample)
+        Plug.Conn.resp(conn, 200, "")
       end
       x = %Hui.Q{q: "author:I*", rows: 5, echoParams: "explicit"}
       y = %Hui.F{field: ["cat", "author_str"], mincount: 1}
@@ -184,6 +184,21 @@ defmodule HuiSearchTest do
 
       {_status, resp} = Hui.search(url, x, y)
       assert String.match?(resp.request_url, ~r/q=author%3AI%2A&rows=5&facet=true&facet.field=cat&facet.field=author_str&facet.mincount=1/)
+    end
+
+    test "should provide result highlighting via Hui.H", context do
+      Bypass.expect context.bypass, fn conn ->
+        Plug.Conn.resp(conn, 200, "")
+      end
+      x = %Hui.Q{q: "features:photo", rows: 1, echoParams: "explicit"}
+      y = %Hui.H{fl: "features", usePhraseHighlighter: true, fragsize: 250, snippets: 3 }
+
+      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}"}
+      {_status, resp} = Hui.Search.search(url, [x, y])
+      assert String.match?(resp.request_url, ~r/q=features%3Aphoto&rows=1&hl.fl=features&hl.fragsize=250&hl=true&hl.snippets=3&hl.usePhraseHighlighter=true/)
+
+      {_status, resp} = Hui.search(url, [x, y])
+      assert String.match?(resp.request_url, ~r/q=features%3Aphoto&rows=1&hl.fl=features&hl.fragsize=250&hl=true&hl.snippets=3&hl.usePhraseHighlighter=true/)
     end
 
   end
@@ -331,6 +346,27 @@ defmodule HuiSearchTest do
       assert String.match?(resp.request_url, ~r/q=author%3AI%2A&rows=5&facet=true&facet.field=cat&facet.field=author_str&facet.mincount=1/)
     end
 
+    test "should provide results highlighting via Hui.H struct" do
+      x = %Hui.Q{q: "features:photo", rows: 1, echoParams: "explicit"}
+      y = %Hui.H{fl: "features", usePhraseHighlighter: true, fragsize: 250, snippets: 3 }
+      expected_response_header_params = %{
+        "echoParams" => "explicit",
+        "hl" => "true",
+        "hl.fl" => "features",
+        "hl.fragsize" => "250",
+        "hl.snippets" => "3",
+        "hl.usePhraseHighlighter" => "true",
+        "q" => "features:photo",
+        "rows" => "1"
+      }
+
+      {_status, resp} = Hui.Search.search(:default, [x,y])
+      requested_params = resp.body["responseHeader"]["params"]
+      assert expected_response_header_params == requested_params
+      assert resp.body["highlighting"]
+      assert String.match?(resp.request_url, ~r/q=features%3Aphoto&rows=1&hl.fl=features&hl.fragsize=250&hl=true&hl.snippets=3&hl.usePhraseHighlighter=true/)
+
+    end
   end
 
 end

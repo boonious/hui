@@ -4,6 +4,7 @@ defmodule HuiStructTest do
   doctest Hui.F
   doctest Hui.F.Range
   doctest Hui.F.Interval
+  doctest Hui.H
 
   describe "query struct Hui.Q" do
 
@@ -217,5 +218,30 @@ defmodule HuiStructTest do
 
   end
 
+  describe "higlighting struct Hui.H" do
+
+    test "set parameters" do
+      x = %Hui.H{
+        encoder: nil,
+        field: nil,
+        fl: "title,words",
+        fragsize: 250,
+        highlightMultiTerm: nil,
+        hl: true,
+        maxAnalyzedChars: nil,
+        method: nil,
+        per_field: false,
+        q: nil,
+        qparser: nil,
+        requireFieldMatch: nil,
+        snippets: 3,
+        "tag.post": nil,
+        "tag.pre": nil,
+        usePhraseHighlighter: true
+      }
+      assert x == %Hui.H{fl: "title,words", usePhraseHighlighter: true, fragsize: 250, snippets: 3}
+    end
+
+  end
 
 end
