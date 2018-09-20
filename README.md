@@ -87,6 +87,7 @@ The following struct modules provide an **idiomatic** and **structured** way for
 creating and encoding Solr parameters:
 
 - Standard and common query: `Hui.Q`
+- DisMax query: `Hui.D`
 - Faceting: `Hui.F`, `Hui.F.Range`, `Hui.F.Interval`
 - *structs for other request handlers are forthcoming*
 
