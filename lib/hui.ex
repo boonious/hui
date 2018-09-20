@@ -15,7 +15,7 @@ defmodule Hui do
   @doc """
   Issue a search query to the default Solr endpoint.
 
-  The query can be a string, a keyword list or query struct.
+  The query can be a string, a keyword list or a standard query struct (`Hui.Q`).
   This function is a shortcut for `search/2` with `:default` as URL key.
 
   ### Example
@@ -41,16 +41,10 @@ defmodule Hui do
   ```
   """
   @spec q(Hui.Q.t, Hui.F.t) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
-  def q(%Hui.Q{} = q, %Hui.F{} = f), do: search(:default, [q, f])
+  def q(%Hui.Q{} = query, %Hui.F{} = facet), do: search(:default, [query, facet])
 
   @doc """
   Issue a search query to a specific Solr endpoint.
-
-  The endpoint can either be a string URL or `t:Hui.URL.t/0` struct which defines
-  a specific URL and request handler. A key referring to a configured endpoint
-  may also be used.
-  
-  The query is a struct (`Hui.Q`) or a keyword list of Solr parameters.
   
   ### Example - parameters 
   
@@ -92,14 +86,11 @@ defmodule Hui do
 
   """
   @spec search(url, query) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
-  def search(url, %Hui.Q{} = q), do: Hui.Search.search(url, [q])
+  def search(url, %Hui.Q{} = query), do: Hui.Search.search(url, [query])
   def search(url, query), do: Hui.Search.search(url, query)
 
   @doc """
   Issue a standard structured query and faceting request to a specific Solr endpoint.
-
-  The endpoint can be a string URL, a `t:Hui.URL.t/0` struct (for HTTP headers and options)
-  which defines a specific URL and request handler or a key referring to a configured endpoint.
 
   ### Example
 
@@ -142,6 +133,6 @@ defmodule Hui do
   ```
   """
   @spec search(url, Hui.Q.t, Hui.F.t) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
-  def search(url, %Hui.Q{} = q, %Hui.F{} = f), do: Hui.Search.search(url, [q, f])
+  def search(url, %Hui.Q{} = query, %Hui.F{} = facet), do: Hui.Search.search(url, [query, facet])
 
 end
