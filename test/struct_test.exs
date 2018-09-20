@@ -220,7 +220,7 @@ defmodule HuiStructTest do
 
   describe "higlighting struct Hui.H" do
 
-    test "set parameters" do
+    test "set Hui.H parameters" do
       x = %Hui.H{
         encoder: nil,
         field: nil,
@@ -242,6 +242,46 @@ defmodule HuiStructTest do
       assert x == %Hui.H{fl: "title,words", usePhraseHighlighter: true, fragsize: 250, snippets: 3}
     end
 
+    test "set unified highlighter Hui.H1 parameters" do
+      x = %Hui.H1{
+        "bs.country": nil,
+        "bs.language": nil,
+        "bs.separator": nil,
+        "bs.type": nil,
+        "bs.variant": nil,
+        defaultSummary: true,
+        encoder: nil,
+        field: nil,
+        fl: "title,words",
+        fragsize: nil,
+        highlightMultiTerm: nil,
+        hl: true,
+        maxAnalyzedChars: nil,
+        method: "unified",
+        offsetSource: "POSTINGS",
+        per_field: false,
+        q: nil,
+        qparser: nil,
+        requireFieldMatch: nil,
+        "score.b": nil,
+        "score.k1": 0,
+        "score.pivot": nil,
+        snippets: nil,
+        "tag.ellipsis": nil,
+        "tag.post": nil,
+        "tag.pre": nil,
+        usePhraseHighlighter: nil
+      }
+      assert x == %Hui.H1{fl: "title,words", offsetSource: "POSTINGS", defaultSummary: true, "score.k1": 0}
+    end
+
+    test "can be encoded into URL query string" do
+      x = %Hui.H{fl: "title,words", usePhraseHighlighter: true, fragsize: 250, snippets: 3}
+      assert "hl.fl=title%2Cwords&hl.fragsize=250&hl=true&hl.snippets=3&hl.usePhraseHighlighter=true" = x |> Hui.URL.encode_query
+
+      x = %Hui.H1{fl: "features", offsetSource: "POSTINGS", defaultSummary: true, "score.k1": 0}
+      assert "hl.defaultSummary=true&hl.fl=features&hl=true&hl.method=unified&hl.offsetSource=POSTINGS&hl.score.k1=0" = x |> Hui.URL.encode_query
+    end
   end
 
 end
