@@ -18,6 +18,12 @@ a data collection in distributed server architecture (cloud).
 
   Hui.search(:library, %Hui.Q{q: "loch", fq: ["type:illustration", "format:image/jpeg"]})
 
+  # DisMax structured query via a list of Hui structs
+  x = %Hui.D{q: "market", qf: "description^2.3 title", mm: "2<-25% 9<-3", pf: "title", ps: 1, qs: 3}
+  y = %Hui.Q{rows: 10, start: 10, fq: ["edited:true"]}
+  z = %Hui.F{field: ["cat", "author_str"], mincount: 1}
+  Hui.search(:library, [x, y, z])
+
   # more elaborated faceting query
   x = %Hui.Q{q: "*", rows: 5}
   range1 = %Hui.F.Range{range: "price", start: 0, end: 100, gap: 10, per_field: true}
@@ -190,7 +196,7 @@ by adding `hui` to your list of dependencies in `mix.exs`:
 ```elixir
   def deps do
     [
-      {:hui, "~> 0.5.4"}
+      {:hui, "~> 0.5.5"}
     ]
   end
 ```

@@ -2,14 +2,14 @@ defmodule Hui do
   @moduledoc """
   Hui 辉 ("shine" in Chinese) is an [Elixir](https://elixir-lang.org) client and library for 
   [Solr enterprise search platform](http://lucene.apache.org/solr/).
-  
+
   ### Usage
   
   - Searching Solr: `q/1`, `q/2`, `search/2`, `search/3`
-  - [More usage](https://hexdocs.pm/hui/readme.html#usage)
+  - [More details](https://hexdocs.pm/hui/readme.html#usage)
   """
 
-  @type query :: Hui.Q.t | Keyword.t
+  @type query_struct_list :: list(Hui.Q.t|Hui.D.t|Hui.F.t)
   @type url :: binary | atom | Hui.URL.t
 
   @doc """
@@ -24,9 +24,17 @@ defmodule Hui do
     Hui.q("scott") # keyword search
     Hui.q(%Hui.Q{q: "loch", fq: ["type:illustration", "format:image/jpeg"]})
     Hui.q(q: "loch", rows: 5, facet: true, "facet.field": ["year", "subject"])
+
+    # supply a list of Hui structs for more complex query
+    # e.g. DisMax
+    x = %Hui.D{q: "run", qf: "description^2.3 title", mm: "2<-25% 9<-3", pf: "title", ps: 1, qs: 3}
+    y = %Hui.Q{rows: 10, start: 10, fq: ["edited:true"]}
+    z = %Hui.F{field: ["cat", "author_str"], mincount: 1}
+    Hui.q([x, y, z])
+
   ```
   """
-  @spec q(binary | query) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
+  @spec q(binary | Hui.Q.t | query_struct_list | Keyword.t) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
   def q(query) when is_binary(query), do: search(:default, q: query)
   def q(%Hui.Q{} = q), do: search(:default, [q])
   def q(query), do: search(:default, query)
@@ -54,8 +62,14 @@ defmodule Hui do
     # a keyword list of arbitrary parameters
     Hui.search(url, q: "edinburgh", rows: 10)
 
+    # supply a list of Hui structs for more complex query
+    # e.g. DisMax
+    x = %Hui.D{q: "run", qf: "description^2.3 title", mm: "2<-25% 9<-3", pf: "title", ps: 1, qs: 3}
+    y = %Hui.Q{rows: 10, start: 10, fq: ["edited:true"]}
+    z = %Hui.F{field: ["cat", "author_str"], mincount: 1}
+    Hui.search(url, [x, y, z])
   ```
- 
+
   ### Example - URL endpoints
 
   ```
@@ -85,7 +99,7 @@ defmodule Hui do
   See `HTTPoison.request/5` for more details on HTTPoison options.
 
   """
-  @spec search(url, query) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
+  @spec search(url, Hui.Q.t | query_struct_list) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
   def search(url, %Hui.Q{} = query), do: Hui.Search.search(url, [query])
   def search(url, query), do: Hui.Search.search(url, query)
 
