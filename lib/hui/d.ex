@@ -1,6 +1,6 @@
 defmodule Hui.D do
   @moduledoc """
-  Struct and functions related to DisMax query parameters.
+  Struct and functions related to DisMax query.
 
   Correspond to the query parsers known as the Maximum Disjunction - DisMax
   and eDismax (extended version).
@@ -14,7 +14,7 @@ defmodule Hui.D do
              :sow, :"mm.autoRelax", :boost, :lowercaseOperators, :pf2, :ps2, :pf3, :ps3, :stopwords, :uf]  # extended dismax
 
   @typedoc """
-  Struct for DisMax/eDismax query parameters.
+  Struct for DisMax/eDismax query.
 
   `Hui.URL.encode_query/1` renders this struct into URL query string.
   """

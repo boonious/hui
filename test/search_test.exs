@@ -201,13 +201,14 @@ defmodule HuiSearchTest do
       assert String.match?(resp.request_url, ~r/q=features%3Aphoto&rows=1&hl.fl=features&hl.fragsize=250&hl=true&hl.snippets=3&hl.usePhraseHighlighter=true/)
     end
 
-    test "should provide result highlighting via Hui.H1/Hui.H2", context do
+    test "should provide result highlighting via Hui.H1/Hui.H2/Hui.H3", context do
       Bypass.expect context.bypass, fn conn ->
         Plug.Conn.resp(conn, 200, "")
       end
       x = %Hui.Q{q: "features:photo", rows: 1, echoParams: "explicit"}
       y1 = %Hui.H1{fl: "features", offsetSource: "POSTINGS", defaultSummary: true, "score.k1": 0}
       y2 = %Hui.H2{fl: "features", mergeContiguous: true, "simple.pre": "<b>", "simple.post": "</b>", preserveMulti: true}
+      y3 = %Hui.H3{fl: "features", boundaryScanner: "breakIterator", "bs.type": "WORD", "bs.language": "EN", "bs.country": "US"}
 
       url = %Hui.URL{url: "http://localhost:#{context.bypass.port}"}
       {_status, resp} = Hui.Search.search(url, [x, y1])
@@ -219,6 +220,11 @@ defmodule HuiSearchTest do
       assert String.match?(resp.request_url, ~r/q=features%3Aphoto&rows=1&hl.fl=features&hl=true&hl.mergeContiguous=true&hl.method=original&hl.preserveMulti=true&hl.simple.post=%3C%2Fb%3E&hl.simple.pre=%3Cb%3E/)
       {_status, resp} = Hui.search(url, [x, y2])
       assert String.match?(resp.request_url, ~r/q=features%3Aphoto&rows=1&hl.fl=features&hl=true&hl.mergeContiguous=true&hl.method=original&hl.preserveMulti=true&hl.simple.post=%3C%2Fb%3E&hl.simple.pre=%3Cb%3E/)
+
+      {_status, resp} = Hui.Search.search(url, [x, y3])
+      assert String.match?(resp.request_url, ~r/q=features%3Aphoto&rows=1&hl.boundaryScanner=breakIterator&hl.bs.country=US&hl.bs.language=EN&hl.bs.type=WORD&hl.fl=features&hl=true&hl.method=fastVector/)
+      {_status, resp} = Hui.search(url, [x, y3])
+      assert String.match?(resp.request_url, ~r/q=features%3Aphoto&rows=1&hl.boundaryScanner=breakIterator&hl.bs.country=US&hl.bs.language=EN&hl.bs.type=WORD&hl.fl=features&hl=true&hl.method=fastVector/)
     end
 
   end
@@ -387,10 +393,12 @@ defmodule HuiSearchTest do
       assert String.match?(resp.request_url, ~r/q=features%3Aphoto&rows=1&hl.fl=features&hl.fragsize=250&hl=true&hl.snippets=3&hl.usePhraseHighlighter=true/)
     end
 
-    test "should provide results highlighting via Hui.H1/Hui.H2 structs" do
+    test "should provide results highlighting via Hui.H1/Hui.H2/Hui.H3 structs" do
       x = %Hui.Q{q: "features:photo", rows: 1, echoParams: "explicit"}
       y1 = %Hui.H1{fl: "features", offsetSource: "ANALYSIS", defaultSummary: true, "score.k1": 0}
       y2 = %Hui.H2{fl: "features", mergeContiguous: true, "simple.pre": "<b>", "simple.post": "</b>", preserveMulti: true}
+      y3 = %Hui.H3{fl: "features", boundaryScanner: "breakIterator", "bs.type": "WORD", "bs.language": "EN", "bs.country": "US"}
+
       expected_response_header_params = %{
         "echoParams" => "explicit",
         "hl" => "true",
@@ -406,7 +414,7 @@ defmodule HuiSearchTest do
       requested_params = resp.body["responseHeader"]["params"]
       assert expected_response_header_params == requested_params
       assert resp.body["highlighting"]
-      assert String.match?(resp.request_url, ~r/q=features%3Aphoto&rows=1&hl.defaultSummary=true&hl.fl=features&hl=true&hl.method=unified&hl.offsetSource=ANALYSIS&hl.score.k1=0/)
+      assert String.match?(resp.request_url, ~r/hl.defaultSummary=true&hl.fl=features&hl=true&hl.method=unified&hl.offsetSource=ANALYSIS&hl.score.k1=0/)
 
       expected_response_header_params = %{
         "echoParams" => "explicit",
@@ -424,7 +432,25 @@ defmodule HuiSearchTest do
       requested_params = resp.body["responseHeader"]["params"]
       assert expected_response_header_params == requested_params
       assert resp.body["highlighting"]
-      assert String.match?(resp.request_url, ~r/q=features%3Aphoto&rows=1&hl.fl=features&hl=true&hl.mergeContiguous=true&hl.method=original&hl.preserveMulti=true&hl.simple.post=%3C%2Fb%3E&hl.simple.pre=%3Cb%3E/)
+      assert String.match?(resp.request_url, ~r/hl.fl=features&hl=true&hl.mergeContiguous=true&hl.method=original&hl.preserveMulti=true&hl.simple.post=%3C%2Fb%3E&hl.simple.pre=%3Cb%3E/)
+
+      expected_response_header_params = %{
+        "echoParams" => "explicit",
+        "hl" => "true",
+        "hl.boundaryScanner" => "breakIterator",
+        "hl.bs.country" => "US",
+        "hl.bs.language" => "EN",
+        "hl.bs.type" => "WORD",
+        "hl.fl" => "features",
+        "hl.method" => "fastVector",
+        "q" => "features:photo",
+        "rows" => "1"
+      }
+      {_status, resp} = Hui.Search.search(:default, [x,y3])
+      requested_params = resp.body["responseHeader"]["params"]
+      assert expected_response_header_params == requested_params
+      assert resp.body["highlighting"]
+      assert String.match?(resp.request_url, ~r/hl.boundaryScanner=breakIterator&hl.bs.country=US&hl.bs.language=EN&hl.bs.type=WORD&hl.fl=features&hl=true&hl.method=fastVector/)
     end
   end
 

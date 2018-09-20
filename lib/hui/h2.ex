@@ -7,7 +7,7 @@ defmodule Hui.H2 do
             [:field, :fl, :q, :qparser, :requireFieldMatch,
              :usePhraseHighlighter, :highlightMultiTerm, :snippets,
              :fragsize, :"tag.pre", :"tag.post", :encoder, :maxAnalyzedChars] ++
-            [:mergeContiguous, :maxMultiValuedToExamine, :maxMultiValuedToMatch, # additional parameters for Oiriginal Highlighter
+            [:mergeContiguous, :maxMultiValuedToExamine, :maxMultiValuedToMatch, # additional parameters for Original Highlighter
              :alternateField, :maxAlternateFieldLength, :highlightAlternate,
              :formatter, :"simple.pre", :"simple.post", :fragmenter, :"regex.slop",
              :"regex.pattern", :"regex.maxAnalyzedChars", :preserveMulti, :payloads] 

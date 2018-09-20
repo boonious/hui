@@ -312,6 +312,44 @@ defmodule HuiStructTest do
       assert x == %Hui.H2{fl: "features", mergeContiguous: true, "simple.pre": "<b>", "simple.post": "</b>", preserveMulti: true}
     end
 
+    test "set fastVector highlighter Hui.H3 parameters" do
+      x = %Hui.H3{
+        alternateField: nil,
+        boundaryScanner: "breakIterator",
+        "bs.chars": nil,
+        "bs.country": "US", 
+        "bs.language": "EN",
+        "bs.maxScan": nil,
+        "bs.type": "WORD",
+        encoder: nil,
+        field: nil,
+        fl: "features",
+        fragListBuilder: nil,
+        fragmentsBuilder: nil,
+        fragsize: nil,
+        highlightAlternate: nil,
+        highlightMultiTerm: nil,
+        hl: true,
+        maxAlternateFieldLength: nil,
+        maxAnalyzedChars: nil,
+        method: "fastVector",
+        multiValuedSeparatorChar: nil,
+        per_field: false,
+        per_field_method: nil,
+        phraseLimit: nil,
+        q: nil,
+        qparser: nil,
+        requireFieldMatch: nil,
+        "simple.post": nil,
+        "simple.pre": nil,
+        snippets: nil,
+        "tag.post": nil,
+        "tag.pre": nil,
+        usePhraseHighlighter: nil
+      }
+      assert x == %Hui.H3{fl: "features", boundaryScanner: "breakIterator", "bs.type": "WORD", "bs.language": "EN", "bs.country": "US"}
+    end
+
     test "can be encoded into URL query string" do
       x = %Hui.H{fl: "title,words", usePhraseHighlighter: true, fragsize: 250, snippets: 3}
       assert "hl.fl=title%2Cwords&hl.fragsize=250&hl=true&hl.snippets=3&hl.usePhraseHighlighter=true" = x |> Hui.URL.encode_query
@@ -321,6 +359,9 @@ defmodule HuiStructTest do
 
       x = %Hui.H2{fl: "features", mergeContiguous: true, "simple.pre": "<b>", "simple.post": "</b>", preserveMulti: true}
       assert "hl.fl=features&hl=true&hl.mergeContiguous=true&hl.method=original&hl.preserveMulti=true&hl.simple.post=%3C%2Fb%3E&hl.simple.pre=%3Cb%3E" = x |> Hui.URL.encode_query
+
+      x = %Hui.H3{fl: "features", boundaryScanner: "breakIterator", "bs.type": "WORD", "bs.language": "EN", "bs.country": "US"}
+      assert "hl.boundaryScanner=breakIterator&hl.bs.country=US&hl.bs.language=EN&hl.bs.type=WORD&hl.fl=features&hl=true&hl.method=fastVector" = x |> Hui.URL.encode_query
     end
   end
 

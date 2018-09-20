@@ -94,7 +94,7 @@ creating and encoding Solr parameters:
 - Standard and common query: `Hui.Q`
 - DisMax query: `Hui.D`
 - Faceting: `Hui.F`, `Hui.F.Range`, `Hui.F.Interval`
-- Highlighting: `Hui.H`
+- Results highlighting: `Hui.H`, `Hui.H1`, `Hui.H2`, `Hui.H3`
 - *structs for other request handlers are forthcoming*
 
 For example, instead of prefixing and repeating `fq=filter`, `facet.field=fieldname`, `facet.range.gap=10`,
@@ -203,7 +203,7 @@ by adding `hui` to your list of dependencies in `mix.exs`:
 ```elixir
   def deps do
     [
-      {:hui, "~> 0.5.5"}
+      {:hui, "~> 0.5.6"}
     ]
   end
 ```

@@ -1,6 +1,6 @@
 defmodule Hui.F do
   @moduledoc """
-  Struct and functions related to [faceting](http://lucene.apache.org/solr/guide/7_4/faceting.html) parameters.
+  Struct and functions related to [faceting](http://lucene.apache.org/solr/guide/7_4/faceting.html).
   """
 
   defstruct [facet: true, field: [], query: []]
@@ -13,7 +13,7 @@ defmodule Hui.F do
          ++ [:interval, :range]
 
   @typedoc """
-  Struct for faceting parameters.
+  Struct for faceting.
 
   `Hui.URL.encode_query/1` renders this struct into URL query string.
 

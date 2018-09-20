@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.6 (2018-09-20)
+
+* Results highlighting (snippets) query via Hui.H struct
+* Unified, Original, Fast Vector results highlighting (snippets) via Hui.H1/H2/H3 structs
+
 ## 0.5.5 (2018-09-20)
 
 * q/1, search/2 to generally accept a list of current and forthcoming Hui structs for more complex querying, e.g. DisMax
