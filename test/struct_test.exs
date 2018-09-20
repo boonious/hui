@@ -275,12 +275,52 @@ defmodule HuiStructTest do
       assert x == %Hui.H1{fl: "title,words", offsetSource: "POSTINGS", defaultSummary: true, "score.k1": 0}
     end
 
+    test "set original highlighter Hui.H2 parameters" do
+      x = %Hui.H2{
+        alternateField: nil,
+        encoder: nil,
+        field: nil,
+        fl: "features",
+        formatter: nil,
+        fragmenter: nil,
+        fragsize: nil,
+        highlightAlternate: nil,
+        highlightMultiTerm: nil,
+        hl: true,
+        maxAlternateFieldLength: nil,
+        maxAnalyzedChars: nil,
+        maxMultiValuedToExamine: nil,
+        maxMultiValuedToMatch: nil,
+        mergeContiguous: true,
+        method: "original",
+        payloads: nil,
+        per_field: false,
+        preserveMulti: true,
+        q: nil,
+        qparser: nil,
+        "regex.maxAnalyzedChars": nil,
+        "regex.pattern": nil,
+        "regex.slop": nil,
+        requireFieldMatch: nil,
+        "simple.post": "</b>",
+        "simple.pre": "<b>",
+        snippets: nil,
+        "tag.post": nil,
+        "tag.pre": nil,
+        usePhraseHighlighter: nil
+      }
+      assert x == %Hui.H2{fl: "features", mergeContiguous: true, "simple.pre": "<b>", "simple.post": "</b>", preserveMulti: true}
+    end
+
     test "can be encoded into URL query string" do
       x = %Hui.H{fl: "title,words", usePhraseHighlighter: true, fragsize: 250, snippets: 3}
       assert "hl.fl=title%2Cwords&hl.fragsize=250&hl=true&hl.snippets=3&hl.usePhraseHighlighter=true" = x |> Hui.URL.encode_query
 
       x = %Hui.H1{fl: "features", offsetSource: "POSTINGS", defaultSummary: true, "score.k1": 0}
       assert "hl.defaultSummary=true&hl.fl=features&hl=true&hl.method=unified&hl.offsetSource=POSTINGS&hl.score.k1=0" = x |> Hui.URL.encode_query
+
+      x = %Hui.H2{fl: "features", mergeContiguous: true, "simple.pre": "<b>", "simple.post": "</b>", preserveMulti: true}
+      assert "hl.fl=features&hl=true&hl.mergeContiguous=true&hl.method=original&hl.preserveMulti=true&hl.simple.post=%3C%2Fb%3E&hl.simple.pre=%3Cb%3E" = x |> Hui.URL.encode_query
     end
   end
 
