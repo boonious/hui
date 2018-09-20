@@ -18,10 +18,6 @@ a data collection in distributed server architecture (cloud).
 
   Hui.search(:library, %Hui.Q{q: "loch", fq: ["type:illustration", "format:image/jpeg"]})
 
-  # DisMax query
-  x = %Hui.D{q: "edinburgh", qf: "description^2.3 title", mm: "2<-25% 9<-3", pf: "title", ps: 1, qs: 3, bq: "edited:true"}
-  Hui.search(:library, x)
-
   # more elaborated faceting query
   x = %Hui.Q{q: "*", rows: 5}
   range1 = %Hui.F.Range{range: "price", start: 0, end: 100, gap: 10, per_field: true}

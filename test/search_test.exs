@@ -166,9 +166,6 @@ defmodule HuiSearchTest do
       solr_params = %Hui.D{q: "edinburgh", qf: "description^2.3 title", mm: "2<-25% 9<-3", pf: "title", ps: 1, qs: 3, bq: "edited:true"}
       {_status, resp} = Hui.Search.search(url, [solr_params])
       assert String.match?(resp.request_url, ~r/bq=edited%3Atrue&mm=2%3C-25%25\+9%3C-3&pf=title&ps=1&q=edinburgh&qf=description%5E2.3\+title&qs=3/)
-
-      {_status, resp} = Hui.search(url, solr_params)
-      assert String.match?(resp.request_url, ~r/bq=edited%3Atrue&mm=2%3C-25%25\+9%3C-3&pf=title&ps=1&q=edinburgh&qf=description%5E2.3\+title&qs=3/)
     end
 
     test "should query via Hui.F", context do
@@ -273,16 +270,6 @@ defmodule HuiSearchTest do
       }
 
       {_status, resp} = Hui.Search.search(:default, [solr_params])
-      requested_params = resp.body["responseHeader"]["params"]
-      assert expected_response_header_params == requested_params
-      assert String.match?(resp.request_url, ~r/#{expected_query_url}/)
-
-      {_status, resp} = Hui.search(:default, solr_params)
-      requested_params = resp.body["responseHeader"]["params"]
-      assert expected_response_header_params == requested_params
-      assert String.match?(resp.request_url, ~r/#{expected_query_url}/)
-
-      {_status, resp} = Hui.q(solr_params)
       requested_params = resp.body["responseHeader"]["params"]
       assert expected_response_header_params == requested_params
       assert String.match?(resp.request_url, ~r/#{expected_query_url}/)
