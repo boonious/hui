@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.0 (2018-09-21)
+
+* Support SolrCloud request parameters such as 'collection', 'shards', 'shards.tolerant' in Hui.Q and distributed search
+
 ## 0.5.7 (2018-09-21)
 
 * Support autosuggest (suggester) query via suggest/2

@@ -71,6 +71,10 @@ defmodule Hui do
     z = %Hui.F{field: ["cat", "author_str"], mincount: 1}
     Hui.search(url, [x, y, z])
 
+    # SolrCloud query
+    x = %Hui.Q{q: "john", collection: "library,commons", rows: 10, distrib: true, "shards.tolerant": true, "shards.info": true}
+    Hui.search(url, x)
+
     # Add results highlighting (snippets) with `Hui.H`
     x = %Hui.Q{q: "features:photo", rows: 5}
     y = %Hui.H{fl: "features", usePhraseHighlighter: true, fragsize: 250, snippets: 3 }

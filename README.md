@@ -19,6 +19,10 @@ a data collection in distributed server architecture (cloud).
   # `:library` is a URL reference key - see below
   Hui.search(:library, %Hui.Q{q: "loch", fq: ["type:illustration", "format:image/jpeg"]})
 
+  # SolrCloud query
+  x = %Hui.Q{q: "john", collection: "library,commons", rows: 10, distrib: true, "shards.tolerant": true, "shards.info": true}
+  Hui.search(:library, x)
+
   # Suggester query
   suggest_query = %Hui.S{q: "ha", count: 10, dictionary: ["name_infix", "ln_prefix", "fn_prefix"]}
   Hui.suggest(:library, suggest_query)
@@ -212,7 +216,7 @@ by adding `hui` to your list of dependencies in `mix.exs`:
 ```elixir
   def deps do
     [
-      {:hui, "~> 0.5.7"}
+      {:hui, "~> 0.6.0"}
     ]
   end
 ```

@@ -26,6 +26,20 @@ defmodule HuiStructSearchTest do
       assert String.match?(resp.request_url, ~r/fq=cat%3Aelectronics&fq=popularity%3A%5B0\+TO\+%2A%5D&q=%2A&rows=10/)
     end
 
+    test "should SolrCloud query via Hui.Q", context do
+      Bypass.expect context.bypass, fn conn ->
+        Plug.Conn.resp(conn, 200, context.simple_search_response_sample)
+      end
+
+      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}"}
+      solr_params = %Hui.Q{q: "*", distrib: true, "shards.tolerant": true, "shards.info": true, collection: "library,common"}
+      {_status, resp} = Hui.Search.search(url, [solr_params])
+      assert String.match?(resp.request_url, ~r/collection=library%2Ccommon&distrib=true&q=%2A&shards.info=true&shards.tolerant=true/)
+
+      {_status, resp} = Hui.search(url, solr_params)
+      assert String.match?(resp.request_url, ~r/collection=library%2Ccommon&distrib=true&q=%2A&shards.info=true&shards.tolerant=true/)
+    end
+
     test "should DisMax query via Hui.D", context do
       Bypass.expect context.bypass, fn conn ->
         Plug.Conn.resp(conn, 200, context.simple_search_response_sample)
