@@ -116,10 +116,12 @@ defmodule Hui.URL do
       iex> x = %Hui.Q{q: "edinburgh", fl: "id,title", fq: ["type:image"], rows: 15}
       %Hui.Q{
         cache: nil,
+        collection: nil,
         debug: nil,
         debugQuery: nil,
         defType: nil,
         df: nil,
+        distrib: nil,
         echoParams: nil,
         explainOther: nil,
         fl: "id,title",
@@ -132,6 +134,10 @@ defmodule Hui.URL do
         "q.op": nil,
         rows: 15,
         segmentTerminateEarly: nil,
+        shards: nil,
+        "shards.info": nil,
+        "shards.preference": nil,
+        "shards.tolerant": nil,
         sort: nil,
         sow: nil,
         start: nil,

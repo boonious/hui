@@ -8,7 +8,7 @@ defmodule Hui.MixProject do
   def project do
     [
       app: :hui,
-      version: "0.5.7",
+      version: "0.6.0",
       elixir: "~> 1.6",
       start_permanent: Mix.env() == :prod,
       deps: deps(),

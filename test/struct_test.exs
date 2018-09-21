@@ -9,32 +9,75 @@ defmodule HuiStructTest do
   describe "query struct Hui.Q" do
 
     test "set basic parameters" do
-     x = %Hui.Q{
-       cache: nil,
-       debug: nil,
-       debugQuery: nil,
-       defType: nil,
-       df: nil,
-       echoParams: nil,
-       explainOther: nil,
-       fl: "id,title",
-       fq: ["type:image"],
-       "json.nl": nil,
-       "json.wrf": nil,
-       logParamsList: nil,
-       omitHeader: nil,
-       q: "edinburgh",
-       "q.op": nil,
-       rows: 15,
-       segmentTerminateEarly: nil,
-       sort: nil,
-       sow: nil,
-       start: nil,
-       timeAllowed: nil,
-       tr: nil,
-       wt: nil
-     }
-     assert x == %Hui.Q{q: "edinburgh", fl: "id,title", fq: ["type:image"], rows: 15}
+      x = %Hui.Q{
+        cache: nil,
+        collection: nil,
+        debug: nil,
+        debugQuery: nil,
+        defType: nil,
+        df: nil,
+        distrib: nil,
+        echoParams: nil,
+        explainOther: nil,
+        fl: "id,title",
+        fq: ["type:image"],
+        "json.nl": nil,
+        "json.wrf": nil,
+        logParamsList: nil,
+        omitHeader: nil,
+        q: "edinburgh",
+        "q.op": nil,
+        rows: 15,
+        segmentTerminateEarly: nil,
+        shards: nil,
+        "shards.info": nil,
+        "shards.preference": nil,
+        "shards.tolerant": nil,
+        sort: nil,
+        sow: nil,
+        start: nil,
+        timeAllowed: nil,
+        tr: nil,
+        wt: nil
+      }
+      assert x == %Hui.Q{q: "edinburgh", fl: "id,title", fq: ["type:image"], rows: 15}
+    end
+
+    test "set SolrCloud parameters" do
+      x = %Hui.Q{
+        cache: nil,
+        collection: "library,common",
+        debug: nil,
+        debugQuery: nil,
+        defType: nil,
+        df: nil,
+        distrib: true,
+        echoParams: nil,
+        explainOther: nil,
+        fl: nil,
+        fq: [],
+        "json.nl": nil,
+        "json.wrf": nil,
+        logParamsList: nil,
+        omitHeader: nil,
+        q: "*",
+        "q.op": nil,
+        rows: nil,
+        segmentTerminateEarly: nil,
+        shards: "localhost:7574/solr/gettingstarted,localhost:8983/solr/gettingstarted",
+        "shards.info": true,
+        "shards.preference": nil,
+        "shards.tolerant": true,
+        sort: nil,
+        sow: nil,
+        start: nil,
+        timeAllowed: nil,
+        tr: nil,
+        wt: nil
+      }
+      assert x == %Hui.Q{q: "*", distrib: true, "shards.tolerant": true, 
+                         "shards.info": true, collection: "library,common",
+                         shards: "localhost:7574/solr/gettingstarted,localhost:8983/solr/gettingstarted"}
     end
 
     test "provide 'q' query setting" do
@@ -47,6 +90,13 @@ defmodule HuiStructTest do
     test "can be encoded into URL query string" do
       x = %Hui.Q{fl: "id,title", q: "loch", fq: ["type:image/jpeg", "year:2001"]}
       assert "fl=id%2Ctitle&fq=type%3Aimage%2Fjpeg&fq=year%3A2001&q=loch" = x |> Hui.URL.encode_query
+    end
+
+    test "SolrCloud request can be encoded into URL query string" do
+      x = %Hui.Q{q: "*", distrib: true, "shards.tolerant": true, "shards.info": true, collection: "library,common",
+                 shards: "localhost:7574/solr/gettingstarted,localhost:8983/solr/gettingstarted"}
+      assert "collection=library%2Ccommon&distrib=true&q=%2A&shards=localhost%3A7574%2Fsolr%2Fgettingstarted%2Clocalhost%3A8983%2Fsolr%2Fgettingstarted&shards.info=true&shards.tolerant=true" 
+             = x |> Hui.URL.encode_query
     end
 
   end
