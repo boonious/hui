@@ -23,6 +23,11 @@ a data collection in distributed server architecture (cloud).
   suggest_query = %Hui.S{q: "ha", count: 10, dictionary: ["name_infix", "ln_prefix", "fn_prefix"]}
   Hui.suggest(:library, suggest_query)
 
+  # MoreLikeThis query
+  query = %Hui.Q{q: "apache", rows: 10, wt: "xml"}
+  mlt = %Hui.M{fl: "manu,cat", mindf: 10, mintf: 200, "match.include": true, count: 10}
+  Hui.mlt(:library, query, mlt)
+
   # DisMax structured query via a list of existing Hui structs
   x = %Hui.D{q: "market", qf: "description^2.3 title", mm: "2<-25% 9<-3", pf: "title", ps: 1, qs: 3}
   y = %Hui.Q{rows: 10, start: 10, fq: ["edited:true"]}

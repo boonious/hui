@@ -11,7 +11,7 @@ defmodule Hui do
   """
 
   @type highlighter_struct :: Hui.H.t | Hui.H1.t | Hui.H2.t | Hui.H3.t
-  @type misc_struct :: Hui.S.t | Hui.Sp.t
+  @type misc_struct :: Hui.S.t | Hui.Sp.t | Hui.M.t
   @type query_struct_list :: list(Hui.Q.t | Hui.D.t | Hui.F.t | highlighter_struct | misc_struct)
   @type url :: binary | atom | Hui.URL.t
 
