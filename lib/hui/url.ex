@@ -179,17 +179,10 @@ defmodule Hui.URL do
   See `Hui.Q`, `Hui.F`, `Hui.F.Range`, `Hui.F.Interval` for more examples
   """
   @spec encode_query(url_params) :: binary
-  def encode_query(%Hui.Q{} = url_params), do: encode_query(url_params |> Map.to_list)
-  def encode_query(%Hui.D{} = url_params), do: encode_query(url_params |> Map.to_list)
-  def encode_query(%Hui.F{} = url_params), do: encode_query(url_params |> Map.to_list)
-  def encode_query(%Hui.H{} = url_params), do: encode_query(url_params |> Map.to_list)
-  def encode_query(%Hui.H1{} = url_params), do: encode_query(url_params |> Map.to_list)
-  def encode_query(%Hui.H2{} = url_params), do: encode_query(url_params |> Map.to_list)
   def encode_query(%Hui.H3{} = url_params), do: encode_query(url_params |> Map.to_list |> Enum.sort)
-  def encode_query(%Hui.S{} = url_params), do: encode_query(url_params |> Map.to_list)
-
   def encode_query(%Hui.F.Range{} = url_params), do: encode_query(url_params |> Map.to_list, "facet.range", url_params.range, url_params.per_field)
   def encode_query(%Hui.F.Interval{} = url_params), do: encode_query(url_params |> Map.to_list, "facet.interval", url_params.interval, url_params.per_field)
+  def encode_query(url_params) when is_map(url_params), do: encode_query(url_params |> Map.to_list)
 
   def encode_query([{:__struct__, Hui.Q} | tail]), do: tail |> encode_query
   def encode_query([{:__struct__, Hui.F} | tail]), do: Enum.map(tail, &prefix/1) |> encode_query
