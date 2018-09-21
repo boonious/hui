@@ -365,4 +365,29 @@ defmodule HuiStructTest do
     end
   end
 
+  describe "other structs" do
+
+    test "set suggester Hui.S parameters" do
+      x = %Hui.S{
+        build: true,
+        buildAll: nil,
+        cfq: nil,
+        count: 10,
+        dictionary: ["name_infix", "surname_prefix"],
+        q: "ha",
+        reload: true,
+        reloadAll: nil,
+        suggest: true
+      }
+      assert x == %Hui.S{q: "ha", count: 10, dictionary: ["name_infix", "surname_prefix"], reload: true, build: true}
+    end
+
+    test "Hui.S can be encoded into URL query string" do
+      x = %Hui.S{q: "ha", count: 10, dictionary: ["name_infix", "surname_prefix"], reload: true, build: true}
+      y = "suggest.build=true&suggest.count=10&suggest.dictionary=name_infix&suggest.dictionary=surname_prefix&suggest.q=ha&suggest.reload=true&suggest=true"
+      assert y == x |> Hui.URL.encode_query
+    end
+
+  end
+
 end

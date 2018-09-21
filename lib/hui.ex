@@ -153,4 +153,17 @@ defmodule Hui do
   @spec search(url, Hui.Q.t, Hui.F.t) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
   def search(url, %Hui.Q{} = query, %Hui.F{} = facet), do: Hui.Search.search(url, [query, facet])
 
+  @doc """
+  Issue a suggester query to a specific Solr endpoint.
+
+  ### Example
+
+  ```
+    suggest_query = %Hui.S{q: "ha", count: 10, dictionary: ["name_infix", "ln_prefix", "fn_prefix"]}
+    Hui.suggest(:library, suggest_query)
+  ```
+  """
+  @spec suggest(url, Hui.S.t) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
+  def suggest(url, %Hui.S{} = suggest_query_struct), do: Hui.Search.search(url, [suggest_query_struct])
+
 end

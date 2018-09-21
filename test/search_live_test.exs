@@ -13,7 +13,7 @@ defmodule HuiSearchLiveTest do
   # http://lucene.apache.org/solr/guide/solr-tutorial.html#solr-tutorial
   # e.g. http://localhost:8983/solr/gettingstarted
   #
-  describe "live SOLR API, search" do
+  describe "search" do
     @describetag live: false
 
     test "should perform keywords query" do
@@ -230,6 +230,26 @@ defmodule HuiSearchLiveTest do
       assert resp.body["highlighting"]
       assert String.match?(resp.request_url, ~r/hl.boundaryScanner=breakIterator&hl.bs.country=US&hl.bs.language=EN&hl.bs.type=WORD&hl.fl=features&hl=true&hl.method=fastVector/)
     end
+
+  end
+
+  describe "suggest" do
+    @describetag live: false
+
+    test "should query via Hui.S" do
+      x = %Hui.S{q: "ha", count: 10, dictionary: ["name_infix", "ln_prefix", "fn_prefix"]}
+      expected_response_header_params = %{
+        "suggest" => "true",
+        "suggest.count" => "10",
+        "suggest.dictionary" => ["name_infix", "ln_prefix", "fn_prefix"],
+        "suggest.q" => "ha"
+      }
+      {_status, resp} = Hui.suggest(:default, x)
+      requested_params = resp.body["responseHeader"]["params"]
+      assert expected_response_header_params == requested_params
+      assert String.match?(resp.request_url, ~r/suggest.count=10&suggest.dictionary=name_infix&suggest.dictionary=ln_prefix&suggest.dictionary=fn_prefix&suggest.q=ha&suggest=true/)
+    end
+
   end
 
 end

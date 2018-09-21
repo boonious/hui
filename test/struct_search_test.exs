@@ -98,4 +98,27 @@ defmodule HuiStructSearchTest do
 
   end
 
+  describe "suggeseter" do
+
+    test "query via Hui.S", context do
+     Bypass.expect context.bypass, fn conn ->
+       Plug.Conn.resp(conn, 200, context.simple_search_response_sample)
+     end
+
+     experted_url = "suggest.count=10&suggest.dictionary=name_infix&suggest.dictionary=ln_prefix&suggest.dictionary=fn_prefix&suggest.q=ha&suggest=true"
+     url = %Hui.URL{url: "http://localhost:#{context.bypass.port}"}
+     solr_params = %Hui.S{q: "ha", count: 10, dictionary: ["name_infix", "ln_prefix", "fn_prefix"]}
+
+     {_status, resp} = Hui.Search.search(url, [solr_params])
+     assert String.match?(resp.request_url, ~r/#{experted_url}/)
+
+     {_status, resp} = Hui.search(url, [solr_params])
+     assert String.match?(resp.request_url, ~r/#{experted_url}/)
+
+     {_status, resp} = Hui.suggest(url, solr_params)
+     assert String.match?(resp.request_url, ~r/#{experted_url}/)
+    end
+
+  end
+
 end

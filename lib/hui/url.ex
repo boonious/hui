@@ -186,6 +186,7 @@ defmodule Hui.URL do
   def encode_query(%Hui.H1{} = url_params), do: encode_query(url_params |> Map.to_list)
   def encode_query(%Hui.H2{} = url_params), do: encode_query(url_params |> Map.to_list)
   def encode_query(%Hui.H3{} = url_params), do: encode_query(url_params |> Map.to_list |> Enum.sort)
+  def encode_query(%Hui.S{} = url_params), do: encode_query(url_params |> Map.to_list)
 
   def encode_query(%Hui.F.Range{} = url_params), do: encode_query(url_params |> Map.to_list, "facet.range", url_params.range, url_params.per_field)
   def encode_query(%Hui.F.Interval{} = url_params), do: encode_query(url_params |> Map.to_list, "facet.interval", url_params.interval, url_params.per_field)
@@ -196,6 +197,7 @@ defmodule Hui.URL do
   def encode_query([{:__struct__, Hui.H1} | tail]), do: Enum.map(tail, &prefix(&1, "hl")) |> encode_query
   def encode_query([{:__struct__, Hui.H2} | tail]), do: Enum.map(tail, &prefix(&1, "hl")) |> encode_query
   def encode_query([{:__struct__, Hui.H3} | tail]), do: Enum.map(tail, &prefix(&1, "hl")) |> encode_query
+  def encode_query([{:__struct__, Hui.S} | tail]), do: Enum.map(tail, &prefix(&1, "suggest")) |> encode_query
 
   def encode_query(enumerable) when is_list(enumerable), do: Enum.reject(enumerable, &invalid_param?/1) |> Enum.map_join("&", &encode/1)
   def encode_query(_), do: ""
@@ -230,6 +232,7 @@ defmodule Hui.URL do
     case {k,prefix} do
       {:facet, _} -> {:facet, v}
       {:hl, _} -> {:hl, v}
+      {:suggest, _} -> {:suggest, v}
       {:range, "facet.range"} -> {:"facet.range", v} # render the same way despite per field setting
       {:method, "facet.range"} -> {:"facet.range.method", v} # ditto
       {:interval, "facet.interval"} -> {:"facet.interval", v} # ditto

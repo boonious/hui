@@ -19,6 +19,10 @@ a data collection in distributed server architecture (cloud).
   # `:library` is a URL reference key - see below
   Hui.search(:library, %Hui.Q{q: "loch", fq: ["type:illustration", "format:image/jpeg"]})
 
+  # Suggester query
+  suggest_query = %Hui.S{q: "ha", count: 10, dictionary: ["name_infix", "ln_prefix", "fn_prefix"]}
+  Hui.suggest(:library, suggest_query)
+
   # DisMax structured query via a list of existing Hui structs
   x = %Hui.D{q: "market", qf: "description^2.3 title", mm: "2<-25% 9<-3", pf: "title", ps: 1, qs: 3}
   y = %Hui.Q{rows: 10, start: 10, fq: ["edited:true"]}
