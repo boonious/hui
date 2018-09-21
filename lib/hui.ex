@@ -182,4 +182,18 @@ defmodule Hui do
   @spec suggest(url, Hui.S.t) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
   def suggest(url, %Hui.S{} = suggest_query_struct), do: Hui.Search.search(url, [suggest_query_struct])
 
+  @doc """
+  Issue a MoreLikeThis (mlt) query to a specific Solr endpoint.
+
+  ### Example
+
+  ```
+    query = %Hui.Q{q: "apache", rows: 10, wt: "xml"}
+    mlt = %Hui.M{fl: "manu,cat", mindf: 10, mintf: 200, "match.include": true, count: 10}
+    Hui.mlt(:library, query, mlt)
+  ```
+  """
+  @spec mlt(url, Hui.Q.t, Hui.M.t) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
+  def mlt(url, %Hui.Q{} = query_struct, %Hui.M{} = mlt_query_struct), do: Hui.Search.search(url, [query_struct, mlt_query_struct])
+
 end

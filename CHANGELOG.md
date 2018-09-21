@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.7 (2018-09-21)
+
+* Support autosuggest (suggester) query via suggest/2
+* Support spell checking query via spellcheck/3
+* Support MoreLikeThis query via mlt/3
+* Suggester query via Hui.S struct
+* Spell checking query via Hui.Sp struct
+* MoreLikeThis query via Hui.M struct
+
 ## 0.5.6 (2018-09-20)
 
 * Results highlighting (snippets) query via Hui.H struct

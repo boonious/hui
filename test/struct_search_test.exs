@@ -148,4 +148,28 @@ defmodule HuiStructSearchTest do
 
   end
 
+  describe "mlt" do
+
+    test "query via Hui.M", context do
+     Bypass.expect context.bypass, fn conn ->
+       Plug.Conn.resp(conn, 200, context.simple_search_response_sample)
+     end
+
+     experted_url = "mlt.count=10&mlt.fl=manu%2Ccat&mlt.match.include=true&mlt.mindf=10&mlt.mintf=200&mlt=true"
+     url = %Hui.URL{url: "http://localhost:#{context.bypass.port}"}
+     solr_params = %Hui.M{fl: "manu,cat", mindf: 10, mintf: 200, "match.include": true, count: 10}
+     solr_params_q = %Hui.Q{q: "apache", rows: 5, wt: "xml"}
+
+     {_status, resp} = Hui.Search.search(url, [solr_params])
+     assert String.match?(resp.request_url, ~r/#{experted_url}/)
+
+     {_status, resp} = Hui.search(url, [solr_params_q, solr_params])
+     assert String.match?(resp.request_url, ~r/q=apache&rows=5&wt=xml&#{experted_url}/)
+
+     {_status, resp} = Hui.mlt(url, solr_params_q, solr_params)
+     assert String.match?(resp.request_url, ~r/q=apache&rows=5&wt=xml&#{experted_url}/)
+    end
+
+  end
+
 end
