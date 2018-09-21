@@ -6,7 +6,7 @@ defmodule Hui.S do
             [:dictionary, :q, :count, :cfq, :build, :reload, :buildAll, :reloadAll]
 
   @typedoc """
-  Struct for [suggester](http://lucene.apache.org/solr/guide/7_4/suggester.html)
+  Struct for [suggester](http://lucene.apache.org/solr/guide/suggester.html)
   """
   @type t :: %__MODULE__{suggest: boolean, 
                          dictionary: binary | list(binary), q: binary, count: number, cfq: binary,

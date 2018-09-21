@@ -191,6 +191,7 @@ defmodule Hui.URL do
   def encode_query([{:__struct__, Hui.H2} | tail]), do: Enum.map(tail, &prefix(&1, "hl")) |> encode_query
   def encode_query([{:__struct__, Hui.H3} | tail]), do: Enum.map(tail, &prefix(&1, "hl")) |> encode_query
   def encode_query([{:__struct__, Hui.S} | tail]), do: Enum.map(tail, &prefix(&1, "suggest")) |> encode_query
+  def encode_query([{:__struct__, Hui.Sp} | tail]), do: Enum.map(tail, &prefix(&1, "spellcheck")) |> encode_query
 
   def encode_query(enumerable) when is_list(enumerable), do: Enum.reject(enumerable, &invalid_param?/1) |> Enum.map_join("&", &encode/1)
   def encode_query(_), do: ""
@@ -226,6 +227,7 @@ defmodule Hui.URL do
       {:facet, _} -> {:facet, v}
       {:hl, _} -> {:hl, v}
       {:suggest, _} -> {:suggest, v}
+      {:spellcheck, _} -> {:spellcheck, v}
       {:range, "facet.range"} -> {:"facet.range", v} # render the same way despite per field setting
       {:method, "facet.range"} -> {:"facet.range.method", v} # ditto
       {:interval, "facet.interval"} -> {:"facet.interval", v} # ditto

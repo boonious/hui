@@ -382,12 +382,45 @@ defmodule HuiStructTest do
       assert x == %Hui.S{q: "ha", count: 10, dictionary: ["name_infix", "surname_prefix"], reload: true, build: true}
     end
 
+    test "set spell checking Hui.Sp parameters" do
+      x = %Hui.Sp{
+        accuracy: nil,
+        alternativeTermCount: nil,
+        build: nil,
+        collate: nil,
+        collateExtendedResults: nil,
+        collateMaxCollectDocs: nil,
+        "collateParam.mm": nil,
+        "collateParam.q.op": "AND",
+        count: 10,
+        dictionary: "default",
+        extendedResults: nil,
+        maxCollationEvaluations: nil,
+        maxCollationTries: nil,
+        maxCollations: nil,
+        maxResultsForSuggest: nil,
+        onlyMorePopular: nil,
+        q: "delll ultra sharp",
+        queryAnalyzerFieldtype: nil,
+        reload: nil,
+        shards: nil,
+        "shards.qt": nil,
+        spellcheck: true
+      }
+      assert x == %Hui.Sp{q: "delll ultra sharp", count: 10, "collateParam.q.op": "AND", dictionary: "default"}
+    end
+
     test "Hui.S can be encoded into URL query string" do
       x = %Hui.S{q: "ha", count: 10, dictionary: ["name_infix", "surname_prefix"], reload: true, build: true}
       y = "suggest.build=true&suggest.count=10&suggest.dictionary=name_infix&suggest.dictionary=surname_prefix&suggest.q=ha&suggest.reload=true&suggest=true"
       assert y == x |> Hui.URL.encode_query
     end
 
+    test "Hui.Sp can be encoded into URL query string" do
+      x = %Hui.Sp{q: "delll ultra sharp", count: 10, "collateParam.q.op": "AND", dictionary: "default"}
+      y = "spellcheck.collateParam.q.op=AND&spellcheck.count=10&spellcheck.dictionary=default&spellcheck.q=delll+ultra+sharp&spellcheck=true"
+      assert y == x |> Hui.URL.encode_query
+    end
   end
 
 end

@@ -6,10 +6,13 @@ defmodule Hui do
   ### Usage
   
   - Searching Solr: `q/1`, `q/2`, `search/2`, `search/3`
+  - Other: `suggest/2`, `spellcheck/3`
   - [More details](https://hexdocs.pm/hui/readme.html#usage)
   """
 
-  @type query_struct_list :: list(Hui.Q.t|Hui.D.t|Hui.F.t)
+  @type highlighter_struct :: Hui.H.t | Hui.H1.t | Hui.H2.t | Hui.H3.t
+  @type misc_struct :: Hui.S.t | Hui.Sp.t
+  @type query_struct_list :: list(Hui.Q.t | Hui.D.t | Hui.F.t | highlighter_struct | misc_struct)
   @type url :: binary | atom | Hui.URL.t
 
   @doc """
@@ -152,6 +155,19 @@ defmodule Hui do
   """
   @spec search(url, Hui.Q.t, Hui.F.t) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
   def search(url, %Hui.Q{} = query, %Hui.F{} = facet), do: Hui.Search.search(url, [query, facet])
+
+  @doc """
+  Issue a spell checking query to a specific Solr endpoint.
+
+  ### Example
+
+  ```
+    spellcheck_query = %Hui.Sp{q: "delll ultra sharp", count: 10, "collateParam.q.op": "AND", dictionary: "default"}
+    Hui.spellcheck(:library, spellcheck_query)
+  ```
+  """
+  @spec spellcheck(url, Hui.Sp.t, Hui.Q.t) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
+  def spellcheck(url, %Hui.Sp{} = spellcheck_query_struct, query_struct \\ %Hui.Q{}), do: Hui.Search.search(url, [query_struct, spellcheck_query_struct])
 
   @doc """
   Issue a suggester query to a specific Solr endpoint.

@@ -98,7 +98,7 @@ defmodule HuiStructSearchTest do
 
   end
 
-  describe "suggeseter" do
+  describe "suggester" do
 
     test "query via Hui.S", context do
      Bypass.expect context.bypass, fn conn ->
@@ -117,6 +117,33 @@ defmodule HuiStructSearchTest do
 
      {_status, resp} = Hui.suggest(url, solr_params)
      assert String.match?(resp.request_url, ~r/#{experted_url}/)
+    end
+
+  end
+
+  describe "spell checking" do
+
+    test "query via Hui.Sp", context do
+     Bypass.expect context.bypass, fn conn ->
+       Plug.Conn.resp(conn, 200, context.simple_search_response_sample)
+     end
+
+     experted_url = "spellcheck.collateParam.q.op=AND&spellcheck.count=10&spellcheck.dictionary=default&spellcheck.q=delll\\\+ultra\\\+sharp&spellcheck=true"
+     url = %Hui.URL{url: "http://localhost:#{context.bypass.port}"}
+     solr_params = %Hui.Sp{q: "delll ultra sharp", count: 10, "collateParam.q.op": "AND", dictionary: "default"}
+     solr_params_q = %Hui.Q{df: "text", wt: "xml"}
+
+     {_status, resp} = Hui.Search.search(url, [solr_params])
+     assert String.match?(resp.request_url, ~r/#{experted_url}/)
+
+     {_status, resp} = Hui.search(url, [solr_params])
+     assert String.match?(resp.request_url, ~r/#{experted_url}/)
+
+     {_status, resp} = Hui.spellcheck(url, solr_params)
+     assert String.match?(resp.request_url, ~r/#{experted_url}/)
+
+     {_status, resp} = Hui.spellcheck(url, solr_params, solr_params_q)
+     assert String.match?(resp.request_url, ~r/df=text&wt=xml&#{experted_url}/)
     end
 
   end
