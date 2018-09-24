@@ -20,7 +20,8 @@ defmodule Hui.Search do
   @type solr_params :: Keyword.t | list(Hui.Q.t | Hui.D.t | Hui.F.t)
   @type solr_url :: :default | atom | Hui.URL.t
 
-  @error_msg "malformed query or URL"
+  @error_einval %Hui.Error{reason: :einval} # invalid argument exception
+  @error_nxdomain %Hui.Error{reason: :nxdomain} # invalid / non existing host or domain
 
   @doc """
   Issues a search query to a specific Solr endpoint.
@@ -86,10 +87,10 @@ defmodule Hui.Search do
     {status, url_struct} = Hui.URL.configured_url(url)
     case status do
       :ok -> exec_search(url_struct, query)
-      :error -> {:error, "URL not configured"}
+      :error -> {:error, @error_nxdomain}
     end
   end
-  def search(_, _), do: {:error, @error_msg}
+  def search(_, _), do: {:error, @error_einval}
 
   # decode JSON data and return other response formats as
   # raw text
@@ -105,12 +106,13 @@ defmodule Hui.Search do
   defp exec_search(%Hui.URL{} = url_struct, [head|tail]) do
     url = Hui.URL.to_string(url_struct)
     cond do
+     url_struct.url == "" -> {:error, @error_nxdomain}
      is_tuple(head) -> exec_search( url <> "?" <> Hui.URL.encode_query([head] ++ tail), url_struct.headers, url_struct.options )
      is_map(head) ->  exec_search( url <> "?" <> Enum.map_join([head] ++ tail, "&", &Hui.URL.encode_query/1), url_struct.headers, url_struct.options )
-     true -> {:error, @error_msg}
+     true -> {:error, @error_einval}
     end
   end
-  defp exec_search(_,_), do: {:error, @error_msg}
+  defp exec_search(_,_), do: {:error, @error_einval}
 
   defp exec_search(url, headers, options) do
    {status, resp} = get(url, headers, options)

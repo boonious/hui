@@ -7,7 +7,10 @@ defmodule HuiSearchTest do
     resp = File.read!("./test/data/simple_search_response.json")
     resp_xml = File.read!("./test/data/simple_search_response.xml")
     bypass = Bypass.open
-    {:ok, bypass: bypass, simple_search_response_sample: resp, simple_search_response_sample_xml: resp_xml}
+    error_einval = %Hui.Error{reason: :einval}
+    error_nxdomain = %Hui.Error{reason: :nxdomain}
+    {:ok, bypass: bypass, simple_search_response_sample: resp, simple_search_response_sample_xml: resp_xml,
+    error_einval: error_einval, error_nxdomain: error_nxdomain}
   end
 
   describe "http client" do
@@ -128,15 +131,15 @@ defmodule HuiSearchTest do
       assert is_binary(resp.body)
     end
 
-    test "should handle malformed queries" do
-      assert {:error, "malformed query or URL"} == Hui.q(nil)
-      assert {:error, "malformed query or URL"} == Hui.search(:default, nil)
-      assert {:error, "malformed query or URL"} == Hui.Search.search(:default, nil)
+    test "should handle malformed queries", context do
+      assert {:error, context.error_einval} == Hui.q(nil)
+      assert {:error, context.error_einval} == Hui.search(:default, nil)
+      assert {:error, context.error_einval} == Hui.Search.search(:default, nil)
     end
 
-    test "should handle missing URL" do
-      assert {:error, "URL not configured"} == Hui.search(nil, nil)
-      assert {:error, "URL not configured"} == Hui.Search.search(nil, nil)
+    test "should handle missing URL", context do
+      assert {:error, context.error_nxdomain} == Hui.search(nil, nil)
+      assert {:error, context.error_nxdomain} == Hui.Search.search(nil, nil)
     end
 
   end
