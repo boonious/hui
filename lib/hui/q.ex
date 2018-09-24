@@ -15,7 +15,8 @@ defmodule Hui.Q do
              :debug, :debugQuery, :explainOther, :timeAllowed, :segmentTerminateEarly,
              :omitHeader, :wt, :cache, :logParamsList, :echoParams,
              :"json.nl", :"json.wrf", :tr, :collection, :distrib,
-             :shards, :"shards.info", :"shards.preference", :"shards.tolerant", fq: []]
+             :shards, :"shards.info", :"shards.preference", :"shards.tolerant",
+             :cursorMark, fq: []]
 
   @typedoc """
   Struct for the standard query
@@ -31,6 +32,6 @@ defmodule Hui.Q do
                          "json.nl": binary, "json.wrf": binary, tr: binary,
                          collection: binary, distrib: boolean, shards: binary,
                          "shards.info": boolean, "shards.preference": binary, "shards.tolerant": boolean,
-                         fq: binary | list(binary)}
+                         cursorMark: binary, fq: binary | list(binary)}
 
 end

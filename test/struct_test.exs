@@ -12,6 +12,7 @@ defmodule HuiStructTest do
       x = %Hui.Q{
         cache: nil,
         collection: nil,
+        cursorMark: nil,
         debug: nil,
         debugQuery: nil,
         defType: nil,
@@ -47,6 +48,7 @@ defmodule HuiStructTest do
       x = %Hui.Q{
         cache: nil,
         collection: "library,common",
+        cursorMark: nil,
         debug: nil,
         debugQuery: nil,
         defType: nil,
@@ -78,6 +80,42 @@ defmodule HuiStructTest do
       assert x == %Hui.Q{q: "*", distrib: true, "shards.tolerant": true, 
                          "shards.info": true, collection: "library,common",
                          shards: "localhost:7574/solr/gettingstarted,localhost:8983/solr/gettingstarted"}
+    end
+
+    test "set deep paging parameters" do
+     x = %Hui.Q{
+       cache: nil,
+       collection: nil,
+       cursorMark: "*",
+       debug: nil,
+       debugQuery: nil,
+       defType: nil,
+       df: nil,
+       distrib: nil,
+       echoParams: nil,
+       explainOther: nil,
+       fl: nil,
+       fq: [],
+       "json.nl": nil,
+       "json.wrf": nil,
+       logParamsList: nil,
+       omitHeader: nil,
+       q: "*",
+       "q.op": nil,
+       rows: nil,
+       segmentTerminateEarly: nil,
+       shards: nil,
+       "shards.info": nil,
+       "shards.preference": nil,
+       "shards.tolerant": nil,
+       sort: "id asc",
+       sow: nil,
+       start: nil,
+       timeAllowed: nil,
+       tr: nil,
+       wt: nil
+     }
+     assert x == %Hui.Q{q: "*", cursorMark: "*", sort: "id asc" }
     end
 
     test "provide 'q' query setting" do

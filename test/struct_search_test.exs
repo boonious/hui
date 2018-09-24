@@ -40,6 +40,20 @@ defmodule HuiStructSearchTest do
       assert String.match?(resp.request_url, ~r/collection=library%2Ccommon&distrib=true&q=%2A&shards.info=true&shards.tolerant=true/)
     end
 
+    test "should facilitate deep paging", context do
+      Bypass.expect context.bypass, fn conn ->
+        Plug.Conn.resp(conn, 200, "")
+      end
+
+      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}"}
+      solr_params = %Hui.Q{q: "*", cursorMark: "*", sort: "id asc"}
+      {_status, resp} = Hui.Search.search(url, [solr_params])
+      assert String.match?(resp.request_url, ~r/cursorMark=%2A&q=%2A&sort=id\+asc/)
+
+      {_status, resp} = Hui.search(url, solr_params)
+      assert String.match?(resp.request_url, ~r/cursorMark=%2A&q=%2A&sort=id\+asc/)
+    end
+
     test "should DisMax query via Hui.D", context do
       Bypass.expect context.bypass, fn conn ->
         Plug.Conn.resp(conn, 200, context.simple_search_response_sample)

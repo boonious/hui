@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.1 (2018-09-25)
+
+* Provide 'cursorMark' parameter for deep paging in Hui.Q
+* Define and use a custom exception Hui.Error, instead of the mixed usage of HTTPoison and arbitrary error text responses
+
 ## 0.6.0 (2018-09-21)
 
 * Support SolrCloud request parameters such as 'collection', 'shards', 'shards.tolerant' in Hui.Q and distributed search
