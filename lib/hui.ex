@@ -36,7 +36,7 @@ defmodule Hui do
 
   ```
   """
-  @spec q(binary | Hui.Q.t | query_struct_list | Keyword.t) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
+  @spec q(binary | Hui.Q.t | query_struct_list | Keyword.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
   def q(query) when is_binary(query), do: search(:default, q: query)
   def q(%Hui.Q{} = q), do: search(:default, [q])
   def q(query), do: search(:default, query)
@@ -50,7 +50,7 @@ defmodule Hui do
     Hui.q(%Hui.Q{q: "author:I*", rows: 5}, %Hui.F{field: ["cat", "author_str"], mincount: 1})
   ```
   """
-  @spec q(Hui.Q.t, Hui.F.t) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
+  @spec q(Hui.Q.t, Hui.F.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
   def q(%Hui.Q{} = query, %Hui.F{} = facet), do: search(:default, [query, facet])
 
   @doc """
@@ -110,7 +110,7 @@ defmodule Hui do
   See `HTTPoison.request/5` for more details on HTTPoison options.
 
   """
-  @spec search(url, Hui.Q.t | query_struct_list) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
+  @spec search(url, Hui.Q.t | query_struct_list) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
   def search(url, %Hui.Q{} = query), do: Hui.Search.search(url, [query])
   def search(url, query), do: Hui.Search.search(url, query)
 
@@ -157,7 +157,7 @@ defmodule Hui do
   }
   ```
   """
-  @spec search(url, Hui.Q.t, Hui.F.t) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
+  @spec search(url, Hui.Q.t, Hui.F.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
   def search(url, %Hui.Q{} = query, %Hui.F{} = facet), do: Hui.Search.search(url, [query, facet])
 
   @doc """
@@ -170,7 +170,7 @@ defmodule Hui do
     Hui.spellcheck(:library, spellcheck_query)
   ```
   """
-  @spec spellcheck(url, Hui.Sp.t, Hui.Q.t) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
+  @spec spellcheck(url, Hui.Sp.t, Hui.Q.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
   def spellcheck(url, %Hui.Sp{} = spellcheck_query_struct, query_struct \\ %Hui.Q{}), do: Hui.Search.search(url, [query_struct, spellcheck_query_struct])
 
   @doc """
@@ -183,7 +183,7 @@ defmodule Hui do
     Hui.suggest(:library, suggest_query)
   ```
   """
-  @spec suggest(url, Hui.S.t) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
+  @spec suggest(url, Hui.S.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
   def suggest(url, %Hui.S{} = suggest_query_struct), do: Hui.Search.search(url, [suggest_query_struct])
 
   @doc """
@@ -197,7 +197,7 @@ defmodule Hui do
     Hui.mlt(:library, query, mlt)
   ```
   """
-  @spec mlt(url, Hui.Q.t, Hui.M.t) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
+  @spec mlt(url, Hui.Q.t, Hui.M.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
   def mlt(url, %Hui.Q{} = query_struct, %Hui.M{} = mlt_query_struct), do: Hui.Search.search(url, [query_struct, mlt_query_struct])
 
 end

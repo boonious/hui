@@ -23,7 +23,7 @@ defmodule HuiSearchTest do
 
     test "should handle unreachable host or offline server", context do
       Bypass.down(context.bypass)
-      assert {:error, %HTTPoison.Error{id: nil, reason: :econnrefused}} = Hui.search("http://localhost:#{context.bypass.port}", q: "http test")
+      assert {:error, %Hui.Error{reason: :econnrefused}} = Hui.search("http://localhost:#{context.bypass.port}", q: "http test")
     end
 
   end
@@ -79,8 +79,8 @@ defmodule HuiSearchTest do
     test "should facilitate HTTPoison options setting via %Hui.URL{}", context do
       # test with the HTTPoison "timeout" option, "0" setting mimicking a request timeout
       url = %Hui.URL{url: "http://localhost:#{context.bypass.port}/", options: [timeout: 0]}
-      assert {:error, %HTTPoison.Error{id: nil, reason: :connect_timeout}} = Hui.search(url, q: "*")
-      assert {:error, %HTTPoison.Error{id: nil, reason: :connect_timeout}} = Hui.Search.search(url, q: "*")
+      assert {:error, %Hui.Error{reason: :connect_timeout}} = Hui.search(url, q: "*")
+      assert {:error, %Hui.Error{reason: :connect_timeout}} = Hui.Search.search(url, q: "*")
 
       # test with the low-level HTTPoison "params" option, for appending additional query string params
       Bypass.expect context.bypass, fn conn -> Plug.Conn.resp(conn, 200, "") end

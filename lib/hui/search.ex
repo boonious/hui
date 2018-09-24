@@ -17,9 +17,10 @@ defmodule Hui.Search do
 
   use HTTPoison.Base 
 
-  @error_msg "malformed query or URL"
   @type solr_params :: Keyword.t | list(Hui.Q.t | Hui.D.t | Hui.F.t)
   @type solr_url :: :default | atom | Hui.URL.t
+
+  @error_msg "malformed query or URL"
 
   @doc """
   Issues a search query to a specific Solr endpoint.
@@ -78,7 +79,7 @@ defmodule Hui.Search do
   See `HTTPoison.request/5` for more details on HTTPoison options.
 
   """
-  @spec search(solr_url, solr_params) :: {:ok, HTTPoison.Response.t} | {:error, HTTPoison.Error.t} | {:error, String.t}
+  @spec search(solr_url, solr_params) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
   def search(%Hui.URL{} = url_struct, query), do: exec_search(url_struct, query)
   def search(url, query) when is_binary(url), do: exec_search(%Hui.URL{url: url}, query)
   def search(url, query) when is_atom(url) do
@@ -104,11 +105,19 @@ defmodule Hui.Search do
   defp exec_search(%Hui.URL{} = url_struct, [head|tail]) do
     url = Hui.URL.to_string(url_struct)
     cond do
-     is_tuple(head) -> get( url <> "?" <> Hui.URL.encode_query([head] ++ tail), url_struct.headers, url_struct.options )
-     is_map(head) ->  get( url <> "?" <> Enum.map_join([head] ++ tail, "&", &Hui.URL.encode_query/1), url_struct.headers, url_struct.options )
+     is_tuple(head) -> exec_search( url <> "?" <> Hui.URL.encode_query([head] ++ tail), url_struct.headers, url_struct.options )
+     is_map(head) ->  exec_search( url <> "?" <> Enum.map_join([head] ++ tail, "&", &Hui.URL.encode_query/1), url_struct.headers, url_struct.options )
      true -> {:error, @error_msg}
     end
   end
   defp exec_search(_,_), do: {:error, @error_msg}
+
+  defp exec_search(url, headers, options) do
+   {status, resp} = get(url, headers, options)
+   case status do
+     :ok -> {:ok, resp}
+     :error -> {:error, %Hui.Error{reason: resp.reason}}
+   end
+  end
 
 end
