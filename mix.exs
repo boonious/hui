@@ -40,7 +40,8 @@ defmodule Hui.MixProject do
       {:httpoison, "~> 1.0"},
       {:poison, "~> 3.1"},
       {:ex_doc, "~> 0.19", only: :dev, runtime: false},
-      {:bypass, "~> 0.8", only: :test}
+      {:bypass, "~> 0.8", only: :test},
+      {:dialyxir, "~> 1.0.0-rc.3", only: [:dev], runtime: false}
     ]
   end
 
