@@ -12,6 +12,8 @@ defmodule Hui.MixProject do
       elixir: "~> 1.6",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
+      test_coverage: [tool: ExCoveralls],
+      preferred_cli_env: [coveralls: :test, "coveralls.detail": :test, "coveralls.post": :test, "coveralls.html": :test],
 
       # Docs
       name: "Hui",
@@ -41,7 +43,8 @@ defmodule Hui.MixProject do
       {:poison, "~> 4.0.1"},
       {:ex_doc, "~> 0.19", only: :dev, runtime: false},
       {:bypass, "~> 0.8", only: :test},
-      {:dialyxir, "~> 1.0.0-rc.3", only: [:dev], runtime: false}
+      {:dialyxir, "~> 1.0.0-rc.3", only: [:dev], runtime: false},
+      {:excoveralls, "~> 0.10", only: :test},
     ]
   end
 
