@@ -39,7 +39,7 @@ defmodule Hui do
   @spec q(binary | Hui.Q.t | query_struct_list | Keyword.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
   def q(query) when is_binary(query), do: search(:default, q: query)
   def q(%Hui.Q{} = q), do: search(:default, [q])
-  def q(query), do: search(:default, query)
+  def q(query_struct_list), do: search(:default, query_struct_list)
 
   @doc """
   Issue a standard structured query and faceting request to the default Solr endpoint.
