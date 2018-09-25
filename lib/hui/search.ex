@@ -85,12 +85,12 @@ defmodule Hui.Search do
 
   """
   @spec search(solr_url, solr_params) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
-  def search(%Hui.URL{} = url_struct, query), do: exec_search(url_struct, query)
-  def search(url, query) when is_binary(url), do: exec_search(%Hui.URL{url: url}, query)
+  def search(%Hui.URL{} = url_struct, query), do: _search(url_struct, query)
+  def search(url, query) when is_binary(url), do: _search(%Hui.URL{url: url}, query)
   def search(url, query) when is_atom(url) do
     {status, url_struct} = Hui.URL.configured_url(url)
     case status do
-      :ok -> exec_search(url_struct, query)
+      :ok -> _search(url_struct, query)
       :error -> {:error, @error_nxdomain}
     end
   end
@@ -107,18 +107,18 @@ defmodule Hui.Search do
     end
   end
 
-  defp exec_search(%Hui.URL{} = url_struct, [head|tail]) do
+  defp _search(%Hui.URL{} = url_struct, [head|tail]) do
     url = Hui.URL.to_string(url_struct)
     cond do
      url_struct.url == "" -> {:error, @error_nxdomain}
-     is_tuple(head) -> exec_search( url <> "?" <> Hui.URL.encode_query([head] ++ tail), url_struct.headers, url_struct.options )
-     is_map(head) ->  exec_search( url <> "?" <> Enum.map_join([head] ++ tail, "&", &Hui.URL.encode_query/1), url_struct.headers, url_struct.options )
+     is_tuple(head) -> _search( url <> "?" <> Hui.URL.encode_query([head] ++ tail), url_struct.headers, url_struct.options )
+     is_map(head) ->  _search( url <> "?" <> Enum.map_join([head] ++ tail, "&", &Hui.URL.encode_query/1), url_struct.headers, url_struct.options )
      true -> {:error, @error_einval}
     end
   end
-  defp exec_search(_,_), do: {:error, @error_einval}
+  defp _search(_,_), do: {:error, @error_einval}
 
-  defp exec_search(url, headers, options) do
+  defp _search(url, headers, options) do
    {status, resp} = get(url, headers, options)
    case status do
      :ok -> {:ok, resp}
