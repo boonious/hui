@@ -17,7 +17,11 @@ defmodule Hui.Search do
 
   use HTTPoison.Base 
 
-  @type solr_params :: Keyword.t | list(Hui.Q.t | Hui.D.t | Hui.F.t)
+  @type highlighter_struct :: Hui.H.t | Hui.H1.t | Hui.H2.t | Hui.H3.t
+  @type misc_struct :: Hui.S.t | Hui.Sp.t | Hui.M.t
+  @type query_struct_list :: list(Hui.Q.t | Hui.D.t | Hui.F.t | highlighter_struct | misc_struct)
+  
+  @type solr_params :: Keyword.t | query_struct_list
   @type solr_url :: :default | atom | Hui.URL.t
 
   @error_einval %Hui.Error{reason: :einval} # invalid argument exception
