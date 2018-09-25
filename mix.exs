@@ -37,7 +37,7 @@ defmodule Hui.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:httpoison, "~> 1.0"},
+      {:httpoison, "~> 1.3.1"},
       {:poison, "~> 3.1"},
       {:ex_doc, "~> 0.19", only: :dev, runtime: false},
       {:bypass, "~> 0.8", only: :test},

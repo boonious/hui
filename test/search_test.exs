@@ -82,8 +82,8 @@ defmodule HuiSearchTest do
     test "should facilitate HTTPoison options setting via %Hui.URL{}", context do
       # test with the HTTPoison "timeout" option, "0" setting mimicking a request timeout
       url = %Hui.URL{url: "http://localhost:#{context.bypass.port}/", options: [timeout: 0]}
-      assert {:error, %Hui.Error{reason: :connect_timeout}} = Hui.search(url, q: "*")
-      assert {:error, %Hui.Error{reason: :connect_timeout}} = Hui.Search.search(url, q: "*")
+      assert {:error, %Hui.Error{reason: :checkout_timeout}} = Hui.search(url, q: "*")
+      assert {:error, %Hui.Error{reason: :checkout_timeout}} = Hui.Search.search(url, q: "*")
 
       # test with the low-level HTTPoison "params" option, for appending additional query string params
       Bypass.expect context.bypass, fn conn -> Plug.Conn.resp(conn, 200, "") end
