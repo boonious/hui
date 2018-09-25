@@ -110,7 +110,7 @@ defmodule Hui do
   See `HTTPoison.request/5` for more details on HTTPoison options.
 
   """
-  @spec search(url, Hui.Q.t | query_struct_list) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
+  @spec search(url, Hui.Q.t | query_struct_list | Keyword.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
   def search(url, %Hui.Q{} = query), do: Hui.Search.search(url, [query])
   def search(url, query), do: Hui.Search.search(url, query)
 
