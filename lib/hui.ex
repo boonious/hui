@@ -10,9 +10,6 @@ defmodule Hui do
   - [More details](https://hexdocs.pm/hui/readme.html#usage)
   """
 
-  @type highlighter_struct :: Hui.H.t | Hui.H1.t | Hui.H2.t | Hui.H3.t
-  @type misc_struct :: Hui.S.t | Hui.Sp.t | Hui.M.t
-  @type query_struct_list :: list(Hui.Q.t | Hui.D.t | Hui.F.t | highlighter_struct | misc_struct)
   @type url :: binary | atom | Hui.URL.t
 
   @doc """
@@ -36,7 +33,7 @@ defmodule Hui do
 
   ```
   """
-  @spec q(binary | Hui.Q.t | query_struct_list | Keyword.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
+  @spec q(binary | Hui.Q.t | Hui.Search.query_struct_list | Keyword.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
   def q(query) when is_binary(query), do: search(:default, q: query)
   def q(%Hui.Q{} = q), do: search(:default, [q])
   def q(query_struct_list), do: search(:default, query_struct_list)
@@ -110,7 +107,7 @@ defmodule Hui do
   See `HTTPoison.request/5` for more details on HTTPoison options.
 
   """
-  @spec search(url, Hui.Q.t | query_struct_list | Keyword.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
+  @spec search(url, Hui.Q.t | Hui.Search.query_struct_list | Keyword.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
   def search(url, %Hui.Q{} = query), do: Hui.Search.search(url, [query])
   def search(url, query), do: Hui.Search.search(url, query)
 
