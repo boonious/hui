@@ -167,8 +167,11 @@ defmodule Hui do
     Hui.spellcheck(:library, spellcheck_query)
   ```
   """
+  #@spec spellcheck(url, Hui.Sp.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
+  def spellcheck(url, %Hui.Sp{} = spellcheck_query_struct), do: Hui.Search.search(url, [spellcheck_query_struct])
+
   @spec spellcheck(url, Hui.Sp.t, Hui.Q.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
-  def spellcheck(url, %Hui.Sp{} = spellcheck_query_struct, query_struct \\ %Hui.Q{}), do: Hui.Search.search(url, [query_struct, spellcheck_query_struct])
+  def spellcheck(url, %Hui.Sp{} = spellcheck_query_struct, %Hui.Q{} = query_struct), do: Hui.Search.search(url, [query_struct, spellcheck_query_struct])
 
   @doc """
   Issue a suggester query to a specific Solr endpoint.
