@@ -3,7 +3,7 @@ defmodule Hui.Request do
 
   Hui.Request module provides underpinning HTTP-based request functions for Solr, including:
   
-  - `search/2`
+  - `search/2`, `search/3`
 
   ### Other low-level HTTP client features
 
@@ -27,7 +27,7 @@ defmodule Hui.Request do
   @doc """
   Issues a search query to a specific Solr endpoint.
 
-  The query parameters can be a keyword list or a list of Hui query structs: `t:Hui.Q.t/0`, `t:Hui.F.t/0`.
+  The query parameters can be a keyword list or a list of Hui query structs (`t:query_struct_list/0`).
 
   ## Example - parameters
 
@@ -47,7 +47,19 @@ defmodule Hui.Request do
     Hui.Request.search(url, [x, y, z])
   ```
 
-  The use of structs is more idiomatic and succinct. It is bound to qualified Solr fields. See `Hui.Q`, `Hui.F`, `Hui.URL.encode_query/1` for more details
+  The use of structs is more idiomatic and succinct. It is bound to qualified Solr fields.
+
+  The function returns a tuple or a `HTTPoison.Response` directly when `bang = true`.
+  This could be used to implement "bangified" functions such as `search!` as per Elixir convention.
+
+  ```
+    Hui.Request.search(url, [x, y, z]) 
+    # => {:ok, %HTTPoison.Response{..}}
+
+    bang = true
+    Hui.Request.search(url, bang, [x, y, z]) 
+    # => %HTTPoison.Response{..} or raise Hui.Error
+  ```
 
   ## Example - URL endpoints
   The URL can be specified as `t:Hui.URL.t/0`.
@@ -80,20 +92,23 @@ defmodule Hui.Request do
 
   See `HTTPoison.request/5` for more details on HTTPoison options.
   """
-  @spec search(solr_url, solr_params) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
-  def search(%Hui.URL{} = url, query), do: _search(url, query)
+  @spec search(solr_url, boolean, solr_params) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t} | HTTPoison.Response.t
+  def search(url, bang \\ false, query)
+  def search(%Hui.URL{} = url, bang, query), do: _search(url, bang, query)
 
-  def search("", _query), do: {:error, @error_einval}
-  def search(nil, _query), do: {:error, @error_einval}
-  def search(url, query) when is_binary(url), do: _search(%Hui.URL{url: url}, query)
-  def search(url, query) when is_atom(url) do
+  def search(url, true, _query) when url == "" or is_nil(url) or length(url) == 0, do: raise @error_einval
+  def search(url, _bang, _query) when url == "" or is_nil(url) or length(url) == 0, do: {:error, @error_einval}
+
+  def search(url, bang, query) when is_binary(url), do: _search(%Hui.URL{url: url}, bang, query)
+  def search(url, bang, query) when is_atom(url) do
     {status, url_struct} = Hui.URL.configured_url(url)
-    case status do
-      :ok -> _search(url_struct, query)
-      :error -> {:error, @error_nxdomain}
+    case {status, bang} do
+      {:ok, _} -> _search(url_struct, bang, query)
+      {:error, false} -> {:error, @error_nxdomain}
+      {:error, true} -> raise @error_nxdomain
     end
   end
-  def search(_, _), do: {:error, @error_einval}
+  def search(_,_,_), do: {:error, @error_einval}
 
   # decode JSON data and return other response formats as
   # raw text
@@ -106,18 +121,22 @@ defmodule Hui.Request do
     end
   end
 
-  defp _search(%Hui.URL{} = url_struct, [head|tail]) when is_tuple(head) do
+  # for keyword lists query 
+  defp _search(%Hui.URL{} = url_struct, bang, [head|tail]) when is_tuple(head) do
     url = Hui.URL.to_string(url_struct)
-    _search( url <> "?" <> Hui.URL.encode_query([head] ++ tail), url_struct.headers, url_struct.options )
+    _search( url <> "?" <> Hui.URL.encode_query([head] ++ tail), url_struct.headers, url_struct.options, bang )
   end
 
-  defp _search(%Hui.URL{} = url_struct, [head|tail]) when is_map(head) do
+  # for struct-based query 
+  defp _search(%Hui.URL{} = url_struct, bang, [head|tail]) when is_map(head) do
     url = Hui.URL.to_string(url_struct)
-    _search( url <> "?" <> Enum.map_join([head] ++ tail, "&", &Hui.URL.encode_query/1), url_struct.headers, url_struct.options )
+    _search( url <> "?" <> Enum.map_join([head] ++ tail, "&", &Hui.URL.encode_query/1), url_struct.headers, url_struct.options, bang )
   end
-  defp _search(_,_), do: {:error, @error_einval}
+  defp _search(_,true,_), do: raise @error_einval
+  defp _search(_,_,_), do: {:error, @error_einval}
 
-  defp _search(url, headers, options) do
+  defp _search(url, headers, options, true), do: get!(url, headers, options)
+  defp _search(url, headers, options, _bang) do
    {status, resp} = get(url, headers, options)
    case status do
      :ok -> {:ok, resp}
