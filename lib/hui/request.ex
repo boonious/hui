@@ -81,7 +81,7 @@ defmodule Hui.Request do
   See `HTTPoison.request/5` for more details on HTTPoison options.
   """
   @spec search(solr_url, solr_params) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
-  def search(%Hui.URL{} = url_struct, query), do: _search(url_struct, query)
+  def search(%Hui.URL{} = url, query), do: _search(url, query)
   def search(url, query) when is_binary(url), do: _search(%Hui.URL{url: url}, query)
   def search(url, query) when is_atom(url) do
     {status, url_struct} = Hui.URL.configured_url(url)
