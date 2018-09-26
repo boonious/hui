@@ -106,13 +106,14 @@ defmodule Hui.Request do
     end
   end
 
-  defp _search(%Hui.URL{} = url_struct, [head|tail]) do
+  defp _search(%Hui.URL{} = url_struct, [head|tail]) when is_tuple(head) do
     url = Hui.URL.to_string(url_struct)
-    cond do
-     is_tuple(head) -> _search( url <> "?" <> Hui.URL.encode_query([head] ++ tail), url_struct.headers, url_struct.options )
-     is_map(head) ->  _search( url <> "?" <> Enum.map_join([head] ++ tail, "&", &Hui.URL.encode_query/1), url_struct.headers, url_struct.options )
-     true -> {:error, @error_einval}
-    end
+    _search( url <> "?" <> Hui.URL.encode_query([head] ++ tail), url_struct.headers, url_struct.options )
+  end
+
+  defp _search(%Hui.URL{} = url_struct, [head|tail]) when is_map(head) do
+    url = Hui.URL.to_string(url_struct)
+    _search( url <> "?" <> Enum.map_join([head] ++ tail, "&", &Hui.URL.encode_query/1), url_struct.headers, url_struct.options )
   end
   defp _search(_,_), do: {:error, @error_einval}
 
