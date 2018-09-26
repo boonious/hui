@@ -1,5 +1,7 @@
 defmodule HuiSearchTest do
   use ExUnit.Case, async: true
+  import TestHelpers
+
   doctest Hui
 
   # testing with Bypass
@@ -32,15 +34,13 @@ defmodule HuiSearchTest do
   end
 
   describe "search" do
-    # tests for Hui.search(query), Hui.Request.search/2
+    # tests for Hui.search/2, Hui.Request.search/2
 
     test "should perform keywords query", context do
       Bypass.expect context.bypass, fn conn ->
-        Plug.Conn.resp(conn, 200, context.simple_search_response_sample)
+        Plug.Conn.resp(conn, 200, "")
       end
-      {_status, resp} = Hui.search("http://localhost:#{context.bypass.port}", q: "*")
-      assert length(resp.body["response"]["docs"]) > 0
-      assert String.match?(resp.request_url, ~r/q=*/)
+      assert check_search_req_url("http://localhost:#{context.bypass.port}", [q: "*"], ~r/q=*/)
     end
 
     test "should query with other Solr parameters", context do
@@ -49,10 +49,10 @@ defmodule HuiSearchTest do
       end
 
       solr_params = [q: "*", rows: 10, fq: ["cat:electronics", "popularity:[0 TO *]"] ]
+      assert check_search_req_url("http://localhost:#{context.bypass.port}", solr_params, ~r/q=%2A&rows=10&fq=cat%3Aelectronics&fq=popularity%3A%5B0\+TO\+%2A%5D/)
 
       {_status, resp} = Hui.search("http://localhost:#{context.bypass.port}", solr_params)
       assert length(resp.body["response"]["docs"]) > 0
-      assert String.match?(resp.request_url, ~r/q=%2A&rows=10&fq=cat%3Aelectronics&fq=popularity%3A%5B0\+TO\+%2A%5D/)
     end
 
     test "should work with %Hui.URL{}", context do
@@ -62,10 +62,9 @@ defmodule HuiSearchTest do
 
       solr_params = [suggest: true, "suggest.dictionary": "mySuggester", "suggest.q": "el"]
       url = %Hui.URL{url: "http://localhost:#{context.bypass.port}/solr/newspapers", handler: "suggest"}
-      {_status, resp} = Hui.search(url, solr_params)
+      experted_request_url = Hui.URL.encode_query(solr_params)
 
-      experted_request_url = Hui.URL.to_string(url) <> "?" <> Hui.URL.encode_query(solr_params)
-      assert experted_request_url == resp.request_url
+      assert check_search_req_url(url, solr_params, ~r/#{experted_request_url}/)
     end
 
     test "should facilitate HTTP headers setting via %Hui.URL{}", context do
@@ -75,8 +74,8 @@ defmodule HuiSearchTest do
          Plug.Conn.resp(conn, 200, "")
       end
       url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", headers: [test_header]}
-      Hui.search(url, q: "*")
       Hui.Request.search(url, q: "*")
+      Hui.search(url, q: "*")
     end
 
     test "should facilitate HTTPoison options setting via %Hui.URL{}", context do
@@ -88,10 +87,8 @@ defmodule HuiSearchTest do
       # test with the low-level HTTPoison "params" option, for appending additional query string params
       Bypass.expect context.bypass, fn conn -> Plug.Conn.resp(conn, 200, "") end
       url = %Hui.URL{url: "http://localhost:#{context.bypass.port}/", options: [params: [test: "from_test"]]}
-      {_status, resp} = Hui.search(url, q: "*")
-      assert String.match?(resp.request_url, ~r/test=from_test/)
-      {_status, resp} = Hui.Request.search(url, q: "*")
-      assert String.match?(resp.request_url, ~r/test=from_test/)
+      
+      assert check_search_req_url(url, [q: "*"], ~r/test=from_test/)
     end
 
     test "should work with configured URL via a config key" do
