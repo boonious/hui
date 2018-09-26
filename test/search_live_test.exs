@@ -57,7 +57,7 @@ defmodule HuiSearchLiveTest do
         "rows" => "10"
       }
 
-      {_status, resp} = Hui.Search.search(:default, [solr_params])
+      {_status, resp} = Hui.Request.search(:default, [solr_params])
       requested_params = resp.body["responseHeader"]["params"]
       assert expected_response_header_params == requested_params
       assert String.match?(resp.request_url, ~r/fq=cat%3Aelectronics&fq=popularity%3A%5B0\+TO\+%2A%5D&q=%2A&rows=10/)
@@ -91,7 +91,7 @@ defmodule HuiSearchLiveTest do
         "qs" => "3"
       }
 
-      {_status, resp} = Hui.Search.search(:default, [solr_params])
+      {_status, resp} = Hui.Request.search(:default, [solr_params])
       requested_params = resp.body["responseHeader"]["params"]
       assert expected_response_header_params == requested_params
       assert String.match?(resp.request_url, ~r/#{expected_query_url}/)
@@ -111,7 +111,7 @@ defmodule HuiSearchLiveTest do
         "qs" => "3",
         "rows" => "10"
       }
-      {_status, resp} = Hui.Search.search(:default, [solr_params, solr_params_ext1, solr_params_ext2])
+      {_status, resp} = Hui.Request.search(:default, [solr_params, solr_params_ext1, solr_params_ext2])
       requested_params = resp.body["responseHeader"]["params"]
       assert expected_response_header_params == requested_params
       assert String.match?(resp.request_url, ~r/#{expected_query_url}#{expected_query_url_ext}/)
@@ -130,7 +130,7 @@ defmodule HuiSearchLiveTest do
       x = %Hui.Q{q: "author:I*", rows: 5, echoParams: "explicit"}
       y = %Hui.F{field: ["cat", "author_str"], mincount: 1}
       solr_params = [x, y]
-      {_status, resp} = Hui.Search.search(:default, solr_params)
+      {_status, resp} = Hui.Request.search(:default, solr_params)
       requested_params = resp.body["responseHeader"]["params"]
       assert x.q == requested_params["q"]
       assert x.rows |> to_string == requested_params["rows"]
@@ -164,7 +164,7 @@ defmodule HuiSearchLiveTest do
         "rows" => "1"
       }
 
-      {_status, resp} = Hui.Search.search(:default, [x,y])
+      {_status, resp} = Hui.Request.search(:default, [x,y])
       requested_params = resp.body["responseHeader"]["params"]
       assert expected_response_header_params == requested_params
       assert resp.body["highlighting"]
@@ -188,7 +188,7 @@ defmodule HuiSearchLiveTest do
         "q" => "features:photo",
         "rows" => "1"
       }
-      {_status, resp} = Hui.Search.search(:default, [x,y1])
+      {_status, resp} = Hui.Request.search(:default, [x,y1])
       requested_params = resp.body["responseHeader"]["params"]
       assert expected_response_header_params == requested_params
       assert resp.body["highlighting"]
@@ -206,7 +206,7 @@ defmodule HuiSearchLiveTest do
         "q" => "features:photo",
         "rows" => "1"
       }
-      {_status, resp} = Hui.Search.search(:default, [x,y2])
+      {_status, resp} = Hui.Request.search(:default, [x,y2])
       requested_params = resp.body["responseHeader"]["params"]
       assert expected_response_header_params == requested_params
       assert resp.body["highlighting"]
@@ -224,7 +224,7 @@ defmodule HuiSearchLiveTest do
         "q" => "features:photo",
         "rows" => "1"
       }
-      {_status, resp} = Hui.Search.search(:default, [x,y3])
+      {_status, resp} = Hui.Request.search(:default, [x,y3])
       requested_params = resp.body["responseHeader"]["params"]
       assert expected_response_header_params == requested_params
       assert resp.body["highlighting"]

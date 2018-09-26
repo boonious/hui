@@ -1,21 +1,16 @@
-defmodule Hui.Search do
+defmodule Hui.Request do
   @moduledoc """
 
-  Hui.Search module provides various underpinning functions for querying Solr, including:
+  Hui.Request module provides underpinning HTTP-based request functions for Solr, including:
   
   - `search/2`
 
   ### Other low-level HTTP client features
 
-  Under the hood, Hui uses `HTTPoison` - an HTTP client to interact with Solr.
+  Under the hood, Hui uses `HTTPoison` client to interact with Solr.
   The existing low-level functions of HTTPoison, e.g. `get/1`, `get/3` 
   remain available as part of this module.
-
-  See the rest of the documentation for more details.
-
   """
-
-  @moduledoc deprecated: "Use Hui.Request instead"
 
   use HTTPoison.Base 
 
@@ -40,16 +35,16 @@ defmodule Hui.Search do
     url = "http://..."
 
     # Parameters can be supplied as a list of keywords, which are unbound and sent to Solr directly
-    Hui.Search.search(url, q: "glen cova", facet: "true", "facet.field": ["type", "year"])
+    Hui.Request.search(url, q: "glen cova", facet: "true", "facet.field": ["type", "year"])
 
     # Parameters can be a list of query structs
-    Hui.Search.search(url, [%Hui.Q{q: "glen cova"}, %Hui.F{field: ["type", "year"]}])
+    Hui.Request.search(url, [%Hui.Q{q: "glen cova"}, %Hui.F{field: ["type", "year"]}])
 
     # DisMax query, multiple structs usage
     x = %Hui.D{q: "edinburgh", qf: "description^2.3 title", mm: "2<-25% 9<-3"}
     y = %Hui.Q{rows: 10, fq: ["cat:electronics"]}
     z = %Hui.F{field: ["popularity"]} # faceting
-    Hui.Search.search(url, [x, y, z])
+    Hui.Request.search(url, [x, y, z])
   ```
 
   The use of structs is more idiomatic and succinct. It is bound to qualified Solr fields. See `Hui.Q`, `Hui.F`, `Hui.URL.encode_query/1` for more details
@@ -59,7 +54,7 @@ defmodule Hui.Search do
 
   ```
     url = %Hul.URL{url: "http://..."}
-    Hui.Search.search(url, q: "loch", rows: 5)
+    Hui.Request.search(url, q: "loch", rows: 5)
     # -> http://.../select?q=loch&rows=5
   ```
 
@@ -67,7 +62,7 @@ defmodule Hui.Search do
     
   ```
     url = :suggester
-    Hui.Search.search(url, suggest: true, "suggest.dictionary": "mySuggester", "suggest.q": "el")
+    Hui.Request.search(url, suggest: true, "suggest.dictionary": "mySuggester", "suggest.q": "el")
     # the above sends http://..configured_url../suggest?suggest=true&suggest.dictionary=mySuggester&suggest.q=el
   ```
 
@@ -80,13 +75,11 @@ defmodule Hui.Search do
   ```
     # setting up a header and a 10s receiving connection timeout
     url = %Hui.URL{url: "..", headers: [{"accept", "application/json"}], options: [recv_timeout: 10000]}
-    Hui.Search.search(url, q: "solr rocks")
+    Hui.Request.search(url, q: "solr rocks")
   ```
 
   See `HTTPoison.request/5` for more details on HTTPoison options.
-
   """
-  @deprecated "Use Hui.Request.search/2 instead"
   @spec search(solr_url, solr_params) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
   def search(%Hui.URL{} = url_struct, query), do: _search(url_struct, query)
   def search(url, query) when is_binary(url), do: _search(%Hui.URL{url: url}, query)

@@ -32,7 +32,7 @@ defmodule HuiSearchTest do
   end
 
   describe "search" do
-    # tests for Hui.search(query), Hui.Search.search/2
+    # tests for Hui.search(query), Hui.Request.search/2
 
     test "should perform keywords query", context do
       Bypass.expect context.bypass, fn conn ->
@@ -76,21 +76,21 @@ defmodule HuiSearchTest do
       end
       url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", headers: [test_header]}
       Hui.search(url, q: "*")
-      Hui.Search.search(url, q: "*")
+      Hui.Request.search(url, q: "*")
     end
 
     test "should facilitate HTTPoison options setting via %Hui.URL{}", context do
       # test with the HTTPoison "timeout" option, "0" setting mimicking a request timeout
       url = %Hui.URL{url: "http://localhost:#{context.bypass.port}/", options: [timeout: 0]}
       assert {:error, %Hui.Error{reason: :checkout_timeout}} = Hui.search(url, q: "*")
-      assert {:error, %Hui.Error{reason: :checkout_timeout}} = Hui.Search.search(url, q: "*")
+      assert {:error, %Hui.Error{reason: :checkout_timeout}} = Hui.Request.search(url, q: "*")
 
       # test with the low-level HTTPoison "params" option, for appending additional query string params
       Bypass.expect context.bypass, fn conn -> Plug.Conn.resp(conn, 200, "") end
       url = %Hui.URL{url: "http://localhost:#{context.bypass.port}/", options: [params: [test: "from_test"]]}
       {_status, resp} = Hui.search(url, q: "*")
       assert String.match?(resp.request_url, ~r/test=from_test/)
-      {_status, resp} = Hui.Search.search(url, q: "*")
+      {_status, resp} = Hui.Request.search(url, q: "*")
       assert String.match?(resp.request_url, ~r/test=from_test/)
     end
 
@@ -134,12 +134,12 @@ defmodule HuiSearchTest do
     test "should handle malformed queries", context do
       assert {:error, context.error_einval} == Hui.q(nil)
       assert {:error, context.error_einval} == Hui.search(:default, nil)
-      assert {:error, context.error_einval} == Hui.Search.search(:default, nil)
+      assert {:error, context.error_einval} == Hui.Request.search(:default, nil)
     end
 
     test "should handle missing URL", context do
       assert {:error, context.error_nxdomain} == Hui.search(nil, nil)
-      assert {:error, context.error_nxdomain} == Hui.Search.search(nil, nil)
+      assert {:error, context.error_nxdomain} == Hui.Request.search(nil, nil)
     end
 
   end

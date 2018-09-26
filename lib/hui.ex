@@ -33,7 +33,7 @@ defmodule Hui do
 
   ```
   """
-  @spec q(binary | Hui.Q.t | Hui.Search.query_struct_list | Keyword.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
+  @spec q(binary | Hui.Q.t | Hui.Request.query_struct_list | Keyword.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
   def q(query) when is_binary(query), do: search(:default, q: query)
   def q(%Hui.Q{} = q), do: search(:default, [q])
   def q(query_struct_list), do: search(:default, query_struct_list)
@@ -107,9 +107,9 @@ defmodule Hui do
   See `HTTPoison.request/5` for more details on HTTPoison options.
 
   """
-  @spec search(url, Hui.Q.t | Hui.Search.query_struct_list | Keyword.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
-  def search(url, %Hui.Q{} = query), do: Hui.Search.search(url, [query])
-  def search(url, query), do: Hui.Search.search(url, query)
+  @spec search(url, Hui.Q.t | Hui.Request.query_struct_list | Keyword.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
+  def search(url, %Hui.Q{} = query), do: Hui.Request.search(url, [query])
+  def search(url, query), do: Hui.Request.search(url, query)
 
   @doc """
   Issue a standard structured query and faceting request to a specific Solr endpoint.
@@ -155,7 +155,7 @@ defmodule Hui do
   ```
   """
   @spec search(url, Hui.Q.t, Hui.F.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
-  def search(url, %Hui.Q{} = query, %Hui.F{} = facet), do: Hui.Search.search(url, [query, facet])
+  def search(url, %Hui.Q{} = query, %Hui.F{} = facet), do: Hui.Request.search(url, [query, facet])
 
   @doc """
   Issue a spell checking query to a specific Solr endpoint.
@@ -168,10 +168,10 @@ defmodule Hui do
   ```
   """
   #@spec spellcheck(url, Hui.Sp.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
-  def spellcheck(url, %Hui.Sp{} = spellcheck_query_struct), do: Hui.Search.search(url, [spellcheck_query_struct])
+  def spellcheck(url, %Hui.Sp{} = spellcheck_query_struct), do: Hui.Request.search(url, [spellcheck_query_struct])
 
   @spec spellcheck(url, Hui.Sp.t, Hui.Q.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
-  def spellcheck(url, %Hui.Sp{} = spellcheck_query_struct, %Hui.Q{} = query_struct), do: Hui.Search.search(url, [query_struct, spellcheck_query_struct])
+  def spellcheck(url, %Hui.Sp{} = spellcheck_query_struct, %Hui.Q{} = query_struct), do: Hui.Request.search(url, [query_struct, spellcheck_query_struct])
 
   @doc """
   Issue a suggester query to a specific Solr endpoint.
@@ -184,7 +184,7 @@ defmodule Hui do
   ```
   """
   @spec suggest(url, Hui.S.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
-  def suggest(url, %Hui.S{} = suggest_query_struct), do: Hui.Search.search(url, [suggest_query_struct])
+  def suggest(url, %Hui.S{} = suggest_query_struct), do: Hui.Request.search(url, [suggest_query_struct])
 
   @doc """
   Issue a MoreLikeThis (mlt) query to a specific Solr endpoint.
@@ -198,6 +198,6 @@ defmodule Hui do
   ```
   """
   @spec mlt(url, Hui.Q.t, Hui.M.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
-  def mlt(url, %Hui.Q{} = query_struct, %Hui.M{} = mlt_query_struct), do: Hui.Search.search(url, [query_struct, mlt_query_struct])
+  def mlt(url, %Hui.Q{} = query_struct, %Hui.M{} = mlt_query_struct), do: Hui.Request.search(url, [query_struct, mlt_query_struct])
 
 end

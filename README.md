@@ -108,7 +108,7 @@ creating and encoding Solr parameters:
 - DisMax query: `Hui.D`
 - Faceting: `Hui.F`, `Hui.F.Range`, `Hui.F.Interval`
 - Results highlighting: `Hui.H`, `Hui.H1`, `Hui.H2`, `Hui.H3`
-- *structs for other request handlers are forthcoming*
+- Misc: spell-checking `Hui.Sp`, suggester `Hui.S`, MoreLikeThis `Hui.M`
 
 For example, instead of prefixing and repeating `fq=filter`, `facet.field=fieldname`, `facet.range.gap=10`,
 multiple filter and facet fields can be specified using
@@ -206,7 +206,7 @@ It is accessible via the `body` key.
 
 Under the hood, Hui uses `HTTPoison` - an HTTP client to interact with Solr.
 The existing low-level functions of HTTPoison e.g. `get/1`, `get/3`
-remain available in the `Hui.Search` module.
+remain available in the `Hui.Request` module.
 
 ## Installation
 
