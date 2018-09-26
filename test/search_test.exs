@@ -137,9 +137,11 @@ defmodule HuiSearchTest do
       assert {:error, context.error_einval} == Hui.Request.search(:default, nil)
     end
 
-    test "should handle missing URL", context do
-      assert {:error, context.error_nxdomain} == Hui.search(nil, nil)
-      assert {:error, context.error_nxdomain} == Hui.Request.search(nil, nil)
+    test "should handle missing or malformed URL", context do
+      assert {:error, context.error_einval} == Hui.search(nil, nil)
+      assert {:error, context.error_einval} == Hui.Request.search(nil, nil)
+      assert {:error, context.error_einval} == Hui.Request.search("", q: "*")
+      assert {:error, context.error_einval} == Hui.Request.search([], q: "*")
     end
 
   end

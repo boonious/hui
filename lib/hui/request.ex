@@ -82,6 +82,9 @@ defmodule Hui.Request do
   """
   @spec search(solr_url, solr_params) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
   def search(%Hui.URL{} = url, query), do: _search(url, query)
+
+  def search("", _query), do: {:error, @error_einval}
+  def search(nil, _query), do: {:error, @error_einval}
   def search(url, query) when is_binary(url), do: _search(%Hui.URL{url: url}, query)
   def search(url, query) when is_atom(url) do
     {status, url_struct} = Hui.URL.configured_url(url)
@@ -106,7 +109,6 @@ defmodule Hui.Request do
   defp _search(%Hui.URL{} = url_struct, [head|tail]) do
     url = Hui.URL.to_string(url_struct)
     cond do
-     url_struct.url == "" -> {:error, @error_nxdomain}
      is_tuple(head) -> _search( url <> "?" <> Hui.URL.encode_query([head] ++ tail), url_struct.headers, url_struct.options )
      is_map(head) ->  _search( url <> "?" <> Enum.map_join([head] ++ tail, "&", &Hui.URL.encode_query/1), url_struct.headers, url_struct.options )
      true -> {:error, @error_einval}
