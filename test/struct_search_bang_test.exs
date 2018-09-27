@@ -22,6 +22,9 @@ defmodule HuiStructSearchBangTest do
       url = %Hui.URL{url: "http://localhost:#{context.bypass.port}"}
       solr_params = %Hui.Q{q: "*", rows: 10, fq: ["cat:electronics", "popularity:[0 TO *]"]}
       assert check_search_req_url!(url, solr_params, ~r/fq=cat%3Aelectronics&fq=popularity%3A%5B0\+TO\+%2A%5D&q=%2A&rows=10/)
+
+      # test query to :default configured but not available URL
+      assert_raise HTTPoison.Error, ":econnrefused", fn -> Hui.q!(solr_params) end
     end
 
     test "should SolrCloud query via Hui.Q", context do

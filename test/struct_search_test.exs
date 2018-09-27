@@ -23,13 +23,9 @@ defmodule HuiStructSearchTest do
       solr_params = %Hui.Q{q: "*", rows: 10, fq: ["cat:electronics", "popularity:[0 TO *]"]}
       assert check_search_req_url(url, solr_params, ~r/fq=cat%3Aelectronics&fq=popularity%3A%5B0\+TO\+%2A%5D&q=%2A&rows=10/)
 
-      # test query to :default test URL which is setup at 8983
-      bypass = Bypass.open(port: 8983)
-      Bypass.expect bypass, fn conn ->
-        Plug.Conn.resp(conn, 200, "")
-      end
+      # test query to :default configured but not available URL
       {_status, resp} = Hui.q(solr_params)
-      assert String.match?(resp.request_url, ~r/fq=cat%3Aelectronics&fq=popularity%3A%5B0\+TO\+%2A%5D&q=%2A&rows=10/)
+      assert resp == %Hui.Error{reason: :econnrefused}
     end
 
     test "should SolrCloud query via Hui.Q", context do

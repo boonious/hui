@@ -27,6 +27,9 @@ defmodule HuiSearchBangTest do
         Plug.Conn.resp(conn, 200, "")
       end
       assert check_search_req_url!("http://localhost:#{context.bypass.port}", [q: "*"], ~r/q=*/)
+
+      # test query to :default configured but not available URL
+      assert_raise HTTPoison.Error, ":econnrefused", fn -> Hui.q!("*") end
     end
 
     test "should query with other Solr parameters", context do
@@ -39,6 +42,9 @@ defmodule HuiSearchBangTest do
 
       #{_status, resp} = Hui.search!("http://localhost:#{context.bypass.port}", solr_params)
       #assert length(resp.body["response"]["docs"]) > 0
+
+      # test query to :default configured but not available URL
+      assert_raise HTTPoison.Error, ":econnrefused", fn -> Hui.q!(solr_params) end
     end
 
     test "should work with %Hui.URL{}", context do
