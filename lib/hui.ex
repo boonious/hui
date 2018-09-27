@@ -128,6 +128,13 @@ defmodule Hui do
   def search(url, query), do: Request.search(url, query)
 
   @doc """
+  Issue a search query to a specific Solr endpoint, raise an exception in case of failure.
+  """
+  @spec search!(url, Hui.Q.t | Request.query_struct_list | Keyword.t) :: HTTPoison.Response.t
+  def search!(url, %Hui.Q{} = query), do: Request.search(url, true, [query])
+  def search!(url, query), do: Request.search(url, true, query)
+
+  @doc """
   Issue a standard structured query and faceting request to a specific Solr endpoint.
 
   ### Example
@@ -172,6 +179,9 @@ defmodule Hui do
   """
   @spec search(url, Hui.Q.t, Hui.F.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
   def search(url, %Hui.Q{} = query, %Hui.F{} = facet), do: Request.search(url, [query, facet])
+
+  @spec search!(url, Hui.Q.t, Hui.F.t) :: HTTPoison.Response.t
+  def search!(url, %Hui.Q{} = query, %Hui.F{} = facet), do: Request.search(url, true, [query, facet])
 
   @doc """
   Issue a spell checking query to a specific Solr endpoint.

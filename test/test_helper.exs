@@ -9,7 +9,6 @@ defmodule TestHelpers do
 
     {_status, resp} = Hui.search(url, solr_params)
     match2? = String.match?(resp.request_url, expected_url_regex)
-
     match1? and match2?
   end
 
@@ -19,7 +18,6 @@ defmodule TestHelpers do
 
     {_status, resp} = Hui.search(url, solr_params)
     match2? = String.match?(resp.request_url, expected_url_regex)
-
     match1? and match2?
   end
 
@@ -28,14 +26,20 @@ defmodule TestHelpers do
     bang = true
     resp = Hui.Request.search(url, bang, [solr_params])
     match1? = String.match?(resp.request_url, expected_url_regex)
-    match1?
+
+    resp = Hui.search!(url, solr_params)
+    match2? = String.match?(resp.request_url, expected_url_regex)
+    match1? and match2?
   end
 
   def check_search_req_url!(url, solr_params, expected_url_regex) when is_list(solr_params) do
     bang = true
     resp = Hui.Request.search(url, bang, solr_params)
     match1? = String.match?(resp.request_url, expected_url_regex)
-    match1?
+
+    resp = Hui.search!(url, solr_params)
+    match2? = String.match?(resp.request_url, expected_url_regex)
+    match1? and match2?
   end
 
 end

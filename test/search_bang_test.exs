@@ -40,8 +40,8 @@ defmodule HuiSearchBangTest do
       solr_params = [q: "*", rows: 10, fq: ["cat:electronics", "popularity:[0 TO *]"] ]
       assert check_search_req_url!("http://localhost:#{context.bypass.port}", solr_params, ~r/q=%2A&rows=10&fq=cat%3Aelectronics&fq=popularity%3A%5B0\+TO\+%2A%5D/)
 
-      #{_status, resp} = Hui.search!("http://localhost:#{context.bypass.port}", solr_params)
-      #assert length(resp.body["response"]["docs"]) > 0
+      resp = Hui.search!("http://localhost:#{context.bypass.port}", solr_params)
+      assert length(resp.body["response"]["docs"]) > 0
 
       # test query to :default configured but not available URL
       assert_raise HTTPoison.Error, ":econnrefused", fn -> Hui.q!(solr_params) end
@@ -68,7 +68,7 @@ defmodule HuiSearchBangTest do
       url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", headers: [test_header]}
       bang = true
       Hui.Request.search(url, bang, q: "*")
-      #Hui.search!(url, q: "*")
+      Hui.search!(url, q: "*")
     end
 
     test "should facilitate HTTPoison options setting via %Hui.URL{}", context do
@@ -96,6 +96,9 @@ defmodule HuiSearchBangTest do
       resp = Hui.Request.search(:library, bang, solr_params)
       experted_request_url = Hui.URL.to_string(url) <> "?" <> Hui.URL.encode_query(solr_params)
       assert experted_request_url == resp.request_url
+
+      resp = Hui.search!(:library, solr_params)
+      assert experted_request_url == resp.request_url
     end
 
     test "should decode and return raw JSON Solr response as Map", context do
@@ -105,6 +108,9 @@ defmodule HuiSearchBangTest do
 
       bang = true
       resp = Hui.Request.search("http://localhost:#{context.bypass.port}", bang, q: "test")
+      assert is_map(resp.body)
+
+      resp = Hui.search!("http://localhost:#{context.bypass.port}", q: "test")
       assert is_map(resp.body)
     end
 
@@ -121,21 +127,20 @@ defmodule HuiSearchBangTest do
 
     test "should handle malformed queries" do
       bang = true
-      #assert {:error, context.error_einval} == Hui.q!(nil)
-      #assert {:error, context.error_einval} == Hui.search!(:default, nil)
+      assert_raise Hui.Error, ":einval", fn -> Hui.q!(nil) end
+      assert_raise Hui.Error, ":einval", fn -> Hui.search!(:default, nil) end
       assert_raise Hui.Error, ":einval", fn -> Hui.Request.search(:default, bang, nil) end
       assert_raise Hui.Error, ":einval", fn -> Hui.Request.search(:default, bang, ["tes"]) end
     end
 
     test "should handle missing or malformed URL" do
       bang = true
-      #assert {:error, context.error_einval} == Hui.search!(nil, nil)
+      assert_raise Hui.Error, ":einval", fn -> Hui.search!(nil, nil) end
+      assert_raise Hui.Error, ":einval", fn -> Hui.search!("", q: "*") end
+      assert_raise Hui.Error, ":einval", fn -> Hui.search!([], q: "*") end
       assert_raise Hui.Error, ":einval", fn -> Hui.Request.search(nil, bang, nil) end
       assert_raise Hui.Error, ":einval", fn -> Hui.Request.search("", bang, q: "*") end
       assert_raise Hui.Error, ":einval", fn -> Hui.Request.search([], bang, q: "*") end
-      #assert {:ok, context.error_einval} == Hui.Request.search(nil, bang, nil)
-      #assert {:ok, context.error_einval} == Hui.Request.search("", bang, q: "*")
-      #assert {:ok, context.error_einval} == Hui.Request.search([], bang, q: "*")
     end
 
   end
