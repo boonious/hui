@@ -42,7 +42,6 @@ defmodule HuiSearchLiveTest do
       assert length(resp.body["response"]["docs"]) >= 0
       assert String.match?(resp.request_url, ~r/q=%2A&rows=10&facet=true&fl=%2A/)
 
-      solr_params = [q: "*", rows: 10, facet: true, fl: "*"]
       {_status, resp} = Hui.search(:default, solr_params)
       assert length(resp.body["response"]["docs"]) >= 0
       assert String.match?(resp.request_url, ~r/q=%2A&rows=10&facet=true&fl=%2A/)

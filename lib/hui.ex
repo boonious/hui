@@ -49,7 +49,7 @@ defmodule Hui do
   def q!(query_struct_list), do: Request.search(:default, true, query_struct_list)
 
   @doc """
-  Issue a standard structured query and faceting request to the default Solr endpoint.
+  Issue a standard structured query with faceting request to the default Solr endpoint.
 
   ### Example
 
@@ -59,6 +59,12 @@ defmodule Hui do
   """
   @spec q(Hui.Q.t, Hui.F.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
   def q(%Hui.Q{} = query, %Hui.F{} = facet), do: search(:default, [query, facet])
+
+  @doc """
+  Issue a standard structured query with faceting request to the default Solr endpoint, raise an exception in case of failure.
+  """
+  @spec q!(Hui.Q.t, Hui.F.t) :: HTTPoison.Response.t
+  def q!(%Hui.Q{} = query, %Hui.F{} = facet), do: Request.search(:default, true, [query, facet])
 
   @doc """
   Issue a search query to a specific Solr endpoint.

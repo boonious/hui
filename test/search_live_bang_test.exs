@@ -33,13 +33,11 @@ defmodule HuiSearchLiveBangTest do
       assert length(resp.body["response"]["docs"]) >= 0
       assert String.match?(resp.request_url, ~r/q=%2A&rows=10&facet=true&fl=%2A/)
 
-      #solr_params = [q: "*", rows: 10, facet: true, fl: "*"]
       #{_status, resp} = Hui.search(:default, solr_params)
       #assert length(resp.body["response"]["docs"]) >= 0
       #assert String.match?(resp.request_url, ~r/q=%2A&rows=10&facet=true&fl=%2A/)
     end
 
-    
     test "should query via Hui.Q struct" do
       solr_params = %Hui.Q{q: "*", rows: 10, fq: ["cat:electronics", "popularity:[0 TO *]"], echoParams: "explicit"}
       expected_response_header_params = %{
@@ -63,6 +61,31 @@ defmodule HuiSearchLiveBangTest do
       requested_params = resp.body["responseHeader"]["params"]
       assert expected_response_header_params == requested_params
       assert String.match?(resp.request_url, ~r/fq=cat%3Aelectronics&fq=popularity%3A%5B0\+TO\+%2A%5D&q=%2A&rows=10/)
+    end
+
+    test "should query via Hui.F faceting struct" do
+      x = %Hui.Q{q: "author:I*", rows: 5, echoParams: "explicit"}
+      y = %Hui.F{field: ["cat", "author_str"], mincount: 1}
+      solr_params = [x, y]
+
+      resp = Hui.Request.search(:default, true, solr_params)
+      requested_params = resp.body["responseHeader"]["params"]
+      assert x.q == requested_params["q"]
+      assert x.rows |> to_string == requested_params["rows"]
+      assert "true" == requested_params["facet"]
+      assert String.match?(resp.request_url, ~r/q=author%3AI%2A&rows=5&facet=true&facet.field=cat&facet.field=author_str&facet.mincount=1/)
+
+      resp =  Hui.q!(x,y)
+      assert x.q == requested_params["q"]
+      assert x.rows |> to_string == requested_params["rows"]
+      assert "true" == requested_params["facet"]
+      assert String.match?(resp.request_url, ~r/q=author%3AI%2A&rows=5&facet=true&facet.field=cat&facet.field=author_str&facet.mincount=1/)
+
+      #{_status, resp} =  Hui.search(:default,x,y)
+      #assert x.q == requested_params["q"]
+      #assert x.rows |> to_string == requested_params["rows"]
+      #assert "true" == requested_params["facet"]
+      #assert String.match?(resp.request_url, ~r/q=author%3AI%2A&rows=5&facet=true&facet.field=cat&facet.field=author_str&facet.mincount=1/)
     end
     
   end
