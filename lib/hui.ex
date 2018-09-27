@@ -251,4 +251,9 @@ defmodule Hui do
   @spec mlt(url, Hui.Q.t, Hui.M.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
   def mlt(url, %Hui.Q{} = query_struct, %Hui.M{} = mlt_query_struct), do: Request.search(url, [query_struct, mlt_query_struct])
 
+  @doc """
+  Issue a MoreLikeThis (mlt) query to a specific Solr endpoint, raise an exception in case of failure.
+  """
+  @spec mlt!(url, Hui.Q.t, Hui.M.t) :: HTTPoison.Response.t
+  def mlt!(url, %Hui.Q{} = query_struct, %Hui.M{} = mlt_query_struct), do: Request.search(url, true, [query_struct, mlt_query_struct])
 end
