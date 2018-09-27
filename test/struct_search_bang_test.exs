@@ -138,15 +138,15 @@ defmodule HuiStructSearchBangTest do
      experted_url = "spellcheck.collateParam.q.op=AND&spellcheck.count=10&spellcheck.dictionary=default&spellcheck.q=delll\\\+ultra\\\+sharp&spellcheck=true"
      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}"}
      solr_params = %Hui.Sp{q: "delll ultra sharp", count: 10, "collateParam.q.op": "AND", dictionary: "default"}
-     #solr_params_q = %Hui.Q{df: "text", wt: "xml"}
+     solr_params_q = %Hui.Q{df: "text", wt: "xml"}
 
      assert check_search_req_url!(url, [solr_params], ~r/#{experted_url}/)
 
-     #resp = Hui.spellcheck!(url, solr_params)
-     #assert String.match?(resp.request_url, ~r/#{experted_url}/)
+     resp = Hui.spellcheck!(url, solr_params)
+     assert String.match?(resp.request_url, ~r/#{experted_url}/)
 
-     #resp = Hui.spellcheck!(url, solr_params, solr_params_q)
-     #assert String.match?(resp.request_url, ~r/df=text&wt=xml&#{experted_url}/)
+     resp = Hui.spellcheck!(url, solr_params, solr_params_q)
+     assert String.match?(resp.request_url, ~r/df=text&wt=xml&#{experted_url}/)
     end
 
   end

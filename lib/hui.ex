@@ -180,6 +180,10 @@ defmodule Hui do
   @spec search(url, Hui.Q.t, Hui.F.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
   def search(url, %Hui.Q{} = query, %Hui.F{} = facet), do: Request.search(url, [query, facet])
 
+  @doc """
+  Issue a standard structured query and faceting request to a specific Solr endpoint,
+  raise an exception in case of failure.
+  """
   @spec search!(url, Hui.Q.t, Hui.F.t) :: HTTPoison.Response.t
   def search!(url, %Hui.Q{} = query, %Hui.F{} = facet), do: Request.search(url, true, [query, facet])
 
@@ -193,11 +197,26 @@ defmodule Hui do
     Hui.spellcheck(:library, spellcheck_query)
   ```
   """
-  #@spec spellcheck(url, Hui.Sp.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
+  @spec spellcheck(url, Hui.Sp.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
   def spellcheck(url, %Hui.Sp{} = spellcheck_query_struct), do: Request.search(url, [spellcheck_query_struct])
 
+  @doc """
+  Issue a spell checking query to a specific Solr endpoint, raise an exception in case of failure.
+  """
+  @spec spellcheck!(url, Hui.Sp.t) :: HTTPoison.Response.t
+  def spellcheck!(url, %Hui.Sp{} = spellcheck_query_struct), do: Request.search(url, true, [spellcheck_query_struct])
+
+  @doc """
+  Issue a spell checking query to a specific Solr endpoint.
+  """
   @spec spellcheck(url, Hui.Sp.t, Hui.Q.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
   def spellcheck(url, %Hui.Sp{} = spellcheck_query_struct, %Hui.Q{} = query_struct), do: Request.search(url, [query_struct, spellcheck_query_struct])
+
+  @doc """
+  Issue a spell checking query to a specific Solr endpoint, raise an exception in case of failure.
+  """
+  @spec spellcheck!(url, Hui.Sp.t, Hui.Q.t) :: HTTPoison.Response.t
+  def spellcheck!(url, %Hui.Sp{} = spellcheck_query_struct, %Hui.Q{} = query_struct), do: Request.search(url, true, [query_struct, spellcheck_query_struct])
 
   @doc """
   Issue a suggester query to a specific Solr endpoint.
