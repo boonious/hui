@@ -41,6 +41,14 @@ defmodule HuiSearchTest do
         Plug.Conn.resp(conn, 200, "")
       end
       assert check_search_req_url("http://localhost:#{context.bypass.port}", [q: "*"], ~r/q=*/)
+
+      # test query to :default test URL which is setup at 8983
+      bypass = Bypass.open(port: 8983)
+      Bypass.expect bypass, fn conn ->
+        Plug.Conn.resp(conn, 200, "")
+      end
+      {_status, resp} = Hui.q("test")
+      assert String.match?(resp.request_url, ~r/q=test/)
     end
 
     test "should query with other Solr parameters", context do
@@ -53,6 +61,14 @@ defmodule HuiSearchTest do
 
       {_status, resp} = Hui.search("http://localhost:#{context.bypass.port}", solr_params)
       assert length(resp.body["response"]["docs"]) > 0
+
+      # test query to :default test URL which is setup at 8983
+      bypass = Bypass.open(port: 8983)
+      Bypass.expect bypass, fn conn ->
+        Plug.Conn.resp(conn, 200, "")
+      end
+      {_status, resp} = Hui.q(solr_params)
+      assert String.match?(resp.request_url, ~r/q=%2A&rows=10&fq=cat%3Aelectronics&fq=popularity%3A%5B0\+TO\+%2A%5D/)
     end
 
     test "should work with %Hui.URL{}", context do
