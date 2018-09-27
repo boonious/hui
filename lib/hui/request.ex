@@ -96,8 +96,8 @@ defmodule Hui.Request do
   def search(url, bang \\ false, query)
   def search(%Hui.URL{} = url, bang, query), do: _search(url, bang, query)
 
-  def search(url, true, _query) when url == "" or is_nil(url) or length(url) == 0, do: raise @error_einval
-  def search(url, _bang, _query) when url == "" or is_nil(url) or length(url) == 0, do: {:error, @error_einval}
+  def search(url, true, _query) when is_nil_empty(url), do: raise @error_einval
+  def search(url, _bang, _query) when is_nil_empty(url), do: {:error, @error_einval}
 
   def search(url, bang, query) when is_binary(url), do: _search(%Hui.URL{url: url}, bang, query)
   def search(url, bang, query) when is_atom(url) do
