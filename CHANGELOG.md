@@ -34,8 +34,8 @@
 ## 0.5.5 (2018-09-20)
 
 * `q/1`, `search/2` to generally accept a list of current and forthcoming Hui structs for more complex querying, e.g. DisMax
-* DisMax (Maximum Disjunction) and Extended DisMax (eDisMax) query now via a new Hui.D struct
-* Deprecate DisMax parameters from Hui.Q struct
+* DisMax (Maximum Disjunction) and Extended DisMax (eDisMax) query now via a new `Hui.D` struct
+* Deprecate DisMax parameters from `Hui.Q` struct
 
 ## 0.5.4 (2018-09-16)
 
