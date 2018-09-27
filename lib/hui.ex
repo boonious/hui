@@ -232,6 +232,12 @@ defmodule Hui do
   def suggest(url, %Hui.S{} = suggest_query_struct), do: Request.search(url, [suggest_query_struct])
 
   @doc """
+  Issue a suggester query to a specific Solr endpoint, raise an exception in case of failure.
+  """
+  @spec suggest!(url, Hui.S.t) :: HTTPoison.Response.t
+  def suggest!(url, %Hui.S{} = suggest_query_struct), do: Request.search(url, true, [suggest_query_struct])
+
+  @doc """
   Issue a MoreLikeThis (mlt) query to a specific Solr endpoint.
 
   ### Example

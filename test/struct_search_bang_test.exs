@@ -122,8 +122,8 @@ defmodule HuiStructSearchBangTest do
 
      assert check_search_req_url!(url, [solr_params], ~r/#{experted_url}/)
 
-     #resp = Hui.suggest!(url, solr_params)
-     #assert String.match?(resp.request_url, ~r/#{experted_url}/)
+     resp = Hui.suggest!(url, solr_params)
+     assert String.match?(resp.request_url, ~r/#{experted_url}/)
     end
 
   end
