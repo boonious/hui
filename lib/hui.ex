@@ -16,7 +16,7 @@ defmodule Hui do
   @type url :: binary | atom | Hui.URL.t
 
   @doc """
-  Issue a keyword or structured query to the default Solr endpoint.
+  Issue a keyword list or structured query to the default Solr endpoint.
 
   The query can either be a keyword list, a standard query struct (`Hui.Q`)
   or a struct list. This function is a shortcut for `search/2` with `:default` as URL key.
@@ -40,9 +40,9 @@ defmodule Hui do
   def q(query) when is_list(query), do: search(:default, query)
 
   @doc """
-  Issue a keyword or structured query to the default Solr endpoint, raising an exception in case of failure.
+  Issue a keyword list or structured query to the default Solr endpoint, raising an exception in case of failure.
   """
-  @spec q!(binary | Hui.Q.t | Request.query_struct_list | Keyword.t) :: HTTPoison.Response.t
+  @spec q!(Hui.Q.t | Request.query_struct_list | Keyword.t) :: HTTPoison.Response.t
   def q!(%Hui.Q{} = query), do: Request.search(:default, true, [query])
   def q!(query) when is_list(query), do: Request.search(:default, true, query)
 
@@ -103,7 +103,7 @@ defmodule Hui do
   end
 
   @doc """
-  Issue a search query to a specific Solr endpoint.
+  Issue a keyword list or structured query to a specified Solr endpoint.
   
   ### Example - parameters 
   
@@ -161,17 +161,17 @@ defmodule Hui do
   """
   @spec search(url, Hui.Q.t | Request.query_struct_list | Keyword.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
   def search(url, %Hui.Q{} = query), do: Request.search(url, [query])
-  def search(url, query), do: Request.search(url, query)
+  def search(url, query) when is_list(query), do: Request.search(url, query)
 
   @doc """
-  Issue a search query to a specific Solr endpoint, raise an exception in case of failure.
+  Issue a keyword list or structured query to a specified Solr endpoint, raise an exception in case of failure.
   """
   @spec search!(url, Hui.Q.t | Request.query_struct_list | Keyword.t) :: HTTPoison.Response.t
   def search!(url, %Hui.Q{} = query), do: Request.search(url, true, [query])
   def search!(url, query), do: Request.search(url, true, query)
 
   @doc """
-  Issue a standard structured query and faceting request to a specific Solr endpoint.
+  Issue a standard structured query with faceting request to a specified Solr endpoint.
 
   ### Example
 
@@ -217,14 +217,29 @@ defmodule Hui do
   def search(url, %Hui.Q{} = query, %Hui.F{} = facet), do: Request.search(url, [query, facet])
 
   @doc """
-  Issue a standard structured query and faceting request to a specific Solr endpoint,
+  Issue a standard structured query with faceting request to a specified Solr endpoint,
   raise an exception in case of failure.
   """
   @spec search!(url, Hui.Q.t, Hui.F.t) :: HTTPoison.Response.t
   def search!(url, %Hui.Q{} = query, %Hui.F{} = facet), do: Request.search(url, true, [query, facet])
 
   @doc """
-  Issue a spell checking query to a specific Solr endpoint.
+  Convenience function for issuing various typical queries to a specified Solr endpoint.
+
+  See `q/6`.
+  """
+  @spec search(url, binary, nil|integer, nil|integer, nil|binary|list(binary), nil|binary|list(binary), nil|binary)
+        :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
+  def search(url, keywords, rows \\ nil, start \\ nil, filters \\ nil, facet_fields \\ nil, sort \\ nil)
+  def search(url, keywords, _, _, _, _, _) when is_nil_empty(keywords) or is_nil_empty(url), do: {:error, %Hui.Error{reason: :einval}}
+  def search(url, keywords, rows, start, filters, facet_fields, sort) do
+    q = %Hui.Q{q: keywords, rows: rows, start: start, fq: filters, sort: sort}
+    f = %Hui.F{field: facet_fields}
+    Request.search(url, false, [q,f])
+  end
+
+  @doc """
+  Issue a spell checking query to a specified Solr endpoint.
 
   ### Example
 
@@ -237,25 +252,25 @@ defmodule Hui do
   def spellcheck(url, %Hui.Sp{} = spellcheck_query_struct), do: Request.search(url, [spellcheck_query_struct])
 
   @doc """
-  Issue a spell checking query to a specific Solr endpoint, raise an exception in case of failure.
+  Issue a spell checking query to a specified Solr endpoint, raise an exception in case of failure.
   """
   @spec spellcheck!(url, Hui.Sp.t) :: HTTPoison.Response.t
   def spellcheck!(url, %Hui.Sp{} = spellcheck_query_struct), do: Request.search(url, true, [spellcheck_query_struct])
 
   @doc """
-  Issue a spell checking query to a specific Solr endpoint.
+  Issue a spell checking query to a specified Solr endpoint.
   """
   @spec spellcheck(url, Hui.Sp.t, Hui.Q.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
   def spellcheck(url, %Hui.Sp{} = spellcheck_query_struct, %Hui.Q{} = query_struct), do: Request.search(url, [query_struct, spellcheck_query_struct])
 
   @doc """
-  Issue a spell checking query to a specific Solr endpoint, raise an exception in case of failure.
+  Issue a spell checking query to a specified Solr endpoint, raise an exception in case of failure.
   """
   @spec spellcheck!(url, Hui.Sp.t, Hui.Q.t) :: HTTPoison.Response.t
   def spellcheck!(url, %Hui.Sp{} = spellcheck_query_struct, %Hui.Q{} = query_struct), do: Request.search(url, true, [query_struct, spellcheck_query_struct])
 
   @doc """
-  Issue a suggester query to a specific Solr endpoint.
+  Issue a suggester query to a specified Solr endpoint.
 
   ### Example
 
@@ -268,13 +283,13 @@ defmodule Hui do
   def suggest(url, %Hui.S{} = suggest_query_struct), do: Request.search(url, [suggest_query_struct])
 
   @doc """
-  Issue a suggester query to a specific Solr endpoint, raise an exception in case of failure.
+  Issue a suggester query to a specified Solr endpoint, raise an exception in case of failure.
   """
   @spec suggest!(url, Hui.S.t) :: HTTPoison.Response.t
   def suggest!(url, %Hui.S{} = suggest_query_struct), do: Request.search(url, true, [suggest_query_struct])
 
   @doc """
-  Issue a MoreLikeThis (mlt) query to a specific Solr endpoint.
+  Issue a MoreLikeThis (mlt) query to a specified Solr endpoint.
 
   ### Example
 
@@ -288,7 +303,7 @@ defmodule Hui do
   def mlt(url, %Hui.Q{} = query_struct, %Hui.M{} = mlt_query_struct), do: Request.search(url, [query_struct, mlt_query_struct])
 
   @doc """
-  Issue a MoreLikeThis (mlt) query to a specific Solr endpoint, raise an exception in case of failure.
+  Issue a MoreLikeThis (mlt) query to a specified Solr endpoint, raise an exception in case of failure.
   """
   @spec mlt!(url, Hui.Q.t, Hui.M.t) :: HTTPoison.Response.t
   def mlt!(url, %Hui.Q{} = query_struct, %Hui.M{} = mlt_query_struct), do: Request.search(url, true, [query_struct, mlt_query_struct])
