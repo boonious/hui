@@ -93,7 +93,7 @@ defmodule Hui do
   raise an exception in case of failure.
   """
   @spec q!(binary, nil|integer, nil|integer, nil|binary|list(binary), nil|binary|list(binary), nil|binary)
-        :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
+        :: HTTPoison.Response.t
   def q!(keywords, rows \\ nil, start \\ nil, filters \\ nil, facet_fields \\ nil, sort \\ nil)
   def q!(keywords, _, _, _, _, _) when is_nil_empty(keywords), do: raise %Hui.Error{reason: :einval}
   def q!(keywords, rows, start, filters, facet_fields, sort) do
@@ -245,7 +245,7 @@ defmodule Hui do
   See `q/6`.
   """
   @spec search!(url, binary, nil|integer, nil|integer, nil|binary|list(binary), nil|binary|list(binary), nil|binary)
-        :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
+        :: HTTPoison.Response.t
   def search!(url, keywords, rows \\ nil, start \\ nil, filters \\ nil, facet_fields \\ nil, sort \\ nil)
   def search!(url, keywords, _, _, _, _, _) when is_nil_empty(keywords) or is_nil_empty(url), do: raise %Hui.Error{reason: :einval}
   def search!(url, keywords, rows, start, filters, facet_fields, sort) do
@@ -320,6 +320,19 @@ defmodule Hui do
   def suggest(url, q, count, dictionaries, context) do
     suggest_query = %Hui.S{q: q, count: count, dictionary: dictionaries, cfq: context}
     Request.search(url, false, [suggest_query])
+  end
+
+  @doc """
+  Convenience function for issuing a suggester query to a specified Solr endpoint,
+  raise an exception in case of failure.
+  """
+  @spec suggest!(url, binary, nil|integer, nil|binary|list(binary), nil|binary)
+        :: HTTPoison.Response.t
+  def suggest!(url, q, count \\ nil, dictionaries \\ nil, context \\ nil)
+  def suggest!(url, q, _, _, _) when is_nil_empty(q) or is_nil_empty(url), do: raise %Hui.Error{reason: :einval}
+  def suggest!(url, q, count, dictionaries, context) do
+    suggest_query = %Hui.S{q: q, count: count, dictionary: dictionaries, cfq: context}
+    Request.search(url, true, [suggest_query])
   end
 
   @doc """

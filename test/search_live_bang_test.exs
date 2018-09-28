@@ -212,6 +212,20 @@ defmodule HuiSearchLiveBangTest do
       assert String.match?(resp.request_url, ~r/suggest.count=10&suggest.dictionary=name_infix&suggest.dictionary=ln_prefix&suggest.dictionary=fn_prefix&suggest.q=ha&suggest=true/)
     end
 
+    test "convenience function" do
+      expected_response_header_params = %{
+        "suggest" => "true",
+        "suggest.count" => "5",
+        "suggest.dictionary" => ["name_infix", "ln_prefix", "fn_prefix"],
+        "suggest.q" => "ha",
+        "suggest.cfq" => "1939"
+      }
+      resp = Hui.suggest!(:default, "ha", 5, ["name_infix", "ln_prefix", "fn_prefix"], "1939")
+      requested_params = resp.body["responseHeader"]["params"]
+      expected_url_str = "suggest.cfq=1939&suggest.count=5&suggest.dictionary=name_infix&suggest.dictionary=ln_prefix&suggest.dictionary=fn_prefix&suggest.q=ha&suggest=true"
+      assert expected_response_header_params == requested_params
+      assert String.match?(resp.request_url, ~r/#{expected_url_str}/)
+    end
   end
 
 end
