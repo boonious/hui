@@ -16,7 +16,7 @@ a data collection in distributed server architecture (cloud).
   Hui.q("scott") # keywords search
   Hui.q(q: "loch", rows: 5) # arbitrary keyword list
   Hui.q(%Hui.Q{q: "loch", rows: 5, start: 20}) # structured query
-  Hui.q(%Hui.Q{q: "author:I*", rows: 5}, %Hui.F{field: ["cat", "author_str"], mincount: 1}) # with faceting
+  Hui.q([%Hui.Q{q: "author:I*", rows: 5}, %Hui.F{field: ["cat", "author_str"], mincount: 1}]) # with faceting
  
   # `:library` is a URL reference key - see below
   Hui.search(:library, %Hui.Q{q: "loch", fq: ["type:illustration", "format:image/jpeg"]})
@@ -50,19 +50,28 @@ a data collection in distributed server architecture (cloud).
   range1 = %Hui.F.Range{range: "price", start: 0, end: 100, gap: 10, per_field: true}
   range2 = %Hui.F.Range{range: "popularity", start: 0, end: 5, gap: 1, per_field: true}
   y = %Hui.F{field: ["cat", "author_str"], mincount: 1, range: [range1, range2]}
-  Hui.search(:library, x, y)
-  # this spawns a request with the following query string
-
-  # q=%2A&rows=5&facet=true&facet.field=cat&facet.field=author_str&facet.mincount=1&
-  # f.price.facet.range.end=100&f.price.facet.range.gap=10&facet.range=price&
-  # f.price.facet.range.start=0&f.popularity.facet.range.end=5&
+  Hui.search(:library, [x, y])
+  # =>this spawns a request with the following query string
+  #
+  # q=%2A&rows=5&facet=true&facet.field=cat&
+  # facet.field=author_str&facet.mincount=1&
+  # f.price.facet.range.end=100&
+  # f.price.facet.range.gap=10&facet.range=price&
+  # f.price.facet.range.start=0&
+  # f.popularity.facet.range.end=5&
   # f.popularity.facet.range.gap=1&
-  # facet.range=popularity&f.popularity.facet.range.start=0
+  # facet.range=popularity&
+  # f.popularity.facet.range.start=0
+
+  # convenience functions
+  Hui.search(:library, "apache documentation", 1, 5, "stream_content_type_str:text/html", ["subject"])
+  Hui.suggest(:autocomplete, "ha", 5, ["name_infix", "ln_prefix", "fn_prefix"], "1939")
 
 ```
 
-The `q` examples queries a default endpoint - see `Configuration` below.
-A query could be a string, a [Keyword list](https://elixir-lang.org/getting-started/keywords-and-maps.html#keyword-lists) or
+The `q` examples queries a `:default` endpoint - see `Configuration` below.
+Query parameters could be a string,
+a [Keyword list](https://elixir-lang.org/getting-started/keywords-and-maps.html#keyword-lists) or
 built-in query [Structs](https://elixir-lang.org/getting-started/structs.html)
 providing a structured way for invoking the comprehensive and powerful features of Solr.
 
@@ -78,8 +87,8 @@ Queries may also be issued to other endpoints and request handlers:
 
   # URL in a struct
   url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "suggest"}
-  Hui.search(url, suggest: true, "suggest.dictionary": "mySuggester", "suggest.q": "el")
-  # this -> http://http://localhost:8983/solr/collection/suggest?suggest=true&suggest.dictionary=mySuggester&suggest.q=el
+  Hui.search(url, %Hui.S{q: "el", dictionary: "mySuggester"})
+  # spawns => http://http://localhost:8983/solr/collection/suggest?suggest=true&suggest.dictionary=mySuggester&suggest.q=el
 
 ```
 
@@ -218,7 +227,7 @@ by adding `hui` to your list of dependencies in `mix.exs`:
 ```elixir
   def deps do
     [
-      {:hui, "~> 0.6.2"}
+      {:hui, "~> 0.6.3"}
     ]
   end
 ```

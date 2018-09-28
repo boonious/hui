@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.3 (2018-09-28)
+
+* Convenience functions for search and suggester requests (`q/6`, `search/7`, `suggest/5`)
+* Bangified all main module functions (`q!/1`, `search!/2`, `spellcheck!/2`, `spellcheck!/3`, `suggest!/2`, `mlt!/3`)
+* Deprecate the standard query + faceting functions (`q/2`, `search/3`) as these are now provided through the more general-purpose functions (`q/1`, `search/2`)
+
 ## 0.6.2 (2018-09-26)
 
 * Introduce a "bang" feature via an additional boolean parameter in `Request.search/3` for implementing bangified functions later
