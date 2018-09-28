@@ -168,7 +168,7 @@ defmodule Hui do
   """
   @spec search!(url, Hui.Q.t | Request.query_struct_list | Keyword.t) :: HTTPoison.Response.t
   def search!(url, %Hui.Q{} = query), do: Request.search(url, true, [query])
-  def search!(url, query), do: Request.search(url, true, query)
+  def search!(url, query) when is_list(query), do: Request.search(url, true, query)
 
   @doc """
   Issue a standard structured query with faceting request to a specified Solr endpoint.
@@ -236,6 +236,22 @@ defmodule Hui do
     q = %Hui.Q{q: keywords, rows: rows, start: start, fq: filters, sort: sort}
     f = %Hui.F{field: facet_fields}
     Request.search(url, false, [q,f])
+  end
+
+  @doc """
+  Convenience function for issuing various typical queries to a specified Solr endpoint,
+  raise an exception in case of failure.
+
+  See `q/6`.
+  """
+  @spec search!(url, binary, nil|integer, nil|integer, nil|binary|list(binary), nil|binary|list(binary), nil|binary)
+        :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
+  def search!(url, keywords, rows \\ nil, start \\ nil, filters \\ nil, facet_fields \\ nil, sort \\ nil)
+  def search!(url, keywords, _, _, _, _, _) when is_nil_empty(keywords) or is_nil_empty(url), do: raise %Hui.Error{reason: :einval}
+  def search!(url, keywords, rows, start, filters, facet_fields, sort) do
+    q = %Hui.Q{q: keywords, rows: rows, start: start, fq: filters, sort: sort}
+    f = %Hui.F{field: facet_fields}
+    Request.search(url, true, [q,f])
   end
 
   @doc """

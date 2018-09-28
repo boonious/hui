@@ -31,8 +31,12 @@ defmodule HuiSearchLiveBangTest do
       resp = Hui.q!("apache documentation")
       assert String.match?(resp.request_url, ~r/q=apache\+documentation/)
 
+      expected_url_str = "fq=stream_content_type_str%3Atext%2Fhtml&q=apache\\\+documentation&rows=1&start=5&facet=true&facet.field=subject"
       resp = Hui.q!("apache documentation", 1, 5, "stream_content_type_str:text/html", ["subject"])
-      assert String.match?(resp.request_url, ~r/fq=stream_content_type_str%3Atext%2Fhtml&q=apache\+documentation&rows=1&start=5&facet=true&facet.field=subject/)
+      assert String.match?(resp.request_url, ~r/#{expected_url_str}/)
+
+      resp = Hui.search!(:default, "apache documentation", 1, 5, "stream_content_type_str:text/html", ["subject"])
+      assert String.match?(resp.request_url, ~r/#{expected_url_str}/)
     end
 
     test "should work with other URL endpoint access types" do

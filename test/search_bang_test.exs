@@ -30,10 +30,24 @@ defmodule HuiSearchBangTest do
 
       # test query to :default configured but not available URL
       assert_raise HTTPoison.Error, ":econnrefused", fn -> Hui.q!("*") end
+    end
+
+    test "convenience functions should query with various Solr parameters", context do
+      Bypass.expect context.bypass, fn conn ->
+        Plug.Conn.resp(conn, 200, "")
+      end
 
       assert_raise HTTPoison.Error, ":econnrefused", fn ->
         Hui.q!("test", 1, 5, ["edited:true"], ["subject", "year"], "id desc")
       end
+
+      url = "http://localhost:#{context.bypass.port}"
+      resp = Hui.search!(url, "apache documentation")
+      assert String.match?(resp.request_url, ~r/q=apache\+documentation/)
+
+      expected_url_str = "fq=content_type%3Atext%2Fhtml&q=apache\\\+documentation&rows=1&start=5&facet=true&facet.field=subject&facet.field=year"
+      resp = Hui.search!(url, "apache documentation", 1, 5, "content_type:text/html", ["subject", "year"])
+      assert String.match?(resp.request_url, ~r/#{expected_url_str}/)
     end
 
     test "should query with other Solr parameters", context do
