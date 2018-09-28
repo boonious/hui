@@ -27,7 +27,10 @@ defmodule Hui do
     Hui.q(%Hui.Q{q: "loch", fq: ["type:illustration", "format:image/jpeg"]})
     Hui.q(q: "loch", rows: 5, facet: true, "facet.field": ["year", "subject"])
 
-    # supply a list of Hui structs for more complex query, e.g. DisMax
+    # supply a list of Hui structs for more complex query, e.g. faceting
+    Hui.q( [%Hui.Q{q: "author:I*", rows: 5}, %Hui.F{field: ["cat", "author_str"], mincount: 1}])
+
+    # DisMax
     x = %Hui.D{q: "run", qf: "description^2.3 title", mm: "2<-25% 9<-3", pf: "title", ps: 1, qs: 3}
     y = %Hui.Q{rows: 10, start: 10, fq: ["edited:true"]}
     z = %Hui.F{field: ["cat", "author_str"], mincount: 1}
@@ -41,6 +44,8 @@ defmodule Hui do
 
   @doc """
   Issue a keyword list or structured query to the default Solr endpoint, raising an exception in case of failure.
+
+  See `q/1`.
   """
   @spec q!(Hui.Q.t | Request.query_struct_list | Keyword.t) :: HTTPoison.Response.t
   def q!(%Hui.Q{} = query), do: Request.search(:default, true, [query])
@@ -48,19 +53,15 @@ defmodule Hui do
 
   @doc """
   Issue a standard structured query with faceting request to the default Solr endpoint.
-
-  ### Example
-
-  ```
-    Hui.q(%Hui.Q{q: "author:I*", rows: 5}, %Hui.F{field: ["cat", "author_str"], mincount: 1})
-  ```
   """
+  @deprecated "Use q/1 instead, supply a list of structs as parameter"
   @spec q(Hui.Q.t, Hui.F.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
   def q(%Hui.Q{} = query_struct, %Hui.F{} = facet_struct), do: search(:default, [query_struct, facet_struct])
 
   @doc """
   Issue a standard structured query with faceting request to the default Solr endpoint, raise an exception in case of failure.
   """
+  @deprecated "Use q!/1 instead, supply a list of structs as parameter"
   @spec q!(Hui.Q.t, Hui.F.t) :: HTTPoison.Response.t
   def q!(%Hui.Q{} = query_struct, %Hui.F{} = facet_struct), do: Request.search(:default, true, [query_struct, facet_struct])
 
@@ -144,7 +145,7 @@ defmodule Hui do
 
   ```
 
-  See `Hui.URL.configured_url/1` amd `Hui.URL.encode_query/1` for more details on Solr parameter keyword list.
+  See `Hui.URL.configured_url/1` and `Hui.URL.encode_query/1` for more details on Solr parameter keyword list.
 
   `t:Hui.URL.t/0` struct also enables HTTP headers and HTTPoison options to be specified
   in keyword lists. HTTPoison options provide further controls for a request, e.g. `timeout`, `recv_timeout`,
@@ -158,37 +159,22 @@ defmodule Hui do
 
   See `HTTPoison.request/5` for more details on HTTPoison options.
 
-  """
-  @spec search(url, Hui.Q.t | Request.query_struct_list | Keyword.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
-  def search(url, %Hui.Q{} = query), do: Request.search(url, [query])
-  def search(url, query) when is_list(query), do: Request.search(url, query)
-
-  @doc """
-  Issue a keyword list or structured query to a specified Solr endpoint, raise an exception in case of failure.
-  """
-  @spec search!(url, Hui.Q.t | Request.query_struct_list | Keyword.t) :: HTTPoison.Response.t
-  def search!(url, %Hui.Q{} = query), do: Request.search(url, true, [query])
-  def search!(url, query) when is_list(query), do: Request.search(url, true, query)
-
-  @doc """
-  Issue a standard structured query with faceting request to a specified Solr endpoint.
-
-  ### Example
+  ### Example - faceting
 
   ```
     x = %Hui.Q{q: "author:I*", rows: 5}
     y = %Hui.F{field: ["cat", "author_str"], mincount: 1}
-    Hui.search(:library, x, y)
+    Hui.search(:library, [x, y])
 
     # more elaborated faceting query
     x = %Hui.Q{q: "*", rows: 5}
     range1 = %Hui.F.Range{range: "price", start: 0, end: 100, gap: 10, per_field: true}
     range2 = %Hui.F.Range{range: "popularity", start: 0, end: 5, gap: 1, per_field: true}
     y = %Hui.F{field: ["cat", "author_str"], mincount: 1, range: [range1, range2]}
-    Hui.search(:default, x, y)
+    Hui.search(:default, [x, y])
   ```
 
-  The above `Hui.search(:default, x, y)` example issues a request that resulted in
+  The above `Hui.search(:default, [x, y])` example issues a request that resulted in
   the following Solr response header showing the corresponding generated and encoded parameters.
 
   ```json
@@ -213,6 +199,23 @@ defmodule Hui do
   }
   ```
   """
+  @spec search(url, Hui.Q.t | Request.query_struct_list | Keyword.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
+  def search(url, %Hui.Q{} = query), do: Request.search(url, [query])
+  def search(url, query) when is_list(query), do: Request.search(url, query)
+
+  @doc """
+  Issue a keyword list or structured query to a specified Solr endpoint, raise an exception in case of failure.
+
+  See `search/2`.
+  """
+  @spec search!(url, Hui.Q.t | Request.query_struct_list | Keyword.t) :: HTTPoison.Response.t
+  def search!(url, %Hui.Q{} = query), do: Request.search(url, true, [query])
+  def search!(url, query) when is_list(query), do: Request.search(url, true, query)
+
+  @doc """
+  Issue a standard structured query with faceting request to a specified Solr endpoint.
+  """
+  @deprecated "Use search/2 instead, supply a list of structs as parameter"
   @spec search(url, Hui.Q.t, Hui.F.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
   def search(url, %Hui.Q{} = query, %Hui.F{} = facet), do: Request.search(url, [query, facet])
 
@@ -220,6 +223,7 @@ defmodule Hui do
   Issue a standard structured query with faceting request to a specified Solr endpoint,
   raise an exception in case of failure.
   """
+  @deprecated "Use search!/2 instead, supply a list of structs as parameter"
   @spec search!(url, Hui.Q.t, Hui.F.t) :: HTTPoison.Response.t
   def search!(url, %Hui.Q{} = query, %Hui.F{} = facet), do: Request.search(url, true, [query, facet])
 
@@ -310,7 +314,8 @@ defmodule Hui do
   ### Example
 
   ```
-    Hui.suggest(:library, "bo", 5, ["name_infix", "ln_prefix", "fn_prefix"], "1939")
+    Hui.suggest(:autocomplete, "t")
+    Hui.suggest(:autocomplete, "bo", 5, ["name_infix", "ln_prefix", "fn_prefix"], "1939")
   ```
   """
   @spec suggest(url, binary, nil|integer, nil|binary|list(binary), nil|binary)
