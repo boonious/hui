@@ -13,13 +13,21 @@ defmodule Hui.Request do
   """
 
   use HTTPoison.Base 
+  import Hui.Guards
 
   @type highlighter_struct :: Hui.H.t | Hui.H1.t | Hui.H2.t | Hui.H3.t
   @type misc_struct :: Hui.S.t | Hui.Sp.t | Hui.M.t
   @type query_struct_list :: list(Hui.Q.t | Hui.D.t | Hui.F.t | highlighter_struct | misc_struct)
-  
+
+  # Use the following equivalent typespecs when checking codes with
+  # Dialyzer as the above typespec style doesn'seem to work with the tool.
+  #
+  #@type highlighter_struct :: %Hui.H{} | %Hui.H1{} | %Hui.H2{} | %Hui.H3{}
+  #@type misc_struct :: %Hui.S{} | %Hui.Sp{} | %Hui.M{}
+  #@type query_struct_list :: list(%Hui.Q{} | %Hui.D{} | %Hui.F{} | highlighter_struct | misc_struct)
+
   @type solr_params :: Keyword.t | query_struct_list
-  @type solr_url :: :default | atom | Hui.URL.t
+  @type solr_url :: atom | Hui.URL.t
 
   @error_einval %Hui.Error{reason: :einval} # invalid argument exception
   @error_nxdomain %Hui.Error{reason: :nxdomain} # invalid / non existing host or domain

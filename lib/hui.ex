@@ -10,20 +10,20 @@ defmodule Hui do
   - [More details](https://hexdocs.pm/hui/readme.html#usage)
   """
 
+  import Hui.Guards
   alias Hui.Request
 
   @type url :: binary | atom | Hui.URL.t
 
   @doc """
-  Issue a search query to the default Solr endpoint.
+  Issue a keyword or structured query to the default Solr endpoint.
 
-  The query can be a string, a keyword list or a standard query struct (`Hui.Q`).
-  This function is a shortcut for `search/2` with `:default` as URL key.
+  The query can either be a keyword list, a standard query struct (`Hui.Q`)
+  or a struct list. This function is a shortcut for `search/2` with `:default` as URL key.
 
   ### Example
 
   ```
-    Hui.q("scott") # keyword search
     Hui.q(%Hui.Q{q: "loch", fq: ["type:illustration", "format:image/jpeg"]})
     Hui.q(q: "loch", rows: 5, facet: true, "facet.field": ["year", "subject"])
 
@@ -35,10 +35,9 @@ defmodule Hui do
 
   ```
   """
-  @spec q(binary | Hui.Q.t | Request.query_struct_list | Keyword.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
-  def q(query) when is_binary(query), do: search(:default, q: query)
-  def q(%Hui.Q{} = q), do: search(:default, [q])
-  def q(query_struct_list), do: search(:default, query_struct_list)
+  @spec q(Hui.Q.t | Request.query_struct_list | Keyword.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
+  def q(%Hui.Q{} = query), do: search(:default, [query])
+  def q(query) when is_list(query), do: search(:default, query)
 
   @doc """
   Issue a search query to the default Solr endpoint, raising an exception in case of failure.
@@ -58,13 +57,37 @@ defmodule Hui do
   ```
   """
   @spec q(Hui.Q.t, Hui.F.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
-  def q(%Hui.Q{} = query, %Hui.F{} = facet), do: search(:default, [query, facet])
+  def q(%Hui.Q{} = query_struct, %Hui.F{} = facet_struct), do: search(:default, [query_struct, facet_struct])
 
   @doc """
   Issue a standard structured query with faceting request to the default Solr endpoint, raise an exception in case of failure.
   """
   @spec q!(Hui.Q.t, Hui.F.t) :: HTTPoison.Response.t
-  def q!(%Hui.Q{} = query, %Hui.F{} = facet), do: Request.search(:default, true, [query, facet])
+  def q!(%Hui.Q{} = query_struct, %Hui.F{} = facet_struct), do: Request.search(:default, true, [query_struct, facet_struct])
+
+  @doc """
+  Convenience function for issuing various typical queries to the default Solr endpoint.
+
+  ### Example
+
+  ```
+    Hui.q("scott")
+    # keywords
+    Hui.q("loch", 10, 20)
+    # .. with paging parameters
+    Hui.q("\\\"apache documentation\\\"~5", 1, 0, "stream_content_type_str:text/html", ["subject"])
+    # .. plus filter(s) and facet fields
+  ```
+  """
+  @spec q(binary, nil|integer, nil|integer, nil|binary|list(binary), nil|binary|list(binary), nil|binary)
+        :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
+  def q(keywords, rows \\ nil, start \\ nil, filters \\ nil, facet_fields \\ nil, sort \\ nil)
+  def q(keywords, _, _, _, _, _) when is_nil_empty(keywords), do: {:error, %Hui.Error{reason: :einval}}
+  def q(keywords, rows, start, filters, facet_fields, sort) do
+    q = %Hui.Q{q: keywords, rows: rows, start: start, fq: filters, sort: sort}
+    f = %Hui.F{field: facet_fields}
+    Request.search(:default, false, [q,f])
+  end
 
   @doc """
   Issue a search query to a specific Solr endpoint.

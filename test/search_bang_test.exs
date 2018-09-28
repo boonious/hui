@@ -84,23 +84,6 @@ defmodule HuiSearchBangTest do
       assert check_search_req_url!(url, [q: "*"], ~r/test=from_test/)
     end
 
-    test "should work with configured URL via a config key" do
-      bypass = Bypass.open(port: 8984)
-      Bypass.expect bypass, fn conn ->
-        Plug.Conn.resp(conn, 200, "")
-      end
-
-      solr_params = [q: "edinburgh", rows: 10]
-      bang = true
-      {_, url} = Hui.URL.configured_url(:library)
-      resp = Hui.Request.search(:library, bang, solr_params)
-      experted_request_url = Hui.URL.to_string(url) <> "?" <> Hui.URL.encode_query(solr_params)
-      assert experted_request_url == resp.request_url
-
-      resp = Hui.search!(:library, solr_params)
-      assert experted_request_url == resp.request_url
-    end
-
     test "should decode and return raw JSON Solr response as Map", context do
       Bypass.expect context.bypass, fn conn ->
         Plug.Conn.resp(conn, 200, context.simple_search_response_sample)
