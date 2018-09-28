@@ -5,8 +5,8 @@ defmodule Hui do
 
   ### Usage
   
-  - Searching Solr: `q/1`, `q/2`, `search/2`, `search/3`
-  - Other: `suggest/2`, `spellcheck/3`
+  - Searching Solr: `q/1`, `q/6`, `search/2`, `search/7`
+  - Other: `suggest/2`, `suggest/5`, `spellcheck/3`
   - [More details](https://hexdocs.pm/hui/readme.html#usage)
   """
 
