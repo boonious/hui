@@ -45,6 +45,9 @@ defmodule HuiSearchTest do
       # test query to :default configured but not available URL
       {_status, resp} = Hui.q("test")
       assert resp == %Hui.Error{reason: :econnrefused}
+
+      {_status, resp} = Hui.q("test", 1, 5, ["edited:true"], ["subject", "year"], "id desc")
+      assert resp == %Hui.Error{reason: :econnrefused}
     end
 
     test "should query with other Solr parameters", context do

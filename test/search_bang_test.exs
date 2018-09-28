@@ -30,6 +30,10 @@ defmodule HuiSearchBangTest do
 
       # test query to :default configured but not available URL
       assert_raise HTTPoison.Error, ":econnrefused", fn -> Hui.q!("*") end
+
+      assert_raise HTTPoison.Error, ":econnrefused", fn ->
+        Hui.q!("test", 1, 5, ["edited:true"], ["subject", "year"], "id desc")
+      end
     end
 
     test "should query with other Solr parameters", context do

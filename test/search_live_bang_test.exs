@@ -27,6 +27,14 @@ defmodule HuiSearchLiveBangTest do
       assert String.match?(resp.request_url, ~r/q=*/)
     end
 
+    test "convenience functions should query with various Solr parameters" do
+      resp = Hui.q!("apache documentation")
+      assert String.match?(resp.request_url, ~r/q=apache\+documentation/)
+
+      resp = Hui.q!("apache documentation", 1, 5, "stream_content_type_str:text/html", ["subject"])
+      assert String.match?(resp.request_url, ~r/fq=stream_content_type_str%3Atext%2Fhtml&q=apache\+documentation&rows=1&start=5&facet=true&facet.field=subject/)
+    end
+
     test "should work with other URL endpoint access types" do
       resp = Hui.search!("http://localhost:8983/solr/gettingstarted", q: "*")
       assert length(resp.body["response"]["docs"]) >= 0

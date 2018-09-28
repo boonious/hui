@@ -40,12 +40,11 @@ defmodule Hui do
   def q(query) when is_list(query), do: search(:default, query)
 
   @doc """
-  Issue a search query to the default Solr endpoint, raising an exception in case of failure.
+  Issue a keyword or structured query to the default Solr endpoint, raising an exception in case of failure.
   """
   @spec q!(binary | Hui.Q.t | Request.query_struct_list | Keyword.t) :: HTTPoison.Response.t
-  def q!(query) when is_binary(query), do: Request.search(:default, true, q: query)
-  def q!(%Hui.Q{} = q), do: Request.search(:default, true, [q])
-  def q!(query_struct_list), do: Request.search(:default, true, query_struct_list)
+  def q!(%Hui.Q{} = query), do: Request.search(:default, true, [query])
+  def q!(query) when is_list(query), do: Request.search(:default, true, query)
 
   @doc """
   Issue a standard structured query with faceting request to the default Solr endpoint.
@@ -87,6 +86,20 @@ defmodule Hui do
     q = %Hui.Q{q: keywords, rows: rows, start: start, fq: filters, sort: sort}
     f = %Hui.F{field: facet_fields}
     Request.search(:default, false, [q,f])
+  end
+
+  @doc """
+  Convenience function for issuing various typical queries to the default Solr endpoint,
+  raise an exception in case of failure.
+  """
+  @spec q!(binary, nil|integer, nil|integer, nil|binary|list(binary), nil|binary|list(binary), nil|binary)
+        :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
+  def q!(keywords, rows \\ nil, start \\ nil, filters \\ nil, facet_fields \\ nil, sort \\ nil)
+  def q!(keywords, _, _, _, _, _) when is_nil_empty(keywords), do: raise %Hui.Error{reason: :einval}
+  def q!(keywords, rows, start, filters, facet_fields, sort) do
+    q = %Hui.Q{q: keywords, rows: rows, start: start, fq: filters, sort: sort}
+    f = %Hui.F{field: facet_fields}
+    Request.search(:default, true, [q,f])
   end
 
   @doc """
