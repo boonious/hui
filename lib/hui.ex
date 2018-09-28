@@ -286,12 +286,12 @@ defmodule Hui do
   def spellcheck!(url, %Hui.Sp{} = spellcheck_query_struct, %Hui.Q{} = query_struct), do: Request.search(url, true, [query_struct, spellcheck_query_struct])
 
   @doc """
-  Issue a suggester query to a specified Solr endpoint.
+  Issue a structured suggester query to a specified Solr endpoint.
 
   ### Example
 
   ```
-    suggest_query = %Hui.S{q: "ha", count: 10, dictionary: ["name_infix", "ln_prefix", "fn_prefix"]}
+    suggest_query = %Hui.S{q: "ha", count: 10, dictionary: "name_infix"}
     Hui.suggest(:library, suggest_query)
   ```
   """
@@ -299,10 +299,28 @@ defmodule Hui do
   def suggest(url, %Hui.S{} = suggest_query_struct), do: Request.search(url, [suggest_query_struct])
 
   @doc """
-  Issue a suggester query to a specified Solr endpoint, raise an exception in case of failure.
+  Issue a structured suggester query to a specified Solr endpoint, raise an exception in case of failure.
   """
   @spec suggest!(url, Hui.S.t) :: HTTPoison.Response.t
   def suggest!(url, %Hui.S{} = suggest_query_struct), do: Request.search(url, true, [suggest_query_struct])
+
+  @doc """
+  Convenience function for issuing a suggester query to a specified Solr endpoint.
+
+  ### Example
+
+  ```
+    Hui.suggest(:library, "bo", 5, ["name_infix", "ln_prefix", "fn_prefix"], "1939")
+  ```
+  """
+  @spec suggest(url, binary, nil|integer, nil|binary|list(binary), nil|binary)
+        :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
+  def suggest(url, q, count \\ nil, dictionaries \\ nil, context \\ nil)
+  def suggest(url, q, _, _, _) when is_nil_empty(q) or is_nil_empty(url), do: {:error, %Hui.Error{reason: :einval}}
+  def suggest(url, q, count, dictionaries, context) do
+    suggest_query = %Hui.S{q: q, count: count, dictionary: dictionaries, cfq: context}
+    Request.search(url, false, [suggest_query])
+  end
 
   @doc """
   Issue a MoreLikeThis (mlt) query to a specified Solr endpoint.

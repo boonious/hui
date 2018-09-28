@@ -168,4 +168,27 @@ defmodule HuiSearchTest do
 
   end
 
+  describe "suggester" do
+
+    test "convenience function", context do
+     Bypass.expect context.bypass, fn conn ->
+       Plug.Conn.resp(conn, 200, "")
+     end
+
+     experted_url = "suggest.cfq=1939&suggest.count=5&suggest.dictionary=name_infix&suggest.dictionary=ln_prefix&suggest.dictionary=fn_prefix&suggest.q=ha&suggest=true"
+     url = %Hui.URL{url: "http://localhost:#{context.bypass.port}"}
+
+     {_status, resp} = Hui.suggest(url, "t")
+     assert String.match?(resp.request_url, ~r/suggest.q=t&suggest=true/)
+
+     {_status, resp} = Hui.suggest(url, "ha", 5, ["name_infix", "ln_prefix", "fn_prefix"], "1939")
+     assert String.match?(resp.request_url, ~r/#{experted_url}/)
+    end
+
+    test "function should handle malformed parameters", context do
+     assert {:error, context.error_einval} == Hui.suggest(nil, nil)
+     assert {:error, context.error_einval} == Hui.suggest(:default, "")
+    end
+
+  end
 end
