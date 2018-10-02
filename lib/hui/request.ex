@@ -118,6 +118,12 @@ defmodule Hui.Request do
   end
   def search(_,_,_), do: {:error, @error_einval}
 
+  @doc """
+  Issues an update request to a specific Solr endpoint.
+  """
+  @spec update(solr_url, binary) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
+  def update(%Hui.URL{} = url, data) when is_binary(data), do: _update(url, data)
+
   # decode JSON data and return other response formats as
   # raw text
   def process_response_body(""), do: ""
@@ -150,6 +156,15 @@ defmodule Hui.Request do
      :ok -> {:ok, resp}
      :error -> {:error, %Hui.Error{reason: resp.reason}}
    end
+  end
+
+  defp  _update(%Hui.URL{} = url_struct, data) do
+    url = Hui.URL.to_string(url_struct)
+    {status, resp} = post(url, data, url_struct.headers, url_struct.options)
+    case status do
+      :ok -> {:ok, resp}
+      :error -> {:error, %Hui.Error{reason: resp.reason}}
+    end
   end
 
 end
