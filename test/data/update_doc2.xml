@@ -1,0 +1,13 @@
+<add>
+  <doc>
+    <field name="id">9781910701874</field>
+    <field name="title">Homo Deus: A Brief History of Tomorrow</field>
+    <field name="author_ss">Yuval Noah Harari</field>
+    <field name="subject_ss">Civilization</field>
+    <field name="subject_ss">Technology and civilization</field>
+    <field name="subject_ss">Human beings</field>
+    <field name="desc">Sapiens showed us where we came from. Homo Deus shows us where we're going.</field>
+    <field name="publisher_s">Harvill Secker</field>
+    <field name="date_dt">2016-09-08T00:00:00Z</field>
+  </doc>
+</add
