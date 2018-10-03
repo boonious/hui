@@ -6,7 +6,8 @@ defmodule HuiUpdateTest do
     update_doc = File.read!("./test/data/update_doc1.json")
     bypass = Bypass.open
     error_einval = %Hui.Error{reason: :einval}
-    {:ok, bypass: bypass, update_doc: update_doc, error_einval: error_einval}
+    error_nxdomain = %Hui.Error{reason: :nxdomain}
+    {:ok, bypass: bypass, update_doc: update_doc, error_einval: error_einval, error_nxdomain: error_nxdomain}
   end
 
   describe "Request.update" do
@@ -44,6 +45,8 @@ defmodule HuiUpdateTest do
       assert {:error, context.error_einval} == Hui.Request.update(nil, update_doc)
       assert {:error, context.error_einval} == Hui.Request.update("", update_doc)
       assert {:error, context.error_einval} == Hui.Request.update([], update_doc)
+      assert {:error, context.error_nxdomain} == Hui.Request.update(:not_in_config_url, update_doc)
+      assert {:error, context.error_nxdomain} == Hui.Request.update(%Hui.URL{url: "boo"}, update_doc)
     end
 
   end
@@ -89,6 +92,7 @@ defmodule HuiUpdateTest do
       assert_raise Hui.Error, ":einval", fn -> Hui.Request.update(nil, bang, update_doc) end
       assert_raise Hui.Error, ":einval", fn -> Hui.Request.update("", bang, update_doc) end
       assert_raise Hui.Error, ":einval", fn -> Hui.Request.update([], bang, update_doc) end
+      assert_raise Hui.Error, ":nxdomain", fn -> Hui.Request.update(:url_in_config, bang, update_doc) end
     end
 
   end
