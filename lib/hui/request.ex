@@ -125,6 +125,19 @@ defmodule Hui.Request do
   def update(url, bang \\ false, data)
   def update(%Hui.URL{} = url, bang, data) when is_binary(data), do: _update(url, data, bang)
 
+  def update(url, true, _data) when is_nil_empty(url), do: raise @error_einval
+  def update(url, _bang, _data) when is_nil_empty(url), do: {:error, @error_einval}
+
+  def update(url, bang, data) when is_atom(url) do
+    {status, url_struct} = Hui.URL.configured_url(url)
+    case {status, bang} do
+      {:ok, _} -> _update(url_struct, data, bang)
+      {:error, false} -> {:error, @error_nxdomain}
+      {:error, true} -> raise @error_nxdomain
+    end
+  end
+  def update(_,_,_), do: {:error, @error_einval}
+
   # decode JSON data and return other response formats as
   # raw text
   def process_response_body(""), do: ""

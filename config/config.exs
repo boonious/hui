@@ -18,3 +18,8 @@ config :hui, :suggester,
 config :hui, :library,
   url: "http://localhost:8984/solr/articles",
   handler: "dismax"
+  
+config :hui, :update_test,
+  url: "http://localhost:8989/solr/articles",
+  handler: "update",
+  headers: [{"Content-type", "application/xml"}]
