@@ -164,6 +164,8 @@ defmodule HuiSearchTest do
       assert {:error, context.error_einval} == Hui.Request.search(nil, nil)
       assert {:error, context.error_einval} == Hui.Request.search("", q: "*")
       assert {:error, context.error_einval} == Hui.Request.search([], q: "*")
+      assert {:error, context.error_nxdomain} == Hui.Request.search(:not_in_config_url, q: "*")
+      assert {:error, context.error_nxdomain} == Hui.Request.search("boo", q: "*")
     end
 
   end

@@ -142,6 +142,8 @@ defmodule HuiSearchBangTest do
       assert_raise Hui.Error, ":einval", fn -> Hui.Request.search(nil, bang, nil) end
       assert_raise Hui.Error, ":einval", fn -> Hui.Request.search("", bang, q: "*") end
       assert_raise Hui.Error, ":einval", fn -> Hui.Request.search([], bang, q: "*") end
+      assert_raise Hui.Error, ":nxdomain", fn -> Hui.Request.search(:not_in_config_url, bang, q: "*") end
+      assert_raise HTTPoison.Error, ":nxdomain", fn -> Hui.Request.search("boo", bang, q: "*") end
     end
 
   end
