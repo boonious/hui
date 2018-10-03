@@ -4,7 +4,7 @@ defmodule HuiUpdateLiveTest do
   describe "Request.update (live)" do
     @describetag live: false
 
-    test "should post binary data", context do
+    test "should post binary data" do
       url = %Hui.URL{url: "http://localhost:8983/solr/gettingstarted", handler: "update", headers: [{"Content-type", "application/xml"}]}
       delete_doc = File.read!("./test/data/delete_doc1.xml")
       commit_doc = File.read!("./test/data/commit.xml")
@@ -32,7 +32,7 @@ defmodule HuiUpdateLiveTest do
   describe "Request.update (live / bang)" do
     @describetag live: false
 
-    test "should post binary data", context do
+    test "should post binary data" do
       url = %Hui.URL{url: "http://localhost:8983/solr/gettingstarted", handler: "update", headers: [{"Content-type", "application/xml"}]}
       delete_doc = File.read!("./test/data/delete_doc2.xml")
       commit_doc = File.read!("./test/data/commit.xml")

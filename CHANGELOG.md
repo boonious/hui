@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.0 (2018-10-03)
+
+* Enable Solr updating with binary data (JSON, XML update docs) via `Request.update/3` function
+
 ## 0.6.3 (2018-09-28)
 
 * Convenience functions for search and suggester requests (`q/6`, `search/7`, `suggest/5`)

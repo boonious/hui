@@ -4,6 +4,7 @@ defmodule Hui.Request do
   Hui.Request module provides underpinning HTTP-based request functions for Solr, including:
   
   - `search/2`, `search/3`
+  - `update/2`, `update/3`
 
   ### Other low-level HTTP client features
 
@@ -119,7 +120,37 @@ defmodule Hui.Request do
   def search(_,_,_), do: {:error, @error_einval}
 
   @doc """
-  Issues an update request to a specific Solr endpoint.
+  Issues an update request to a specific Solr endpoint, for data uploading and deletion.
+
+  The request sends binary data to an endpoint
+  specified in a `t:Hui.URL.t/0` struct or a key
+  referring to a URL setting in configuration. A content type header is also required so that
+  Solr can process that the data accordingly.
+
+  ## Example
+
+  ```
+  # Specify an endpoint for JSON data
+  headers = [{"Content-type", "application/json"}]
+  url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "update", headers: headers}
+  json_doc = # encoded binary data such as raw JSON text from a file
+  {status, response} = Hui.Request.update(url, json_doc)
+
+  # Send data to a pre-configured URL
+  {status, response} = Hui.Request.update(:library, json_doc)
+
+  # Direct response, or exception in case of failture
+  bang = true
+  response = Hui.Request.update(url, bang, json_doc)
+  
+  # Delete a document via XML message
+  headers = [{"Content-type", "application/xml"}]
+  url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "update", headers: headers}
+  {status, response} = Hui.Request.update(url, "<delete><id>9780141981727</id></delete>")
+  ```
+
+  See [Solr reference](http://lucene.apache.org/solr/guide/uploading-data-with-index-handlers.html)
+  for more details on various data commands, types and formats.
   """
   @spec update(solr_url, boolean, binary) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t} | HTTPoison.Response.t
   def update(url, bang \\ false, data)

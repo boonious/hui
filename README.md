@@ -11,7 +11,7 @@ in [Elixir](https://elixir-lang.org) or [Phoenix](https://phoenixframework.org) 
 Typical Solr data can be contained within a core (index) held on a single server or 
 a data collection in distributed server architecture (cloud).
 
-### Example
+### Example - searching
 
 ```elixir
   Hui.q("scott") # keywords search
@@ -96,6 +96,30 @@ Queries may also be issued to other endpoints and request handlers:
 See the [API reference](https://hexdocs.pm/hui/api-reference.html#content)
 and [Solr reference guide](http://lucene.apache.org/solr/guide/7_4/searching.html)
 for more details on available search parameters.
+
+### Example - updating
+
+Update requests can currently be issued with the `Request.update/3` function and binary data
+encapsulating Solr documents and commands -
+See [Solr reference](http://lucene.apache.org/solr/guide/uploading-data-with-index-handlers.html)
+for various data commands, types and formats.
+
+```elixir
+ # Specify an endpoint for JSON data
+ headers = [{"Content-type", "application/json"}]
+ url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "update", headers: headers}
+ json_doc = # encoded binary data such as raw JSON text from a file
+ {status, response} = Hui.Request.update(url, json_doc)
+
+ # Send data to a pre-configured URL
+ {status, response} = Hui.Request.update(:library, json_doc)
+
+ # Delete a document via XML message
+ headers = [{"Content-type", "application/xml"}]
+ url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "update", headers: headers}
+ {status, response} = Hui.Request.update(url, "<delete><id>9780141981727</id></delete>")
+
+```
 
 ### HTTP headers and options
 HTTP headers and options can be specified via the `t:Hui.URL.t/0` struct.
@@ -228,7 +252,7 @@ by adding `hui` to your list of dependencies in `mix.exs`:
 ```elixir
   def deps do
     [
-      {:hui, "~> 0.6.3"}
+      {:hui, "~> 0.7.0"}
     ]
   end
 ```

@@ -31,7 +31,7 @@ defmodule HuiUpdateTest do
       Bypass.expect bypass, fn conn ->
         assert "/solr/articles/update" == conn.request_path
         assert "POST" == conn.method
-        assert conn.req_headers |> Enum.member? {"content-type", "application/xml"}
+        assert conn.req_headers |> Enum.member?({"content-type", "application/xml"})
         {:ok, body, conn} = Plug.Conn.read_body(conn)
         assert body == update_doc
         Plug.Conn.resp(conn, 200, "")
@@ -76,7 +76,7 @@ defmodule HuiUpdateTest do
       Bypass.expect bypass, fn conn ->
         assert "/solr/articles/update" == conn.request_path
         assert "POST" == conn.method
-        assert conn.req_headers |> Enum.member? {"content-type", "application/xml"}
+        assert conn.req_headers |> Enum.member?({"content-type", "application/xml"})
         {:ok, body, conn} = Plug.Conn.read_body(conn)
         assert body == update_doc
         Plug.Conn.resp(conn, 200, "")
