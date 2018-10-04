@@ -207,7 +207,7 @@ defmodule Hui do
         :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
   def search(url, keywords, rows \\ nil, start \\ nil, filters \\ nil, facet_fields \\ nil, sort \\ nil)
   def search(url, keywords, _, _, _, _, _) when is_nil_empty(keywords) or is_nil_empty(url), do: {:error, %Hui.Error{reason: :einval}}
-  def search(url, keywords, rows, start, filters, facet_fields, sort) when is_binary(keywords) do
+  def search(url, keywords, rows, start, filters, facet_fields, sort) do
     q = %Hui.Q{q: keywords, rows: rows, start: start, fq: filters, sort: sort}
     f = %Hui.F{field: facet_fields}
     Request.search(url, false, [q,f])
@@ -223,7 +223,7 @@ defmodule Hui do
         :: HTTPoison.Response.t
   def search!(url, keywords, rows \\ nil, start \\ nil, filters \\ nil, facet_fields \\ nil, sort \\ nil)
   def search!(url, keywords, _, _, _, _, _) when is_nil_empty(keywords) or is_nil_empty(url), do: raise %Hui.Error{reason: :einval}
-  def search!(url, keywords, rows, start, filters, facet_fields, sort) when is_binary(keywords) do
+  def search!(url, keywords, rows, start, filters, facet_fields, sort) do
     q = %Hui.Q{q: keywords, rows: rows, start: start, fq: filters, sort: sort}
     f = %Hui.F{field: facet_fields}
     Request.search(url, true, [q,f])
