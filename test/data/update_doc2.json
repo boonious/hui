@@ -1,0 +1,18 @@
+{
+  "add": {
+    "doc": {
+      "id": "tt0083658",
+      "directed_by": ["Ridley Scott"],
+      "initial_release_date": "1982-06-25",
+      "genre": ["Sci-Fi","Thriller"],
+      "name": "Blade Runner",
+      "desc": "A blade runner must pursue and terminate four replicants who stole a ship in space, and have returned to Earth to find their creator.",
+      "actor_ss": [
+       "Harrison Ford",
+       "Rutger Hauer",
+       "Sean Young",
+       "Edward James Olmos"
+      ]
+    }
+  }
+}

@@ -155,6 +155,7 @@ defmodule Hui.Request do
   @spec update(solr_url, boolean, binary) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t} | HTTPoison.Response.t
   def update(url, bang \\ false, data)
   def update(%Hui.URL{} = url, bang, data) when is_binary(data), do: _update(url, bang, data)
+  def update(%Hui.URL{} = url, bang, %Hui.U{} = data), do: _update(url, bang, data |> Hui.U.encode)
 
   def update(url, true, _data) when is_nil_empty(url), do: raise @error_einval
   def update(url, _bang, _data) when is_nil_empty(url), do: {:error, @error_einval}
