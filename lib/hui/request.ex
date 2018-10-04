@@ -154,7 +154,7 @@ defmodule Hui.Request do
   """
   @spec update(solr_url, boolean, binary) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t} | HTTPoison.Response.t
   def update(url, bang \\ false, data)
-  def update(%Hui.URL{} = url, bang, data) when is_binary(data), do: _update(url, data, bang)
+  def update(%Hui.URL{} = url, bang, data) when is_binary(data), do: _update(url, bang, data)
 
   def update(url, true, _data) when is_nil_empty(url), do: raise @error_einval
   def update(url, _bang, _data) when is_nil_empty(url), do: {:error, @error_einval}
@@ -162,7 +162,7 @@ defmodule Hui.Request do
   def update(url, bang, data) when is_atom(url) do
     {status, url_struct} = Hui.URL.configured_url(url)
     case {status, bang} do
-      {:ok, _} -> _update(url_struct, data, bang)
+      {:ok, _} -> _update(url_struct, bang, data)
       {:error, false} -> {:error, @error_nxdomain}
       {:error, true} -> raise @error_nxdomain
     end
@@ -203,8 +203,8 @@ defmodule Hui.Request do
    end
   end
 
-  defp  _update(%Hui.URL{} = url_struct, data, true), do: Hui.URL.to_string(url_struct) |> post!(data, url_struct.headers, url_struct.options)
-  defp  _update(%Hui.URL{} = url_struct, data, _bang) do
+  defp  _update(%Hui.URL{} = url_struct, true, data), do: Hui.URL.to_string(url_struct) |> post!(data, url_struct.headers, url_struct.options)
+  defp  _update(%Hui.URL{} = url_struct, _bang, data) do
     url = Hui.URL.to_string(url_struct)
     {status, resp} = post(url, data, url_struct.headers, url_struct.options)
     case status do
