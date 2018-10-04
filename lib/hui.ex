@@ -52,20 +52,6 @@ defmodule Hui do
   def q!(query) when is_list(query), do: Request.search(:default, true, query)
 
   @doc """
-  Issue a standard structured query with faceting request to the default Solr endpoint.
-  """
-  @deprecated "Use q/1 instead, supply a list of structs as parameter"
-  @spec q(Hui.Q.t, Hui.F.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
-  def q(%Hui.Q{} = query_struct, %Hui.F{} = facet_struct), do: search(:default, [query_struct, facet_struct])
-
-  @doc """
-  Issue a standard structured query with faceting request to the default Solr endpoint, raise an exception in case of failure.
-  """
-  @deprecated "Use q!/1 instead, supply a list of structs as parameter"
-  @spec q!(Hui.Q.t, Hui.F.t) :: HTTPoison.Response.t
-  def q!(%Hui.Q{} = query_struct, %Hui.F{} = facet_struct), do: Request.search(:default, true, [query_struct, facet_struct])
-
-  @doc """
   Convenience function for issuing various typical queries to the default Solr endpoint.
 
   ### Example
@@ -213,21 +199,6 @@ defmodule Hui do
   def search!(url, query) when is_list(query), do: Request.search(url, true, query)
 
   @doc """
-  Issue a standard structured query with faceting request to a specified Solr endpoint.
-  """
-  @deprecated "Use search/2 instead, supply a list of structs as parameter"
-  @spec search(url, Hui.Q.t, Hui.F.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
-  def search(url, %Hui.Q{} = query, %Hui.F{} = facet), do: Request.search(url, [query, facet])
-
-  @doc """
-  Issue a standard structured query with faceting request to a specified Solr endpoint,
-  raise an exception in case of failure.
-  """
-  @deprecated "Use search!/2 instead, supply a list of structs as parameter"
-  @spec search!(url, Hui.Q.t, Hui.F.t) :: HTTPoison.Response.t
-  def search!(url, %Hui.Q{} = query, %Hui.F{} = facet), do: Request.search(url, true, [query, facet])
-
-  @doc """
   Convenience function for issuing various typical queries to a specified Solr endpoint.
 
   See `q/6`.
@@ -236,7 +207,7 @@ defmodule Hui do
         :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
   def search(url, keywords, rows \\ nil, start \\ nil, filters \\ nil, facet_fields \\ nil, sort \\ nil)
   def search(url, keywords, _, _, _, _, _) when is_nil_empty(keywords) or is_nil_empty(url), do: {:error, %Hui.Error{reason: :einval}}
-  def search(url, keywords, rows, start, filters, facet_fields, sort) do
+  def search(url, keywords, rows, start, filters, facet_fields, sort) when is_binary(keywords) do
     q = %Hui.Q{q: keywords, rows: rows, start: start, fq: filters, sort: sort}
     f = %Hui.F{field: facet_fields}
     Request.search(url, false, [q,f])
@@ -252,7 +223,7 @@ defmodule Hui do
         :: HTTPoison.Response.t
   def search!(url, keywords, rows \\ nil, start \\ nil, filters \\ nil, facet_fields \\ nil, sort \\ nil)
   def search!(url, keywords, _, _, _, _, _) when is_nil_empty(keywords) or is_nil_empty(url), do: raise %Hui.Error{reason: :einval}
-  def search!(url, keywords, rows, start, filters, facet_fields, sort) do
+  def search!(url, keywords, rows, start, filters, facet_fields, sort) when is_binary(keywords) do
     q = %Hui.Q{q: keywords, rows: rows, start: start, fq: filters, sort: sort}
     f = %Hui.F{field: facet_fields}
     Request.search(url, true, [q,f])

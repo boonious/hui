@@ -69,11 +69,11 @@ defmodule HuiStructSearchBangTest do
       resp = Hui.Request.search(url, bang, [x, y])
       assert String.match?(resp.request_url, ~r/q=author%3AI%2A&rows=5&facet=true&facet.field=cat&facet.field=author_str&facet.mincount=1/)
 
-      resp = Hui.search!(url, x, y)
+      resp = Hui.search!(url, [x, y])
       assert String.match?(resp.request_url, ~r/q=author%3AI%2A&rows=5&facet=true&facet.field=cat&facet.field=author_str&facet.mincount=1/)
 
       # test query to :default configured but not available URL
-      assert_raise HTTPoison.Error, ":econnrefused", fn -> Hui.q!(x, y) end
+      assert_raise HTTPoison.Error, ":econnrefused", fn -> Hui.q!([x, y]) end
     end
 
     test "should provide result highlighting via Hui.H", context do

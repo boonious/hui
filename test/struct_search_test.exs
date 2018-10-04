@@ -69,11 +69,11 @@ defmodule HuiStructSearchTest do
       {_status, resp} = Hui.Request.search(url, [x, y])
       assert String.match?(resp.request_url, ~r/q=author%3AI%2A&rows=5&facet=true&facet.field=cat&facet.field=author_str&facet.mincount=1/)
 
-      {_status, resp} = Hui.search(url, x, y)
+      {_status, resp} = Hui.search(url, [x, y])
       assert String.match?(resp.request_url, ~r/q=author%3AI%2A&rows=5&facet=true&facet.field=cat&facet.field=author_str&facet.mincount=1/)
 
       # test query to :default configured but not available URL
-      {_status, resp} = Hui.q(x, y)
+      {_status, resp} = Hui.q([x, y])
       assert resp == %Hui.Error{reason: :econnrefused}
     end
 

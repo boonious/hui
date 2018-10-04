@@ -141,6 +141,7 @@ defmodule HuiSearchLiveTest do
       x = %Hui.Q{q: "author:I*", rows: 5, echoParams: "explicit"}
       y = %Hui.F{field: ["cat", "author_str"], mincount: 1}
       solr_params = [x, y]
+
       {_status, resp} = Hui.Request.search(:default, solr_params)
       requested_params = resp.body["responseHeader"]["params"]
       assert x.q == requested_params["q"]
@@ -148,13 +149,13 @@ defmodule HuiSearchLiveTest do
       assert "true" == requested_params["facet"]
       assert String.match?(resp.request_url, ~r/q=author%3AI%2A&rows=5&facet=true&facet.field=cat&facet.field=author_str&facet.mincount=1/)
 
-      {_status, resp} =  Hui.q(x,y)
+      {_status, resp} =  Hui.q(solr_params)
       assert x.q == requested_params["q"]
       assert x.rows |> to_string == requested_params["rows"]
       assert "true" == requested_params["facet"]
       assert String.match?(resp.request_url, ~r/q=author%3AI%2A&rows=5&facet=true&facet.field=cat&facet.field=author_str&facet.mincount=1/)
 
-      {_status, resp} =  Hui.search(:default,x,y)
+      {_status, resp} =  Hui.search(:default, solr_params)
       assert x.q == requested_params["q"]
       assert x.rows |> to_string == requested_params["rows"]
       assert "true" == requested_params["facet"]

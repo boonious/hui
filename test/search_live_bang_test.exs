@@ -99,13 +99,13 @@ defmodule HuiSearchLiveBangTest do
       assert "true" == requested_params["facet"]
       assert String.match?(resp.request_url, ~r/q=author%3AI%2A&rows=5&facet=true&facet.field=cat&facet.field=author_str&facet.mincount=1/)
 
-      resp =  Hui.q!(x,y)
+      resp =  Hui.q!(solr_params)
       assert x.q == requested_params["q"]
       assert x.rows |> to_string == requested_params["rows"]
       assert "true" == requested_params["facet"]
       assert String.match?(resp.request_url, ~r/q=author%3AI%2A&rows=5&facet=true&facet.field=cat&facet.field=author_str&facet.mincount=1/)
 
-      resp =  Hui.search!(:default,x,y)
+      resp =  Hui.search!(:default, solr_params)
       assert x.q == requested_params["q"]
       assert x.rows |> to_string == requested_params["rows"]
       assert "true" == requested_params["facet"]
