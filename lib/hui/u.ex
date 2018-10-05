@@ -19,7 +19,7 @@ defmodule Hui.U do
   def encode(doc) when is_map(doc), do: Poison.encode!(doc)
 
   def encode(doc: doc, within: w, overwrite: o) when is_map(doc), do: "\"add\":{#{encode(within: w)}#{encode(overwrite: o)}\"doc\":#{encode(doc)}}"
-  def encode(doc: [h|t], within: w, overwrite: o) when is_map(h), do: Enum.map([h]++t, &encode(doc: &1, within: w, overwrite: o))
+  def encode(doc: [h|t], within: w, overwrite: o) when is_map(h), do: Enum.map_join([h]++t, "," , &encode(doc: &1, within: w, overwrite: o))
   def encode(doc: _, within: _, overwrite: _), do: ""
 
   def encode(within: w) when is_integer(w), do: "\"commitWithin\":#{w},"
