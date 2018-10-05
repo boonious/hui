@@ -453,7 +453,7 @@ defmodule HuiStructTest do
     end
   end
 
-  describe "other structs" do
+  describe "other query structs" do
 
     test "set suggester Hui.S parameters" do
       x = %Hui.S{
@@ -536,6 +536,43 @@ defmodule HuiStructTest do
       x = %Hui.M{fl: "manu,cat", mindf: 10, mintf: 200, "match.include": true, count: 10}
       y = "mlt.count=10&mlt.fl=manu%2Ccat&mlt.match.include=true&mlt.mindf=10&mlt.mintf=200&mlt=true"
       assert y == x |> Hui.URL.encode_query
+    end
+  end
+
+  describe "update struct Hui.U" do
+
+    test "should encode a single doc" do
+      update_doc =  File.read!("./test/data/update_doc2.json") |> Poison.decode!
+      doc_map = update_doc["add"]["doc"]
+      expected_data = update_doc |> Poison.encode!
+
+      x = %Hui.U{doc: doc_map}
+      assert Hui.U.encode(x) == expected_data
+    end
+
+    test "should encode multiple docs" do
+      doc_map1 = %{
+        "actor_ss" => ["János Derzsi", "Erika Bók", "Mihály Kormos", "Ricsi"],
+        "desc" => "A rural farmer is forced to confront the mortality of his faithful horse.",
+        "directed_by" => ["Béla Tarr", "Ágnes Hranitzky"],
+        "genre" => ["Drama"],
+        "id" => "tt1316540",
+        "initial_release_date" => "2011-03-31",
+        "name" => "The Turin Horse"
+      }
+      doc_map2 = %{
+        "actor_ss" => ["Masami Nagasawa", "Hiroshi Abe", "Kanna Hashimoto",
+         "Yoshio Harada"],
+        "desc" => "Twelve-year-old Koichi, who has been separated from his brother Ryunosuke due to his parents' divorce, hears a rumor that the new bullet trains will precipitate a wish-granting miracle when they pass each other at top speed.",
+        "directed_by" => ["Hirokazu Koreeda"],
+        "genre" => ["Drame"],
+        "id" => "tt1650453",
+        "initial_release_date" => "2011-06-11",
+        "name" => "I Wish"
+      }
+
+      x = %Hui.U{doc: [doc_map1, doc_map2]}
+      assert Hui.U.encode(x) == File.read!("./test/data/update_doc3.json")
     end
   end
 
