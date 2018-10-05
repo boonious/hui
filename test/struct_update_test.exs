@@ -61,6 +61,21 @@ defmodule HuiStructUpdateTest do
       Hui.Request.update(:update_struct_test, x)
     end
 
+    test "update should post doc with commitWithin and overwrite parameters", context do
+      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
+      expected_data =  File.read!("./test/data/update_doc5.json")
+
+      update_doc = expected_data |> Poison.decode!
+      doc_map = update_doc["add"]["doc"]
+      commitWithin = update_doc["add"]["commitWithin"]
+      overwrite = update_doc["add"]["overwrite"]
+
+      check_post_data_bypass_setup(context.bypass, expected_data)
+
+      x = %Hui.U{doc: doc_map, commitWithin: commitWithin, overwrite: overwrite}
+      Hui.Request.update(url, x)
+    end
+
   end
 
 end

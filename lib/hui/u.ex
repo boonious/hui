@@ -15,11 +15,17 @@ defmodule Hui.U do
                          waitSearcher: boolean, expungeDeletes: boolean, maxSegments: integer,
                          delete_id: binary | list(binary), delete_query: binary | list(binary)}
 
-  def encode(%__MODULE__{} = s), do: "{#{encode(doc: s.doc)}}"
+  def encode(%__MODULE__{} = s), do: "{#{encode(doc: s.doc, within: s.commitWithin, overwrite: s.overwrite)}}"
   def encode(doc) when is_map(doc), do: Poison.encode!(doc)
 
-  def encode(doc: nil), do: ""
-  def encode(doc: doc) when is_map(doc), do: "\"add\":{\"doc\":#{encode(doc)}}"
-  def encode(doc: [head|tail]) when is_map(head), do: Enum.map([head]++tail, &encode(doc: &1))
+  def encode(doc: doc, within: w, overwrite: o) when is_map(doc), do: "\"add\":{#{encode(within: w)}#{encode(overwrite: o)}\"doc\":#{encode(doc)}}"
+  def encode(doc: [h|t], within: w, overwrite: o) when is_map(h), do: Enum.map([h]++t, &encode(doc: &1, within: w, overwrite: o))
+  def encode(doc: _, within: _, overwrite: _), do: ""
+
+  def encode(within: w) when is_integer(w), do: "\"commitWithin\":#{w},"
+  def encode(within: _), do: ""
+
+  def encode(overwrite: o) when is_boolean(o), do: "\"overwrite\":#{o},"
+  def encode(overwrite: _), do: ""
 
 end

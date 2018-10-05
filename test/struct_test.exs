@@ -574,6 +574,22 @@ defmodule HuiStructTest do
       x = %Hui.U{doc: [doc_map1, doc_map2]}
       assert Hui.U.encode(x) == File.read!("./test/data/update_doc3.json")
     end
+
+    test "should encode doc with commitWithin and overwrite parameters" do
+      expected_data =  File.read!("./test/data/update_doc4.json")
+      update_doc = expected_data |> Poison.decode!
+      doc_map = update_doc["add"]["doc"]
+
+      x = %Hui.U{doc: doc_map, commitWithin: 5000}
+      assert Hui.U.encode(x) == expected_data
+
+      x = %Hui.U{doc: doc_map, commitWithin: 10, overwrite: true}
+      assert Hui.U.encode(x) == File.read!("./test/data/update_doc5.json")
+
+      x = %Hui.U{doc: doc_map, overwrite: false}
+      assert Hui.U.encode(x) == File.read!("./test/data/update_doc6.json")
+    end
+
   end
 
 end

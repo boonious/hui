@@ -142,7 +142,7 @@ defmodule Hui.Request do
   # Direct response, or exception in case of failture
   bang = true
   response = Hui.Request.update(url, bang, json_doc)
-  
+
   # Delete a document via XML message
   headers = [{"Content-type", "application/xml"}]
   url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "update", headers: headers}
