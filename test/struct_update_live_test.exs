@@ -15,7 +15,7 @@ defmodule HuiStructUpdateLiveTest do
       x = %Hui.U{doc: doc_map}
 
       Hui.Request.update(url, x)
-      Hui.Request.update(url, File.read!("./test/data/commit.json"))
+      Hui.Request.update(url, "{\"commit\":{}}")
 
       verify_docs_exist(:default, ["tt0083658"])
     end
@@ -64,7 +64,7 @@ defmodule HuiStructUpdateLiveTest do
       x = %Hui.U{doc: [doc_map1, doc_map2]}
 
       Hui.Request.update(url, x)
-      Hui.Request.update(url, File.read!("./test/data/commit.json"))
+      Hui.Request.update(url, "{\"commit\":{}}")
 
       verify_docs_exist(:default, ["tt1316540", "tt1650453"])
     end
