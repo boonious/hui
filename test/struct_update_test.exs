@@ -8,7 +8,26 @@ defmodule HuiStructUpdateTest do
     bypass = Bypass.open
     error_einval = %Hui.Error{reason: :einval}
     error_nxdomain = %Hui.Error{reason: :nxdomain}
-    {:ok, bypass: bypass, update_doc: update_doc, error_einval: error_einval, error_nxdomain: error_nxdomain}
+    doc_map1 = %{
+      "actor_ss" => ["János Derzsi", "Erika Bók", "Mihály Kormos", "Ricsi"],
+      "desc" => "A rural farmer is forced to confront the mortality of his faithful horse.",
+      "directed_by" => ["Béla Tarr", "Ágnes Hranitzky"],
+      "genre" => ["Drama"],
+      "id" => "tt1316540",
+      "initial_release_date" => "2011-03-31",
+      "name" => "The Turin Horse"
+    }
+    doc_map2 = %{
+      "actor_ss" => ["Masami Nagasawa", "Hiroshi Abe", "Kanna Hashimoto",
+       "Yoshio Harada"],
+      "desc" => "Twelve-year-old Koichi, who has been separated from his brother Ryunosuke due to his parents' divorce, hears a rumor that the new bullet trains will precipitate a wish-granting miracle when they pass each other at top speed.",
+      "directed_by" => ["Hirokazu Koreeda"],
+      "genre" => ["Drame"],
+      "id" => "tt1650453",
+      "initial_release_date" => "2011-06-11",
+      "name" => "I Wish"
+    }
+    {:ok, bypass: bypass, multi_docs: [doc_map1, doc_map2], update_doc: update_doc, error_einval: error_einval, error_nxdomain: error_nxdomain}
   end
 
   describe "structured update via Hui.U" do
@@ -29,27 +48,17 @@ defmodule HuiStructUpdateTest do
       expected_data = File.read!("./test/data/update_doc3.json")
       check_post_data_bypass_setup(context.bypass, expected_data)
 
-      doc_map1 = %{
-        "actor_ss" => ["János Derzsi", "Erika Bók", "Mihály Kormos", "Ricsi"],
-        "desc" => "A rural farmer is forced to confront the mortality of his faithful horse.",
-        "directed_by" => ["Béla Tarr", "Ágnes Hranitzky"],
-        "genre" => ["Drama"],
-        "id" => "tt1316540",
-        "initial_release_date" => "2011-03-31",
-        "name" => "The Turin Horse"
-      }
-      doc_map2 = %{
-        "actor_ss" => ["Masami Nagasawa", "Hiroshi Abe", "Kanna Hashimoto",
-         "Yoshio Harada"],
-        "desc" => "Twelve-year-old Koichi, who has been separated from his brother Ryunosuke due to his parents' divorce, hears a rumor that the new bullet trains will precipitate a wish-granting miracle when they pass each other at top speed.",
-        "directed_by" => ["Hirokazu Koreeda"],
-        "genre" => ["Drame"],
-        "id" => "tt1650453",
-        "initial_release_date" => "2011-06-11",
-        "name" => "I Wish"
-      }
-      x = %Hui.U{doc: [doc_map1, doc_map2]}
+      x = %Hui.U{doc: context.multi_docs}
       Hui.Request.update(url, x)
+    end
+
+    test "update should post multiple docs to a URL key", context do
+      bypass = Bypass.open(port: 9000)
+      expected_data = File.read!("./test/data/update_doc3.json")
+      check_post_data_bypass_setup(bypass, expected_data)
+
+      x = %Hui.U{doc: context.multi_docs}
+      Hui.Request.update(:update_struct_test, x)
     end
 
   end

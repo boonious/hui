@@ -160,7 +160,8 @@ defmodule Hui.Request do
   def update(url, true, _data) when is_nil_empty(url), do: raise @error_einval
   def update(url, _bang, _data) when is_nil_empty(url), do: {:error, @error_einval}
 
-  def update(url, bang, data) when is_atom(url) do
+  def update(url, bang, %Hui.U{} = data) when is_atom(url), do: update(url, bang, data |> Hui.U.encode)
+  def update(url, bang, data) when is_atom(url) and is_binary(data) do
     {status, url_struct} = Hui.URL.configured_url(url)
     case {status, bang} do
       {:ok, _} -> _update(url_struct, bang, data)

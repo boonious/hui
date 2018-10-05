@@ -23,3 +23,8 @@ config :hui, :update_test,
   url: "http://localhost:8989/solr/articles",
   handler: "update",
   headers: [{"Content-type", "application/xml"}]
+
+config :hui, :update_struct_test,
+  url: "http://localhost:9000/solr/articles",
+  handler: "update",
+  headers: [{"Content-type", "application/json"}]

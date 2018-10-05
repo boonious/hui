@@ -46,8 +46,9 @@ defmodule TestHelpers do
   # for update tests
   def check_post_data_bypass_setup(bypass, expected_data) do
     Bypass.expect bypass, fn conn ->
-      assert "/update" == conn.request_path
+      assert String.match?(conn.request_path, ~r/\/update/)
       assert "POST" == conn.method
+      assert conn.req_headers |> Enum.member?({"content-type", "application/json"})
       {:ok, body, conn} = Plug.Conn.read_body(conn)
       assert body == expected_data
       Plug.Conn.resp(conn, 200, "")
