@@ -1,5 +1,6 @@
 defmodule HuiStructUpdateTest do
   use ExUnit.Case, async: true
+  import TestHelpers
 
   # testing with Bypass
   setup do
@@ -16,16 +17,9 @@ defmodule HuiStructUpdateTest do
       url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
       update_doc =  context.update_doc |> Poison.decode!
       expected_data = update_doc |> Poison.encode!
-
-      Bypass.expect context.bypass, fn conn ->
-        assert "/update" == conn.request_path
-        assert "POST" == conn.method
-        {:ok, body, conn} = Plug.Conn.read_body(conn)
-        assert body == expected_data
-        Plug.Conn.resp(conn, 200, "")
-      end
-
       doc_map = update_doc["add"]["doc"]
+      check_post_data_bypass_setup(context.bypass, expected_data)
+
       x = %Hui.U{doc: doc_map}
       Hui.Request.update(url, x)
     end
@@ -33,14 +27,7 @@ defmodule HuiStructUpdateTest do
     test "update should post multiple docs to a URL (struct)", context do
       url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
       expected_data = File.read!("./test/data/update_doc3.json")
-
-      Bypass.expect context.bypass, fn conn ->
-        assert "/update" == conn.request_path
-        assert "POST" == conn.method
-        {:ok, body, conn} = Plug.Conn.read_body(conn)
-        assert body == expected_data
-        Plug.Conn.resp(conn, 200, "")
-      end
+      check_post_data_bypass_setup(context.bypass, expected_data)
 
       doc_map1 = %{
         "actor_ss" => ["János Derzsi", "Erika Bók", "Mihály Kormos", "Ricsi"],
