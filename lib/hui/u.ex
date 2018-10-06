@@ -17,10 +17,10 @@ defmodule Hui.U do
 
   def encode(%__MODULE__{} = s) do
    a = "#{encode(doc: s.doc, within: s.commitWithin, overwrite: s.overwrite)}"
-   b = "#{encode(commit: s.commit, wait: s.waitSearcher, expunge: s.expungeDeletes)}"
-   c = "#{encode(optimize: s.optimize, wait: s.waitSearcher, max: s.maxSegments)}"
-   d = "#{encode(delete_id: s.delete_id)}"
-   e = "#{encode(delete_query: s.delete_query)}"
+   b = "#{encode(delete_id: s.delete_id)}"
+   c = "#{encode(delete_query: s.delete_query)}"
+   d = "#{encode(commit: s.commit, wait: s.waitSearcher, expunge: s.expungeDeletes)}"
+   e = "#{encode(optimize: s.optimize, wait: s.waitSearcher, max: s.maxSegments)}"
 
    x = [a, b, c, d, e] |> Enum.filter(fn x -> x != "" end)
    "{#{Enum.join(x, ",")}}"
