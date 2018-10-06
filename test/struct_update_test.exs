@@ -76,6 +76,35 @@ defmodule HuiStructUpdateTest do
       Hui.Request.update(url, x)
     end
 
+    test "update should post multiple bundled update commands", context do
+      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
+      expected_data =  File.read!("./test/data/update_doc9.json")
+      check_post_data_bypass_setup(context.bypass, expected_data)
+
+      doc_map1 = %{
+        "actor_ss" => ["Ingrid Bergman", "Liv Ullmann", "Lena Nyman", "Halvar Björk"],
+        "desc" => "A married daughter who longs for her mother's love is visited by the latter, a successful concert pianist.",
+        "directed_by" => ["Ingmar Bergman"],
+        "genre" => ["Drama", "Music"],
+        "id" => "tt0077711",
+        "initial_release_date" => "1978-10-08",
+        "name" => "Autumn Sonata"
+      }
+      doc_map2 = %{
+        "actor_ss" => ["Bibi Andersson", "Liv Ullmann", "Margaretha Krook"],
+        "desc" => "A nurse is put in charge of a mute actress and finds that their personas are melding together.",
+        "directed_by" => ["Ingmar Bergman"],
+        "genre" => ["Drama", "Thriller"],
+        "id" => "tt0060827",
+        "initial_release_date" => "1967-09-21",
+        "name" => "Persona"
+      }
+
+      x = %Hui.U{doc: [doc_map1, doc_map2], commitWithin: 50, overwrite: true}
+      x = %Hui.U{x | commit: true, waitSearcher: true, expungeDeletes: false}
+      Hui.Request.update(url, x)
+    end
+
   end
 
 end

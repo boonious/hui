@@ -15,7 +15,13 @@ defmodule Hui.U do
                          waitSearcher: boolean, expungeDeletes: boolean, maxSegments: integer,
                          delete_id: binary | list(binary), delete_query: binary | list(binary)}
 
-  def encode(%__MODULE__{} = s), do: "{#{encode(doc: s.doc, within: s.commitWithin, overwrite: s.overwrite)}}"
+  def encode(%__MODULE__{} = s) do
+   a = "#{encode(doc: s.doc, within: s.commitWithin, overwrite: s.overwrite)}"
+   b = "#{encode(commit: s.commit, wait: s.waitSearcher, expunge: s.expungeDeletes)}"
+
+   x = [a, b] |> Enum.filter(fn x -> x != "" end)
+   "{#{Enum.join(x, ",")}}"
+  end
   def encode(doc) when is_map(doc), do: Poison.encode!(doc)
 
   def encode(doc: doc, within: w, overwrite: o) when is_map(doc), do: "\"add\":{#{encode(within: w)}#{encode(overwrite: o)}\"doc\":#{encode(doc)}}"
@@ -27,5 +33,11 @@ defmodule Hui.U do
 
   def encode(overwrite: o) when is_boolean(o), do: "\"overwrite\":#{o},"
   def encode(overwrite: _), do: ""
+
+  def encode(commit: true, wait: w, expunge: e) when is_boolean(w) and is_boolean(e), do: "\"commit\":{\"waitSearcher\":#{w},\"expungeDeletes\":#{e}}"
+  def encode(commit: true, wait: w, expunge: nil) when is_boolean(w), do: "\"commit\":{\"waitSearcher\":#{w}}"
+  def encode(commit: true, wait: nil, expunge: e) when is_boolean(e), do: "\"commit\":{\"expungeDeletes\":#{e}}"
+  def encode(commit: true, wait: nil, expunge: nil), do: "\"commit\":{}"
+  def encode(commit: _, wait: _, expunge: _), do: ""
 
 end

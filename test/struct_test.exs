@@ -591,7 +591,7 @@ defmodule HuiStructTest do
     end
 
     test "should encode multiple docs with commitWithin and overwrite parameters" do
-      expected_data =  File.read!("./test/data/update_doc8.json")
+      expected_data = File.read!("./test/data/update_doc8.json")
       doc_map1 = %{
         "actor_ss" => ["Ingrid Bergman", "Liv Ullmann", "Lena Nyman", "Halvar Björk"],
         "desc" => "A married daughter who longs for her mother's love is visited by the latter, a successful concert pianist.",
@@ -613,6 +613,48 @@ defmodule HuiStructTest do
 
       x = %Hui.U{doc: [doc_map1, doc_map2], commitWithin: 50, overwrite: true}
       assert Hui.U.encode(x) == expected_data
+    end
+
+    test "should encode commit message with waitSearcher and expungeDeletes parameters" do
+       x = %Hui.U{commit: true}
+       assert x |> Hui.U.encode == "{\"commit\":{}}"
+
+       x = %Hui.U{commit: true, waitSearcher: true}
+       assert x |> Hui.U.encode == "{\"commit\":{\"waitSearcher\":true}}"
+
+       x = %Hui.U{commit: true, waitSearcher: false}
+       assert x |> Hui.U.encode == "{\"commit\":{\"waitSearcher\":false}}"
+
+       x = %Hui.U{commit: true, expungeDeletes: true}
+       assert x |> Hui.U.encode == "{\"commit\":{\"expungeDeletes\":true}}"
+
+       x = %Hui.U{commit: true, waitSearcher: true, expungeDeletes: false}
+       assert x |> Hui.U.encode == "{\"commit\":{\"waitSearcher\":true,\"expungeDeletes\":false}}"
+    end
+
+    test "should encode multiple bundled update commands (docs, optimize etc.)" do
+     doc_map1 = %{
+       "actor_ss" => ["Ingrid Bergman", "Liv Ullmann", "Lena Nyman", "Halvar Björk"],
+       "desc" => "A married daughter who longs for her mother's love is visited by the latter, a successful concert pianist.",
+       "directed_by" => ["Ingmar Bergman"],
+       "genre" => ["Drama", "Music"],
+       "id" => "tt0077711",
+       "initial_release_date" => "1978-10-08",
+       "name" => "Autumn Sonata"
+     }
+     doc_map2 = %{
+       "actor_ss" => ["Bibi Andersson", "Liv Ullmann", "Margaretha Krook"],
+       "desc" => "A nurse is put in charge of a mute actress and finds that their personas are melding together.",
+       "directed_by" => ["Ingmar Bergman"],
+       "genre" => ["Drama", "Thriller"],
+       "id" => "tt0060827",
+       "initial_release_date" => "1967-09-21",
+       "name" => "Persona"
+     }
+
+     x = %Hui.U{doc: [doc_map1, doc_map2], commitWithin: 50, overwrite: true}
+     x = %Hui.U{x | commit: true, waitSearcher: true, expungeDeletes: false}
+     assert x |> Hui.U.encode == File.read!("./test/data/update_doc9.json")
     end
 
   end
