@@ -615,7 +615,7 @@ defmodule HuiStructTest do
       assert Hui.U.encode(x) == expected_data
     end
 
-    test "should encode commit message with waitSearcher and expungeDeletes parameters" do
+    test "should encode commit command with waitSearcher and expungeDeletes parameters" do
        x = %Hui.U{commit: true}
        assert x |> Hui.U.encode == "{\"commit\":{}}"
 
@@ -632,7 +632,24 @@ defmodule HuiStructTest do
        assert x |> Hui.U.encode == "{\"commit\":{\"waitSearcher\":true,\"expungeDeletes\":false}}"
     end
 
-    test "should encode multiple bundled update commands (docs, optimize etc.)" do
+    test "should encode optimize command with waitSearcher and maxSegment parameters" do
+       x = %Hui.U{optimize: true}
+       assert x |> Hui.U.encode == "{\"optimize\":{}}"
+
+       x = %Hui.U{optimize: true, waitSearcher: true}
+       assert x |> Hui.U.encode == "{\"optimize\":{\"waitSearcher\":true}}"
+
+       x = %Hui.U{optimize: true, waitSearcher: false}
+       assert x |> Hui.U.encode == "{\"optimize\":{\"waitSearcher\":false}}"
+
+       x = %Hui.U{optimize: true, maxSegments: 20}
+       assert x |> Hui.U.encode == "{\"optimize\":{\"maxSegments\":20}}"
+
+       x = %Hui.U{optimize: true, waitSearcher: true, maxSegments: 20}
+       assert x |> Hui.U.encode == "{\"optimize\":{\"waitSearcher\":true,\"maxSegments\":20}}"
+    end
+ 
+    test "should encode multiple bundled update commands (docs, commit, optimize etc.)" do
      doc_map1 = %{
        "actor_ss" => ["Ingrid Bergman", "Liv Ullmann", "Lena Nyman", "Halvar Björk"],
        "desc" => "A married daughter who longs for her mother's love is visited by the latter, a successful concert pianist.",
@@ -653,8 +670,8 @@ defmodule HuiStructTest do
      }
 
      x = %Hui.U{doc: [doc_map1, doc_map2], commitWithin: 50, overwrite: true}
-     x = %Hui.U{x | commit: true, waitSearcher: true, expungeDeletes: false}
-     assert x |> Hui.U.encode == File.read!("./test/data/update_doc9.json")
+     x = %Hui.U{x | commit: true, waitSearcher: true, expungeDeletes: false, optimize: true, maxSegments: 20}
+     assert x |> Hui.U.encode == File.read!("./test/data/update_doc10.json")
     end
 
   end
