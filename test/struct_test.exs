@@ -649,12 +649,20 @@ defmodule HuiStructTest do
        assert x |> Hui.U.encode == "{\"optimize\":{\"waitSearcher\":true,\"maxSegments\":20}}"
     end
  
-    test "should encode delete IDs command" do
+    test "should encode delete by ID command" do
        x = %Hui.U{delete_id: "tt1316540"}
        assert x |> Hui.U.encode == "{\"delete\":{\"id\":\"tt1316540\"}}"
        
        x = %Hui.U{delete_id: ["tt1316540", "tt1650453"]}
        assert x |> Hui.U.encode == "{\"delete\":{\"id\":\"tt1316540\"},\"delete\":{\"id\":\"tt1650453\"}}"
+    end
+
+    test "should encode delete by query command" do
+       x = %Hui.U{delete_query: "name:Persona"}
+       assert x |> Hui.U.encode == "{\"delete\":{\"query\":\"name:Persona\"}}"
+
+       x = %Hui.U{delete_query: ["name:Persona", "genre:Drama"]}
+       assert x |> Hui.U.encode == "{\"delete\":{\"query\":\"name:Persona\"},\"delete\":{\"query\":\"genre:Drama\"}}"
     end
 
     test "should encode multiple grouped update commands (docs, commit, optimize etc.)" do

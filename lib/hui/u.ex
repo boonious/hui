@@ -20,8 +20,9 @@ defmodule Hui.U do
    b = "#{encode(commit: s.commit, wait: s.waitSearcher, expunge: s.expungeDeletes)}"
    c = "#{encode(optimize: s.optimize, wait: s.waitSearcher, max: s.maxSegments)}"
    d = "#{encode(delete_id: s.delete_id)}"
+   e = "#{encode(delete_query: s.delete_query)}"
 
-   x = [a, b, c, d] |> Enum.filter(fn x -> x != "" end)
+   x = [a, b, c, d, e] |> Enum.filter(fn x -> x != "" end)
    "{#{Enum.join(x, ",")}}"
   end
   def encode(doc) when is_map(doc), do: Poison.encode!(doc)
@@ -49,6 +50,10 @@ defmodule Hui.U do
   def encode(optimize: _, wait: _, max: _), do: ""
 
   def encode(delete_id: id) when is_binary(id), do: "\"delete\":{\"id\":\"#{id}\"}"
-  def encode(delete_id: ids) when is_list(ids), do: Enum.map_join(ids, ",", &encode(delete_id: &1))
+  def encode(delete_id: id) when is_list(id), do: Enum.map_join(id, ",", &encode(delete_id: &1))
   def encode(delete_id: _), do: ""
+
+  def encode(delete_query: q) when is_binary(q), do: "\"delete\":{\"query\":\"#{q}\"}"
+  def encode(delete_query: q) when is_list(q), do: Enum.map_join(q, ",", &encode(delete_query: &1))
+  def encode(delete_query: _), do: ""
 end
