@@ -97,6 +97,9 @@ for more details on available search parameters.
 
 ### Example - updating
 
+**Latest**: it is now feasible to issue update commands using the `Hui.U` struct.
+Further details and module documentation are forthcoming.
+
 Update requests can currently be issued with the `Request.update/3` function and binary data
 encapsulating Solr documents and commands -
 See [Solr reference](http://lucene.apache.org/solr/guide/uploading-data-with-index-handlers.html)
@@ -143,6 +146,7 @@ creating and encoding Solr parameters:
 - Faceting: `Hui.F`, `Hui.F.Range`, `Hui.F.Interval`
 - Results highlighting: `Hui.H`, `Hui.H1`, `Hui.H2`, `Hui.H3`
 - Misc: spell-checking `Hui.Sp`, suggester `Hui.S`, MoreLikeThis `Hui.M`
+- Update (add/delete/commit/optimize data): `Hui.U`
 
 For example, instead of prefixing and repeating `fq=filter`, `facet.field=fieldname`, `facet.range.gap=10`,
 multiple filter and facet fields can be specified using

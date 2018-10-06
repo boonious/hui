@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.0 (2018-10-06)
+
+* Solr updating via struct: `Request.update/3` now accepts a `Hui.U` struct for adding, deleting and committing documents, as well as optimising indexes
+
 ## 0.7.0 (2018-10-03)
 
 * Enable Solr updating with binary data (JSON, XML update docs) via `Request.update/3` function
