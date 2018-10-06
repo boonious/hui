@@ -57,9 +57,8 @@ defmodule TestHelpers do
 
   # for live update tests
   def delete_verify_doc_deletion(%Hui.URL{} = url, delete_msg, id) when is_binary(delete_msg) do
-    # change the following update calls from binary to struct-based later when 'delete', 'commit' ops exist
     Hui.Request.update(url, delete_msg)
-    Hui.Request.update(url, "{\"commit\":{}}")
+    Hui.Request.update(url, %Hui.U{commit: true})
     ids = if is_list(id), do: Enum.join(id, " OR "), else: id
     resp = Hui.search!(:default, q: "*", fq: ["id:#{ids}"])
     assert resp.body["response"]["numFound"] == 0
