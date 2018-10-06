@@ -649,7 +649,15 @@ defmodule HuiStructTest do
        assert x |> Hui.U.encode == "{\"optimize\":{\"waitSearcher\":true,\"maxSegments\":20}}"
     end
  
-    test "should encode multiple bundled update commands (docs, commit, optimize etc.)" do
+    test "should encode delete IDs command" do
+       x = %Hui.U{delete_id: "tt1316540"}
+       assert x |> Hui.U.encode == "{\"delete\":{\"id\":\"tt1316540\"}}"
+       
+       x = %Hui.U{delete_id: ["tt1316540", "tt1650453"]}
+       assert x |> Hui.U.encode == "{\"delete\":{\"id\":\"tt1316540\"},\"delete\":{\"id\":\"tt1650453\"}}"
+    end
+
+    test "should encode multiple grouped update commands (docs, commit, optimize etc.)" do
      doc_map1 = %{
        "actor_ss" => ["Ingrid Bergman", "Liv Ullmann", "Lena Nyman", "Halvar Björk"],
        "desc" => "A married daughter who longs for her mother's love is visited by the latter, a successful concert pianist.",
@@ -671,6 +679,7 @@ defmodule HuiStructTest do
 
      x = %Hui.U{doc: [doc_map1, doc_map2], commitWithin: 50, overwrite: true}
      x = %Hui.U{x | commit: true, waitSearcher: true, expungeDeletes: false, optimize: true, maxSegments: 20}
+     x = %Hui.U{x | delete_id: ["tt1316540", "tt1650453"]}
      assert x |> Hui.U.encode == File.read!("./test/data/update_doc10.json")
     end
 

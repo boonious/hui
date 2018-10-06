@@ -76,7 +76,16 @@ defmodule HuiStructUpdateTest do
       Hui.Request.update(url, x)
     end
 
-    test "update should post multiple bundled update commands", context do
+    test "update should post delete commands", context do
+      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
+      expected_data =  File.read!("./test/data/delete_doc3.json")
+      check_post_data_bypass_setup(context.bypass, expected_data)
+
+      x = %Hui.U{delete_id: ["tt1316540","tt1650453"]}
+      Hui.Request.update(url, x)
+    end
+ 
+    test "update should post multiple grouped update commands", context do
       url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
       expected_data =  File.read!("./test/data/update_doc9.json")
       check_post_data_bypass_setup(context.bypass, expected_data)
