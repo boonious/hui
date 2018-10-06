@@ -60,7 +60,14 @@ defmodule TestHelpers do
     Hui.Request.update(url, delete_msg)
     Hui.Request.update(url, %Hui.U{commit: true})
     ids = if is_list(id), do: Enum.join(id, " OR "), else: id
-    resp = Hui.search!(:default, q: "*", fq: ["id:#{ids}"])
+    resp = Hui.search!(:default, q: "*", fq: ["id:(#{ids})"])
+    assert resp.body["response"]["numFound"] == 0
+  end
+
+  def delete_verify_doc_deletion(%Hui.URL{} = url, %Hui.U{} = delete_msg, id) do
+    Hui.Request.update(url, delete_msg)
+    ids = if is_list(id), do: Enum.join(id, " OR "), else: id
+    resp = Hui.search!(:default, q: "*", fq: ["id:(#{ids})"])
     assert resp.body["response"]["numFound"] == 0
   end
 

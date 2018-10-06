@@ -8,7 +8,7 @@ defmodule HuiStructUpdateLiveTest do
     test "should post a single doc" do
       default_url = Hui.URL.default_url!
       url = %Hui.URL{default_url | handler: "update", headers: [{"Content-type", "application/json"}]}
-      delete_verify_doc_deletion(url, File.read!("./test/data/delete_doc2.json"), "tt0083658")
+      delete_verify_doc_deletion(url, %Hui.U{delete_id: "tt0083658", commit: true}, "tt0083658")
 
       update_doc = File.read!("./test/data/update_doc2.json") |> Poison.decode!
       doc_map = update_doc["add"]["doc"]
@@ -23,7 +23,7 @@ defmodule HuiStructUpdateLiveTest do
     test "should post a single doc with commitWithin and overwrite parameters" do
       default_url = Hui.URL.default_url!
       url = %Hui.URL{default_url | handler: "update", headers: [{"Content-type", "application/json"}]}
-      delete_verify_doc_deletion(url, File.read!("./test/data/delete_doc4.json"), "tt0078748")
+      delete_verify_doc_deletion(url, %Hui.U{delete_id: "tt0078748", commit: true}, "tt0078748")
 
       update_doc = File.read!("./test/data/update_doc5.json") |> Poison.decode!
       doc_map = update_doc["add"]["doc"]
@@ -32,7 +32,7 @@ defmodule HuiStructUpdateLiveTest do
       x = %Hui.U{doc: doc_map, commitWithin: commitWithin, overwrite: overwrite}
 
       Hui.Request.update(url, x)
-      :timer.sleep(100)
+      :timer.sleep(300)
       
       verify_docs_exist(:default, ["tt0078748"])
     end
@@ -40,7 +40,7 @@ defmodule HuiStructUpdateLiveTest do
     test "should post multiple docs" do
       default_url = Hui.URL.default_url!
       url = %Hui.URL{default_url | handler: "update", headers: [{"Content-type", "application/json"}]}
-      delete_verify_doc_deletion(url, File.read!("./test/data/delete_doc3.json"), ["tt1316540", "tt1650453"])
+      delete_verify_doc_deletion(url, %Hui.U{delete_query: ["name:'The Turin Horse'", "name:'I Wish'"], commit: true}, ["tt1316540", "tt1650453"])
 
       doc_map1 = %{
         "actor_ss" => ["János Derzsi", "Erika Bók", "Mihály Kormos", "Ricsi"],
@@ -72,7 +72,7 @@ defmodule HuiStructUpdateLiveTest do
     test "should post multiple docs with commitWithin and overwrite parameters" do
       default_url = Hui.URL.default_url!
       url = %Hui.URL{default_url | handler: "update", headers: [{"Content-type", "application/json"}]}
-      delete_verify_doc_deletion(url, "{\"delete\":\"tt0077711\", \"delete\":\"tt0060827\"}", ["tt0077711", "tt0060827"])
+      delete_verify_doc_deletion(url, %Hui.U{delete_id: ["tt0077711", "tt0060827"], commit: true}, ["tt0077711", "tt0060827"])
 
       doc_map1 = %{
         "actor_ss" => ["Ingrid Bergman", "Liv Ullmann", "Lena Nyman", "Halvar Björk"],
@@ -95,7 +95,7 @@ defmodule HuiStructUpdateLiveTest do
       x = %Hui.U{doc: [doc_map1, doc_map2], commitWithin: 50, overwrite: true}
 
       Hui.Request.update(url, x)
-      :timer.sleep(200)
+      :timer.sleep(300)
 
       verify_docs_exist(:default, ["tt0077711", "tt0060827"])
     end
