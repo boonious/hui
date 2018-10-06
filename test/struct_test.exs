@@ -691,6 +691,14 @@ defmodule HuiStructTest do
      assert x |> Hui.U.encode == File.read!("./test/data/update_doc10.json")
     end
 
+    test "should encode rollback command" do
+       x = %Hui.U{rollback: true}
+       assert x |> Hui.U.encode == "{\"rollback\":{}}"
+
+       x = %Hui.U{rollback: true, delete_query: "name:Persona"}
+       assert x |> Hui.U.encode == "{\"delete\":{\"query\":\"name:Persona\"},\"rollback\":{}}"
+    end
+
   end
 
 end

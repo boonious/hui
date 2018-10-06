@@ -21,8 +21,9 @@ defmodule Hui.U do
    c = "#{encode(delete_query: s.delete_query)}"
    d = "#{encode(commit: s.commit, wait: s.waitSearcher, expunge: s.expungeDeletes)}"
    e = "#{encode(optimize: s.optimize, wait: s.waitSearcher, max: s.maxSegments)}"
+   f = "#{encode(rollback: s.rollback)}"
 
-   x = [a, b, c, d, e] |> Enum.filter(fn x -> x != "" end)
+   x = [a, b, c, d, e, f] |> Enum.filter(fn x -> x != "" end)
    "{#{Enum.join(x, ",")}}"
   end
   def encode(doc) when is_map(doc), do: Poison.encode!(doc)
@@ -56,4 +57,8 @@ defmodule Hui.U do
   def encode(delete_query: q) when is_binary(q), do: "\"delete\":{\"query\":\"#{q}\"}"
   def encode(delete_query: q) when is_list(q), do: Enum.map_join(q, ",", &encode(delete_query: &1))
   def encode(delete_query: _), do: ""
+
+  def encode(rollback: true), do: "\"rollback\":{}"
+  def encode(rollback: _), do: ""
+
 end

@@ -32,7 +32,7 @@ defmodule HuiStructUpdateTest do
 
   describe "structured update via Hui.U" do
 
-    test "update should post a single doc to a URL (struct)", context do
+    test "should post a single doc to a URL (struct)", context do
       url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
       update_doc =  context.update_doc |> Poison.decode!
       expected_data = update_doc |> Poison.encode!
@@ -43,7 +43,7 @@ defmodule HuiStructUpdateTest do
       Hui.Request.update(url, x)
     end
 
-    test "update should post multiple docs to a URL (struct)", context do
+    test "should post multiple docs to a URL (struct)", context do
       url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
       expected_data = File.read!("./test/data/update_doc3.json")
       check_post_data_bypass_setup(context.bypass, expected_data)
@@ -52,7 +52,7 @@ defmodule HuiStructUpdateTest do
       Hui.Request.update(url, x)
     end
 
-    test "update should post multiple docs to a URL key", context do
+    test "should post multiple docs to a URL key", context do
       bypass = Bypass.open(port: 9000)
       expected_data = File.read!("./test/data/update_doc3.json")
       check_post_data_bypass_setup(bypass, expected_data)
@@ -61,7 +61,7 @@ defmodule HuiStructUpdateTest do
       Hui.Request.update(:update_struct_test, x)
     end
 
-    test "update should post doc with commitWithin and overwrite parameters", context do
+    test "should post doc with commitWithin and overwrite parameters", context do
       url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
       expected_data =  File.read!("./test/data/update_doc5.json")
 
@@ -76,7 +76,7 @@ defmodule HuiStructUpdateTest do
       Hui.Request.update(url, x)
     end
 
-    test "update should post delete by ID command", context do
+    test "should post delete by ID command", context do
       url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
       expected_data =  File.read!("./test/data/delete_doc3.json")
       check_post_data_bypass_setup(context.bypass, expected_data)
@@ -85,7 +85,7 @@ defmodule HuiStructUpdateTest do
       Hui.Request.update(url, x)
     end
     
-    test "update should post delete by query command", context do
+    test "should post delete by query command", context do
       url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
       expected_data =  "{\"delete\":{\"query\":\"name:Persona\"},\"delete\":{\"query\":\"genre:Drama\"}}"
       check_post_data_bypass_setup(context.bypass, expected_data)
@@ -94,7 +94,16 @@ defmodule HuiStructUpdateTest do
       Hui.Request.update(url, x)
     end
 
-    test "update should post multiple grouped update commands", context do
+    test "should post rollback command", context do
+      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
+      expected_data =  "{\"delete\":{\"query\":\"name:Persona\"},\"rollback\":{}}"
+      check_post_data_bypass_setup(context.bypass, expected_data)
+
+      x = %Hui.U{delete_query: "name:Persona", rollback: true}
+      Hui.Request.update(url, x)
+    end
+
+    test "should post multiple grouped update commands", context do
       url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
       expected_data =  File.read!("./test/data/update_doc9.json")
       check_post_data_bypass_setup(context.bypass, expected_data)
