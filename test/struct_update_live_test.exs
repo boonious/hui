@@ -56,7 +56,7 @@ defmodule HuiStructUpdateLiveTest do
          "Yoshio Harada"],
         "desc" => "Twelve-year-old Koichi, who has been separated from his brother Ryunosuke due to his parents' divorce, hears a rumor that the new bullet trains will precipitate a wish-granting miracle when they pass each other at top speed.",
         "directed_by" => ["Hirokazu Koreeda"],
-        "genre" => ["Drame"],
+        "genre" => ["Drama"],
         "id" => "tt1650453",
         "initial_release_date" => "2011-06-11",
         "name" => "I Wish"
@@ -67,6 +67,37 @@ defmodule HuiStructUpdateLiveTest do
       Hui.Request.update(url, "{\"commit\":{}}")
 
       verify_docs_exist(:default, ["tt1316540", "tt1650453"])
+    end
+
+    test "should post multiple docs with commitWithin and overwrite parameters" do
+      default_url = Hui.URL.default_url!
+      url = %Hui.URL{default_url | handler: "update", headers: [{"Content-type", "application/json"}]}
+      delete_verify_doc_deletion(url, "{\"delete\":\"tt0077711\", \"delete\":\"tt0060827\"}", ["tt0077711", "tt0060827"])
+
+      doc_map1 = %{
+        "actor_ss" => ["Ingrid Bergman", "Liv Ullmann", "Lena Nyman", "Halvar Björk"],
+        "desc" => "A married daughter who longs for her mother's love is visited by the latter, a successful concert pianist.",
+        "directed_by" => ["Ingmar Bergman"],
+        "genre" => ["Drama", "Music"],
+        "id" => "tt0077711",
+        "initial_release_date" => "1978-10-08",
+        "name" => "Autumn Sonata"
+      }
+      doc_map2 = %{
+        "actor_ss" => ["Bibi Andersson", "Liv Ullmann", "Margaretha Krook"],
+        "desc" => "A nurse is put in charge of a mute actress and finds that their personas are melding together.",
+        "directed_by" => ["Ingmar Bergman"],
+        "genre" => ["Drama", "Thriller"],
+        "id" => "tt0060827",
+        "initial_release_date" => "1967-09-21",
+        "name" => "Persona"
+      }
+      x = %Hui.U{doc: [doc_map1, doc_map2], commitWithin: 50, overwrite: true}
+
+      Hui.Request.update(url, x)
+      :timer.sleep(200)
+
+      verify_docs_exist(:default, ["tt0077711", "tt0060827"])
     end
 
   end
