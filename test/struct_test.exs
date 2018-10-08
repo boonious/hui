@@ -5,6 +5,7 @@ defmodule HuiStructTest do
   doctest Hui.F.Range
   doctest Hui.F.Interval
   doctest Hui.H
+  doctest Hui.U
 
   describe "query struct Hui.Q" do
 
