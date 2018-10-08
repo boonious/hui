@@ -330,4 +330,15 @@ defmodule Hui do
   """
   @spec mlt!(url, Hui.Q.t, Hui.M.t) :: HTTPoison.Response.t
   def mlt!(url, %Hui.Q{} = query_struct, %Hui.M{} = mlt_query_struct), do: Request.search(url, true, [query_struct, mlt_query_struct])
+
+  @spec update(url, map | list(map), boolean) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
+  def update(url, docs, commit \\ true)
+  def update(url, docs, commit) when is_binary(docs), do: Request.update(url, docs)
+  def update(url, docs, commit) when is_map(docs) or is_list(docs), do: Request.update(url, %Hui.U{doc: docs, commit: commit})
+
+  @spec update!(url, map | list(map), boolean) :: HTTPoison.Response.t
+  def update!(url, docs, commit \\ true)
+  def update!(url, docs, commit) when is_binary(docs), do: Request.update(url, true, docs)
+  def update!(url, docs, commit) when is_map(docs) or is_list(docs), do: Request.update(url, true, %Hui.U{doc: docs, commit: commit})
+
 end

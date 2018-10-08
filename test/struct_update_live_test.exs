@@ -40,7 +40,7 @@ defmodule HuiStructUpdateLiveTest do
     test "should post multiple docs" do
       default_url = Hui.URL.default_url!
       url = %Hui.URL{default_url | handler: "update", headers: [{"Content-type", "application/json"}]}
-      delete_verify_doc_deletion(url, %Hui.U{delete_query: ["name:'The Turin Horse'", "name:'I Wish'"], commit: true}, ["tt1316540", "tt1650453"])
+      delete_verify_doc_deletion(url, %Hui.U{delete_id: ["tt1316540", "tt1650453"], commit: true}, ["tt1316540", "tt1650453"])
 
       doc_map1 = %{
         "actor_ss" => ["János Derzsi", "Erika Bók", "Mihály Kormos", "Ricsi"],
