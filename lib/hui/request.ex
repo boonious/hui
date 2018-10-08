@@ -122,31 +122,61 @@ defmodule Hui.Request do
   @doc """
   Issues an update request to a specific Solr endpoint, for data uploading and deletion.
 
-  The request sends binary data to an endpoint
-  specified in a `t:Hui.URL.t/0` struct or a key
-  referring to a URL setting in configuration. A content type header is also required so that
-  Solr can process that the data accordingly.
+  The request sends update data in `Hui.U` struct or binary format to an endpoint
+  specified in a `t:Hui.URL.t/0` struct or a URL config key. A content type header
+  is required so that Solr can process that the data accordingly.
 
   ## Example
 
   ```
-  # Specify an endpoint for JSON data
-  headers = [{"Content-type", "application/json"}]
-  url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "update", headers: headers}
-  json_doc = # encoded binary data such as raw JSON text from a file
-  {status, response} = Hui.Request.update(url, json_doc)
+    # Specify an endpoint for JSON-formatted update
+    headers = [{"Content-type", "application/json"}]
+    url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "update", headers: headers}
+  
+    # Solr data / docs - field mapping
+    doc1 = %{
+      "actor_ss" => ["Ingrid Bergman", "Liv Ullmann", "Lena Nyman", "Halvar Björk"],
+      "desc" => "A married daughter who longs for her mother's love is visited by the latter, a successful concert pianist.",
+      "directed_by" => ["Ingmar Bergman"],
+      "genre" => ["Drama", "Music"],
+      "id" => "tt0077711",
+      "initial_release_date" => "1978-10-08",
+      "name" => "Autumn Sonata"
+    }
+    doc2 = %{
+      "actor_ss" => ["Bibi Andersson", "Liv Ullmann", "Margaretha Krook"],
+      "desc" => "A nurse is put in charge of a mute actress and finds that their personas are melding together.",
+      "directed_by" => ["Ingmar Bergman"],
+      "genre" => ["Drama", "Thriller"],
+      "id" => "tt0060827",
+      "initial_release_date" => "1967-09-21",
+      "name" => "Persona"
+    }
 
-  # Send data to a pre-configured URL
-  {status, response} = Hui.Request.update(:library, json_doc)
+    # Hui.U struct command for updating and committing the docs to Solr immediately
+    x = %Hui.U{doc: [doc1, doc2], commit: true, waitSearcher: true}
+    {status, resp} = Hui.Request.update(url, x)
 
-  # Direct response, or exception in case of failture
-  bang = true
-  response = Hui.Request.update(url, bang, json_doc)
+    # Delete the docs by IDs, with a URL key from configuration
+    {status, resp} = Hui.Request.update(:library_update, %Hui.U{delete_id: ["tt1316540", "tt1650453"]})
 
-  # Delete a document via XML message
-  headers = [{"Content-type", "application/xml"}]
-  url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "update", headers: headers}
-  {status, response} = Hui.Request.update(url, "<delete><id>9780141981727</id></delete>")
+    # Commit and optimise index
+    {status, resp} = Hui.Request.update(url, %Hui.U{commit: true, waitSearcher: true, optimize: true, maxSegments: 10})
+
+    # Direct response or exception in case of failture
+    # for implementing bang! style function
+    bang = true
+    resp = Hui.Request.update(url, bang, json_doc)
+
+    # Binary mode,
+    json_binary = # any encoded binary data, e.g. raw JSON from a file
+    {status, resp} = Hui.Request.update(url, json_binary)
+
+    # Binary mode, e.g. delete a document via XML binary
+    headers = [{"Content-type", "application/xml"}]
+    url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "update", headers: headers}
+    {status, resp} = Hui.Request.update(url, "<delete><id>9780141981727</id></delete>")
+
   ```
 
   See [Solr reference](http://lucene.apache.org/solr/guide/uploading-data-with-index-handlers.html)

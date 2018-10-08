@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.1 (2018-10-08)
+
+* Documentation, README and doctests for Solr updating via `Hui.U` struct
+
 ## 0.8.0 (2018-10-06)
 
 * Solr updating via struct: `Request.update/3` now accepts a `Hui.U` struct for adding, deleting and committing documents, as well as optimising indexes

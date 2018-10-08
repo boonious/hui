@@ -1,4 +1,4 @@
-# Hui 辉 [![Build Status](https://travis-ci.org/boonious/hui.svg?branch=master)](https://travis-ci.org/boonious/hui) [![Hex pm](http://img.shields.io/hexpm/v/hui.svg?style=flat)](https://hex.pm/packages/hui) [![Coverage Status](https://coveralls.io/repos/github/boonious/hui/badge.svg?branch=master)](https://coveralls.io/github/boonious/hui?branch=master)
+# Hui 辉 [![Build Status](https://travis-ci.org/boonious/hui.svg?branch=master)](https://travis-ci.org/boonious/hui) [![Hex pm](http://img.shields.io/hexpm/v/hui.svg?style=flat)](https://hex.pm/packages/hui) [![Coverage Status](https://coveralls.io/repos/github/boonious/hui/badge.svg)](https://coveralls.io/github/boonious/hui?branch=master)
 
 Hui 辉 ("shine" in Chinese) is a [Solr](http://lucene.apache.org/solr/) client and library for Elixir.
 
@@ -97,30 +97,55 @@ for more details on available search parameters.
 
 ### Example - updating
 
-**Latest**: it is now feasible to issue update commands using the `Hui.U` struct.
-Further details and module documentation are forthcoming.
+**Latest**: it is now feasible to issue update commands with the `Hui.U` struct.
+Convenience functions for updating in [Hui](https://hexdocs.pm/hui/Hui.html#content)
+module are forthcoming.
 
-Update requests can currently be issued with the `Request.update/3` function and binary data
-encapsulating Solr documents and commands -
-See [Solr reference](http://lucene.apache.org/solr/guide/uploading-data-with-index-handlers.html)
-for various data commands, types and formats.
+Update requests can currently be issued using the `Request.update/3` function with either
+the [`Hui.U`](https://hexdocs.pm/hui/Hui.U.html) struct or any valid binary data
+encapsulating Solr documents and commands.
 
 ```elixir
- # Specify an endpoint for JSON data
+ # Specify an endpoint for JSON-formatted update
  headers = [{"Content-type", "application/json"}]
  url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "update", headers: headers}
- json_doc = # encoded binary data such as raw JSON text from a file
- {status, response} = Hui.Request.update(url, json_doc)
 
- # Send data to a pre-configured URL
- {status, response} = Hui.Request.update(:library, json_doc)
+ # Solr data / docs - field mapping
+ doc1 = %{
+   "actor_ss" => ["Ingrid Bergman", "Liv Ullmann", "Lena Nyman", "Halvar Björk"],
+   "desc" => "A married daughter who longs for her mother's love is visited by the latter, a successful concert pianist.",
+   "directed_by" => ["Ingmar Bergman"],
+   "genre" => ["Drama", "Music"],
+   "id" => "tt0077711",
+   "initial_release_date" => "1978-10-08",
+   "name" => "Autumn Sonata"
+ }
+ doc2 = %{
+   "actor_ss" => ["Bibi Andersson", "Liv Ullmann", "Margaretha Krook"],
+   "desc" => "A nurse is put in charge of a mute actress and finds that their personas are melding together.",
+   "directed_by" => ["Ingmar Bergman"],
+   "genre" => ["Drama", "Thriller"],
+   "id" => "tt0060827",
+   "initial_release_date" => "1967-09-21",
+   "name" => "Persona"
+ }
 
- # Delete a document via XML message
+ # Hui.U struct command for updating and committing the docs to Solr immediately
+ x = %Hui.U{doc: [doc1, doc2], commit: true, waitSearcher: true}
+ Hui.Request.update(url, x)
+
+ # Delete the docs by IDs
+ Hui.Request.update(url, %Hui.U{delete_id: ["tt1316540", "tt1650453"]})
+
+ # Binary mode, e.g. delete a document via XML binary
  headers = [{"Content-type", "application/xml"}]
  url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "update", headers: headers}
- {status, response} = Hui.Request.update(url, "<delete><id>9780141981727</id></delete>")
+ Hui.Request.update(url, "<delete><id>9780141981727</id></delete>")
 
 ```
+
+See [Solr reference](http://lucene.apache.org/solr/guide/uploading-data-with-index-handlers.html)
+for more details on update commands, data types and formats.
 
 ### HTTP headers and options
 HTTP headers and options can be specified via the `t:Hui.URL.t/0` struct.
@@ -175,6 +200,21 @@ key - see below.
   x = %{x | per_field: true} # toggle per field faceting
   x |> Hui.URL.encode_query
   # -> "f.age.facet.range.end=100&f.age.facet.range.gap=10&facet.range=age&f.age.facet.range.start=0"
+```
+
+The [`Hui.U`](https://hexdocs.pm/hui/Hui.U.html) struct module enables
+various JSON-formatted update and grouped commands to be created.
+
+```elixir
+   # doc1, doc2 are Maps of Solr documents
+   x = %Hui.U{doc: [doc1, doc2], commit: true, commitWithin: 1000}
+   x |> Hui.U.encode
+   # -> "{\"add\":{\"commitWithin\":1000,\"doc\":{...}},\"add\":{\"commitWithin\":1000,\"doc\":{...}},\"commit\":{}}"
+
+   # Delete the documents by ID
+   %Hui.U{delete_id: ["tt1316540", "tt1650453"]} |> Hui.U.encode
+   # -> "{\"delete\":{\"id\":\"tt1316540\"},\"delete\":{\"id\":\"tt1650453\"}}"
+
 ```
 
 The structs also provide binding to and introspection of the available fields.
@@ -254,7 +294,7 @@ by adding `hui` to your list of dependencies in `mix.exs`:
 ```elixir
   def deps do
     [
-      {:hui, "~> 0.7.0"}
+      {:hui, "~> 0.8.1"}
     ]
   end
 ```
