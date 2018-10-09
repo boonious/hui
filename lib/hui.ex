@@ -6,8 +6,9 @@ defmodule Hui do
   ### Usage
   
   - Searching Solr: `q/1`, `q/6`, `search/2`, `search/7`
+  - Updating: `update/3`
   - Other: `suggest/2`, `suggest/5`, `spellcheck/3`
-  - [More details](https://hexdocs.pm/hui/readme.html#usage)
+  - [README](https://hexdocs.pm/hui/readme.html#usage)
   """
 
   import Hui.Guards
@@ -331,14 +332,78 @@ defmodule Hui do
   @spec mlt!(url, Hui.Q.t, Hui.M.t) :: HTTPoison.Response.t
   def mlt!(url, %Hui.Q{} = query_struct, %Hui.M{} = mlt_query_struct), do: Request.search(url, true, [query_struct, mlt_query_struct])
 
-  @spec update(url, map | list(map), boolean) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
+  @doc """
+  Updates or adds Solr documents to an index or collection.
+
+  This function accepts documents as map (single or a list) and commits the docs
+  to the index immediately by default - set `commit` to `false` for manual or
+  auto commits later. It can also operate in binary mode, accepting
+  text containing any valid Solr update data or commands.
+
+  An index/update handler endpoint should be specified through a `t:Hui.URL.t/0` struct
+  or a URL config key. A content type header is required so that Solr knows the
+  incoming data format (JSON, XML etc.) and can process data accordingly.
+
+  ### Example
+
+  ```
+    # Index handler for JSON-formatted update
+    headers = [{"Content-type", "application/json"}]
+    url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "update", headers: headers}
+
+    # Solr docs in maps
+    doc1 = %{
+      "actors" => ["Ingrid Bergman", "Liv Ullmann", "Lena Nyman", "Halvar Björk"],
+      "desc" => "A married daughter who longs for her mother's love is visited by the latter, a successful concert pianist.",
+      "directed_by" => ["Ingmar Bergman"],
+      "genre" => ["Drama", "Music"],
+      "id" => "tt0077711",
+      "initial_release_date" => "1978-10-08",
+      "name" => "Autumn Sonata"
+    }
+    doc2 = %{
+      "actors" => ["Bibi Andersson", "Liv Ullmann", "Margaretha Krook"],
+      "desc" => "A nurse is put in charge of a mute actress and finds that their personas are melding together.",
+      "directed_by" => ["Ingmar Bergman"],
+      "genre" => ["Drama", "Thriller"],
+      "id" => "tt0060827",
+      "initial_release_date" => "1967-09-21",
+      "name" => "Persona"
+    }
+
+    Hui.update(url, doc1) # add a single doc
+    Hui.update(url, [doc1, doc2]) # add a list of docs
+
+    # Don't commit the docs e.g. mass ingestion when index handler is setup for autocommit. 
+    Hui.update(url, [doc1, doc2], false)
+
+    # Send to a configured endpoint
+    Hui.update(:updater, [doc1, doc2])
+
+    # Binary mode, add and commit a doc
+    Hui.update(url, "{\\\"add\\\":{\\\"doc\\\":{\\\"name\\\":\\\"Blade Runner\\\",\\\"id\\\":\\\"tt0083658\\\",..}},\\\"commit\\\":{}}")
+
+    # Binary mode, delete a doc via XML
+    headers = [{"Content-type", "application/xml"}]
+    url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "update", headers: headers}
+    Hui.update(url, "<delete><id>9780141981727</id></delete>")
+
+  ```
+
+  See `Hui.Request.update/3` for more advanced update options.
+
+  """
+  @spec update(binary | Hui.URL.t, binary | map | list(map), boolean) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
   def update(url, docs, commit \\ true)
-  def update(url, docs, commit) when is_binary(docs), do: Request.update(url, docs)
+  def update(url, docs, _commit) when is_binary(docs), do: Request.update(url, docs)
   def update(url, docs, commit) when is_map(docs) or is_list(docs), do: Request.update(url, %Hui.U{doc: docs, commit: commit})
 
-  @spec update!(url, map | list(map), boolean) :: HTTPoison.Response.t
+  @doc """
+  Updates or adds Solr documents to an index or collection, raise an exception in case of failure.
+  """
+  @spec update!(binary | Hui.URL.t, binary | map | list(map), boolean) :: HTTPoison.Response.t
   def update!(url, docs, commit \\ true)
-  def update!(url, docs, commit) when is_binary(docs), do: Request.update(url, true, docs)
+  def update!(url, docs, _commit) when is_binary(docs), do: Request.update(url, true, docs)
   def update!(url, docs, commit) when is_map(docs) or is_list(docs), do: Request.update(url, true, %Hui.U{doc: docs, commit: commit})
 
 end

@@ -123,8 +123,8 @@ defmodule Hui.Request do
   Issues an update request to a specific Solr endpoint, for data uploading and deletion.
 
   The request sends update data in `Hui.U` struct or binary format to an endpoint
-  specified in a `t:Hui.URL.t/0` struct or a URL config key. A content type header
-  is required so that Solr can process that the data accordingly.
+  specified in a `t:Hui.URL.t/0` struct or a URL config key. A content type header is required so that Solr knows the
+  incoming data format (JSON, XML etc.) and can process data accordingly.
 
   ## Example
 
@@ -153,14 +153,14 @@ defmodule Hui.Request do
       "name" => "Persona"
     }
 
-    # Hui.U struct command for updating and committing the docs to Solr immediately
-    x = %Hui.U{doc: [doc1, doc2], commit: true, waitSearcher: true}
+    # Hui.U struct command for updating and committing the docs to Solr within 5 seconds
+    x = %Hui.U{doc: [doc1, doc2], commitWithin: 5000, overwrite: true}
     {status, resp} = Hui.Request.update(url, x)
 
     # Delete the docs by IDs, with a URL key from configuration
     {status, resp} = Hui.Request.update(:library_update, %Hui.U{delete_id: ["tt1316540", "tt1650453"]})
 
-    # Commit and optimise index
+    # Commit and optimise index, keep max index segments at 10
     {status, resp} = Hui.Request.update(url, %Hui.U{commit: true, waitSearcher: true, optimize: true, maxSegments: 10})
 
     # Direct response or exception in case of failture
