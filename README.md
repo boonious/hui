@@ -100,35 +100,38 @@ for more details on available search parameters.
 Hui provides functions to add, update and delete Solr documents, as well as optimised search indexes.
 
 ```elixir
- # Specify an update handler endpoint for JSON-formatted update
- headers = [{"Content-type", "application/json"}]
- url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "update", headers: headers}
+  # Specify an update handler endpoint for JSON-formatted update
+  headers = [{"Content-type", "application/json"}]
+  url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "update", headers: headers}
 
- # Solr documents
- doc1 = %{
-   "actors" => ["Ingrid Bergman", "Liv Ullmann", "Lena Nyman", "Halvar Björk"],
-   "desc" => "A married daughter who longs for her mother's love is visited by the latter, a successful concert pianist.",
-   "directed_by" => ["Ingmar Bergman"],
-   "genre" => ["Drama", "Music"],
-   "id" => "tt0077711",
-   "initial_release_date" => "1978-10-08",
-   "name" => "Autumn Sonata"
- }
- doc2 = %{
-   "actors" => ["Bibi Andersson", "Liv Ullmann", "Margaretha Krook"],
-   "desc" => "A nurse is put in charge of a mute actress and finds that their personas are melding together.",
-   "directed_by" => ["Ingmar Bergman"],
-   "genre" => ["Drama", "Thriller"],
-   "id" => "tt0060827",
-   "initial_release_date" => "1967-09-21",
-   "name" => "Persona"
- }
+  # Solr documents
+  doc1 = %{
+    "actors" => ["Ingrid Bergman", "Liv Ullmann", "Lena Nyman", "Halvar Björk"],
+    "desc" => "A married daughter who longs for her mother's love is visited by the latter, a successful concert pianist.",
+    "directed_by" => ["Ingmar Bergman"],
+    "genre" => ["Drama", "Music"],
+    "id" => "tt0077711",
+    "initial_release_date" => "1978-10-08",
+    "name" => "Autumn Sonata"
+  }
+  doc2 = %{
+    "actors" => ["Bibi Andersson", "Liv Ullmann", "Margaretha Krook"],
+    "desc" => "A nurse is put in charge of a mute actress and finds that their personas are melding together.",
+    "directed_by" => ["Ingmar Bergman"],
+    "genre" => ["Drama", "Thriller"],
+    "id" => "tt0060827",
+    "initial_release_date" => "1967-09-21",
+    "name" => "Persona"
+  }
 
- # Add the docs and commit them to the index immediately
- Hui.update(url, [doc1, doc2])
+  # Add the docs and commit them to the index immediately
+  Hui.update(url, [doc1, doc2])
 
- # Send documents to another pre-configured endpoint
- Hui.update(:updater, [doc1, doc2])
+  # Send documents to another pre-configured endpoint
+  Hui.update(:updater, [doc1, doc2])
+
+  Hui.delete(url, "tt0077711") # delete one doc
+  Hui.delete(url, ["tt0077711", "tt0060827"]) # delete a list of docs
 
 ```
 
@@ -137,24 +140,24 @@ a struct - [`Hui.U`](https://hexdocs.pm/hui/Hui.U.html), as well as through
 any valid binary data encapsulating Solr documents and commands.
 
 ```elixir
- # Hui.U struct command for updating and committing the docs to Solr immediately
- x = %Hui.U{doc: [doc1, doc2], commit: true, waitSearcher: true}
- Hui.Request.update(url, x)
+  # Hui.U struct command for updating and committing the docs to Solr immediately
+  x = %Hui.U{doc: [doc1, doc2], commit: true, waitSearcher: true}
+  Hui.Request.update(url, x)
 
- # Commits docs within 5 seconds
- x = %Hui.U{doc: [doc1, doc2], commitWithin: 5000, overwrite: true}
- Hui.Request.update(url, x)
+  # Commits docs within 5 seconds
+  x = %Hui.U{doc: [doc1, doc2], commitWithin: 5000, overwrite: true}
+  Hui.Request.update(url, x)
 
- # Delete docs by query
- Hui.Request.update(url, %Hui.U{delete_query: "name:Persona"})
+  # Delete docs by query
+  Hui.Request.update(url, %Hui.U{delete_query: "name:Persona"})
 
- # Commit and optimise index
- Hui.Request.update(url, %Hui.U{commit: true, waitSearcher: true, optimize: true, maxSegments: 10})
+  # Commit and optimise index
+  Hui.Request.update(url, %Hui.U{commit: true, waitSearcher: true, optimize: true, maxSegments: 10})
 
- # Binary mode, e.g. delete a document via XML binary
- headers = [{"Content-type", "application/xml"}]
- url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "update", headers: headers}
- Hui.Request.update(url, "<delete><id>9780141981727</id></delete>")
+  # Binary mode, e.g. delete a document via XML binary
+  headers = [{"Content-type", "application/xml"}]
+  url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "update", headers: headers}
+  Hui.Request.update(url, "<delete><id>9780141981727</id></delete>")
 
 ```
 
