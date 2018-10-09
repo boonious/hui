@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.2 (2018-10-09)
+
+* `update/3`, `update!/3` functions for adding and updating Solr docs
+* `delete/3`, `delete!/3`, `delete_by_query/3`, `delete_by_query!/3` functions for deleting Solr docs
+* `commit/2`, `commit!/2` functions for committing Solr docs to index
+
 ## 0.8.1 (2018-10-08)
 
 * Documentation, README and doctests for Solr updating via `Hui.U` struct

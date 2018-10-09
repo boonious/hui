@@ -132,6 +132,7 @@ Hui provides functions to add, update and delete Solr documents, as well as opti
 
   Hui.delete(url, "tt0077711") # delete one doc
   Hui.delete(url, ["tt0077711", "tt0060827"]) # delete a list of docs
+  Hui.delete_by_query(url, ["genre:Drama", "name:Persona"]) # delete via filter queries
 
 ```
 
@@ -147,9 +148,6 @@ any valid binary data encapsulating Solr documents and commands.
   # Commits docs within 5 seconds
   x = %Hui.U{doc: [doc1, doc2], commitWithin: 5000, overwrite: true}
   Hui.Request.update(url, x)
-
-  # Delete docs by query
-  Hui.Request.update(url, %Hui.U{delete_query: "name:Persona"})
 
   # Commit and optimise index
   Hui.Request.update(url, %Hui.U{commit: true, waitSearcher: true, optimize: true, maxSegments: 10})
@@ -311,7 +309,7 @@ by adding `hui` to your list of dependencies in `mix.exs`:
 ```elixir
   def deps do
     [
-      {:hui, "~> 0.8.1"}
+      {:hui, "~> 0.8.2"}
     ]
   end
 ```

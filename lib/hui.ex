@@ -6,7 +6,7 @@ defmodule Hui do
   ### Usage
   
   - Searching Solr: `q/1`, `q/6`, `search/2`, `search/7`
-  - Updating: `update/3`, `delete/3`
+  - Updating: `update/3`, `delete/3`, `delete_by_query/3`, `commit/2`
   - Other: `suggest/2`, `suggest/5`, `spellcheck/3`
   - [README](https://hexdocs.pm/hui/readme.html#usage)
   """
@@ -438,10 +438,33 @@ defmodule Hui do
   def delete!(url, ids, commit \\ true)
   def delete!(url, ids, commit) when is_binary(ids) or is_list(ids), do: Request.update(url, true, %Hui.U{delete_id: ids, commit: commit})
 
+  @doc """
+  Deletes Solr documents by filter queries.
+
+  This function accepts a single or list of filter queries and immediately delete the corresponding
+  documents from the Solr index (commit by default).
+
+  An index/update handler endpoint should be specified through a `t:Hui.URL.t/0` struct
+  or a URL config key. A JSON content type header for the URL is required so that Solr knows the
+  incoming data format and can process data accordingly.
+
+  ### Example
+  ```
+    # Index handler for JSON-formatted update
+    headers = [{"Content-type", "application/json"}]
+    url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "update", headers: headers}
+
+    Hui.delete_by_query(url, "name:Persona") # delete with a single filter
+    Hui.delete_by_query(url, ["genre:Drama", "name:Persona"]) # delete with a list of filters
+  ```
+  """
   @spec delete_by_query(binary | Hui.URL.t, binary | list(binary), boolean) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
   def delete_by_query(url, queries, commit \\ true)
   def delete_by_query(url, queries, commit) when is_binary(queries) or is_list(queries), do: Request.update(url, %Hui.U{delete_query: queries, commit: commit})
 
+  @doc """
+  Deletes Solr documents by filter queries, raise an exception in case of failure.
+  """
   @spec delete_by_query!(binary | Hui.URL.t, binary | list(binary), boolean) :: HTTPoison.Response.t
   def delete_by_query!(url, queries, commit \\ true)
   def delete_by_query!(url, queries, commit) when is_binary(queries) or is_list(queries), do: Request.update(url, %Hui.U{delete_query: queries, commit: commit})
