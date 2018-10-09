@@ -98,6 +98,24 @@ defmodule HuiUpdateLiveTest do
       verify_docs_missing(:default, ["tt2358891", "tt1602620"])
     end
 
+    test "shoud delete documents by query" do
+      url = %Hui.URL{url: "http://localhost:8983/solr/gettingstarted", handler: "update", headers: [{"Content-type", "application/json"}]}
+      doc_map1 = %{
+        "actor_ss" => ["Guy Pearce", "Carrie-Anne Moss"],
+        "desc" => "A man with short-term memory loss attempts to track down his wife's murderer.",
+        "directed_by" => ["Christopher Nolan"],
+        "genre" => ["Mystery", "Thriller"],
+        "id" => "tt0209144",
+        "initial_release_date" => "2000-10-20",
+        "name" => "Memento"
+      }
+      Hui.update(url, doc_map1)
+      verify_docs_exist(:default, ["tt0209144"])
+
+      Hui.delete_by_query(url, "name:Memento")
+      verify_docs_missing(:default, ["tt0209144"])
+    end
+
   end
 
   describe "update (live / bang)" do
@@ -179,6 +197,23 @@ defmodule HuiUpdateLiveTest do
       verify_docs_missing(:default, ["tt0324133"])
     end
 
+    test "shoud delete documents by query" do
+      url = %Hui.URL{url: "http://localhost:8983/solr/gettingstarted", handler: "update", headers: [{"Content-type", "application/json"}]}
+      doc_map1 = %{
+        "actor_ss" => ["Leonardo DiCaprio", "Joseph Gordon-Levitt", "Ellen Page"],
+        "desc" => "A thief who steals corporate secrets through the use of dream-sharing technology is given the inverse task of planting an idea into the mind of a CEO.",
+        "directed_by" => ["Christopher Nolan"],
+        "genre" => ["Action", "Adventure", "Sci-Fi"],
+        "id" => "tt1375666",
+        "initial_release_date" => "2010-07-16",
+        "name" => "Inception"
+      }
+      Hui.update(url, doc_map1)
+      verify_docs_exist(:default, ["tt1375666"])
+
+      Hui.delete_by_query!(url, "name:Inception")
+      verify_docs_missing(:default, ["tt1375666"])
+    end
   end
 
 end

@@ -438,6 +438,14 @@ defmodule Hui do
   def delete!(url, ids, commit \\ true)
   def delete!(url, ids, commit) when is_binary(ids) or is_list(ids), do: Request.update(url, true, %Hui.U{delete_id: ids, commit: commit})
 
+  @spec delete_by_query(binary | Hui.URL.t, binary | list(binary), boolean) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
+  def delete_by_query(url, queries, commit \\ true)
+  def delete_by_query(url, queries, commit) when is_binary(queries) or is_list(queries), do: Request.update(url, %Hui.U{delete_query: queries, commit: commit})
+
+  @spec delete_by_query!(binary | Hui.URL.t, binary | list(binary), boolean) :: HTTPoison.Response.t
+  def delete_by_query!(url, queries, commit \\ true)
+  def delete_by_query!(url, queries, commit) when is_binary(queries) or is_list(queries), do: Request.update(url, %Hui.U{delete_query: queries, commit: commit})
+
   @doc """
   Commit any added or deleted Solr documents to the index.
 
@@ -460,7 +468,7 @@ defmodule Hui do
     Hui.commit(url, false) # commits op only, new docs to be made available later
   ```
 
-  Use `Hui.Request.update/3` for other types of commit, e.g. expunge deleted docs to
+  Use `Hui.Request.update/3` for other types of commit and index optimisation, e.g. expunge deleted docs to
   physically remove docs from the index, which could be a system-intensive operation.
   """
   @spec commit(binary | Hui.URL.t, boolean) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
