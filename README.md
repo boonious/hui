@@ -4,7 +4,7 @@ Hui 辉 ("shine" in Chinese) is a [Solr](http://lucene.apache.org/solr/) client 
 
 ## Usage
 
-Hui enables [Solr](http://lucene.apache.org/solr/) querying, updating and other forms of interaction (forthcoming)
+Hui enables [Solr](http://lucene.apache.org/solr/) querying, updating and other forms of interaction
 in [Elixir](https://elixir-lang.org) or [Phoenix](https://phoenixframework.org) applications.
 Typical Solr data can be contained within a core (index) held on a single server or 
 a data collection in distributed server architecture (cloud).
