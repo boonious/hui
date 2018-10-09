@@ -1,4 +1,4 @@
-# Hui 辉 [![Build Status](https://travis-ci.org/boonious/hui.svg?branch=master)](https://travis-ci.org/boonious/hui) [![Hex pm](http://img.shields.io/hexpm/v/hui.svg?style=flat)](https://hex.pm/packages/hui) [![Coverage Status](https://coveralls.io/repos/github/boonious/hui/badge.svg)](https://coveralls.io/github/boonious/hui?branch=master)
+# Hui 辉 [![Build Status](https://travis-ci.org/boonious/hui.svg?branch=master)](https://travis-ci.org/boonious/hui) [![Hex pm](http://img.shields.io/hexpm/v/hui.svg?style=flat)](https://hex.pm/packages/hui) [![Coverage Status](https://coveralls.io/repos/github/boonious/hui/badge.svg?branch=master)](https://coveralls.io/github/boonious/hui?branch=master)
 
 Hui 辉 ("shine" in Chinese) is a [Solr](http://lucene.apache.org/solr/) client and library for Elixir.
 
@@ -97,22 +97,16 @@ for more details on available search parameters.
 
 ### Example - updating
 
-**Latest**: it is now feasible to issue update commands with the `Hui.U` struct.
-Convenience functions for updating in [Hui](https://hexdocs.pm/hui/Hui.html#content)
-module are forthcoming.
-
-Update requests can currently be issued using the `Request.update/3` function with either
-the [`Hui.U`](https://hexdocs.pm/hui/Hui.U.html) struct or any valid binary data
-encapsulating Solr documents and commands.
+Hui provides functions to add, update and delete Solr documents, as well as optimised search indexes.
 
 ```elixir
- # Specify an endpoint for JSON-formatted update
+ # Specify an update handler endpoint for JSON-formatted update
  headers = [{"Content-type", "application/json"}]
  url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "update", headers: headers}
 
- # Solr data / docs - field mapping
+ # Solr documents
  doc1 = %{
-   "actor_ss" => ["Ingrid Bergman", "Liv Ullmann", "Lena Nyman", "Halvar Björk"],
+   "actors" => ["Ingrid Bergman", "Liv Ullmann", "Lena Nyman", "Halvar Björk"],
    "desc" => "A married daughter who longs for her mother's love is visited by the latter, a successful concert pianist.",
    "directed_by" => ["Ingmar Bergman"],
    "genre" => ["Drama", "Music"],
@@ -121,7 +115,7 @@ encapsulating Solr documents and commands.
    "name" => "Autumn Sonata"
  }
  doc2 = %{
-   "actor_ss" => ["Bibi Andersson", "Liv Ullmann", "Margaretha Krook"],
+   "actors" => ["Bibi Andersson", "Liv Ullmann", "Margaretha Krook"],
    "desc" => "A nurse is put in charge of a mute actress and finds that their personas are melding together.",
    "directed_by" => ["Ingmar Bergman"],
    "genre" => ["Drama", "Thriller"],
@@ -130,12 +124,32 @@ encapsulating Solr documents and commands.
    "name" => "Persona"
  }
 
+ # Add the docs and commit them to the index immediately
+ Hui.update(url, [doc1, doc2])
+
+ # Send documents to another pre-configured endpoint
+ Hui.update(:updater, [doc1, doc2])
+
+```
+
+More advanced update requests can be issued using `Request.update/3` with
+a struct - [`Hui.U`](https://hexdocs.pm/hui/Hui.U.html), as well as through
+any valid binary data encapsulating Solr documents and commands.
+
+```elixir
  # Hui.U struct command for updating and committing the docs to Solr immediately
  x = %Hui.U{doc: [doc1, doc2], commit: true, waitSearcher: true}
  Hui.Request.update(url, x)
 
- # Delete the docs by IDs
- Hui.Request.update(url, %Hui.U{delete_id: ["tt1316540", "tt1650453"]})
+ # Commits docs within 5 seconds
+ x = %Hui.U{doc: [doc1, doc2], commitWithin: 5000, overwrite: true}
+ Hui.Request.update(url, x)
+
+ # Delete docs by query
+ Hui.Request.update(url, %Hui.U{delete_query: "name:Persona"})
+
+ # Commit and optimise index
+ Hui.Request.update(url, %Hui.U{commit: true, waitSearcher: true, optimize: true, maxSegments: 10})
 
  # Binary mode, e.g. delete a document via XML binary
  headers = [{"Content-type", "application/xml"}]
