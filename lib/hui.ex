@@ -437,4 +437,12 @@ defmodule Hui do
   @spec delete!(binary | Hui.URL.t, binary | list(binary), boolean) :: HTTPoison.Response.t
   def delete!(url, ids, commit \\ true)
   def delete!(url, ids, commit) when is_binary(ids) or is_list(ids), do: Request.update(url, true, %Hui.U{delete_id: ids, commit: commit})
+  @spec commit(binary | Hui.URL.t, boolean) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
+  def commit(url, wait_searcher \\ true)
+  def commit(url, wait_searcher), do: Request.update(url, %Hui.U{commit: true, waitSearcher: wait_searcher})
+
+  @spec commit!(binary | Hui.URL.t, boolean) :: HTTPoison.Response.t
+  def commit!(url, wait_searcher \\ true)
+  def commit!(url, wait_searcher), do: Request.update(url, %Hui.U{commit: true, waitSearcher: wait_searcher})
+
 end

@@ -116,6 +116,13 @@ defmodule HuiUpdateTest do
       Hui.delete(url, ["tt1650453", "tt1650453"])
     end
 
+    test "should commit docs", context do
+      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
+      expected_data = %Hui.U{commit: true, waitSearcher: true} |> Hui.U.encode
+      check_post_data_bypass_setup(context.bypass, expected_data)
+      Hui.commit(url)
+    end
+
     test "should handle missing or malformed URL", context do
       assert {:error, context.error_einval} == Hui.update(nil, context.update_doc)
       assert {:error, context.error_einval} == Hui.update("", context.update_doc)
@@ -188,6 +195,13 @@ defmodule HuiUpdateTest do
       expected_data = %Hui.U{delete_id: ["tt1650453", "tt1650453"], commit: true} |> Hui.U.encode
       check_post_data_bypass_setup(context.bypass, expected_data)
       Hui.delete!(url, ["tt1650453", "tt1650453"])
+    end
+
+    test "should commit docs", context do
+      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
+      expected_data = %Hui.U{commit: true, waitSearcher: true} |> Hui.U.encode
+      check_post_data_bypass_setup(context.bypass, expected_data)
+      Hui.commit!(url)
     end
 
     test "should handle missing or malformed URL", context do
