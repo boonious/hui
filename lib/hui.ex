@@ -437,10 +437,39 @@ defmodule Hui do
   @spec delete!(binary | Hui.URL.t, binary | list(binary), boolean) :: HTTPoison.Response.t
   def delete!(url, ids, commit \\ true)
   def delete!(url, ids, commit) when is_binary(ids) or is_list(ids), do: Request.update(url, true, %Hui.U{delete_id: ids, commit: commit})
+
+  @doc """
+  Commit any added or deleted Solr documents to the index.
+
+  This provides a (separate) mechanism to commit previously added or deleted documents to
+  Solr index for different updating and index maintenance scenarios. By default, the commit
+  waits for a new Solr searcher to be regenerated, so that the commit result is made available
+  for search.
+
+  An index/update handler endpoint should be specified through a `t:Hui.URL.t/0` struct
+  or a URL config key. A JSON content type header for the URL is required so that Solr knows the
+  incoming data format and can process data accordingly.
+
+  ### Example
+  ```
+    # Index handler for JSON-formatted update
+    headers = [{"Content-type", "application/json"}]
+    url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "update", headers: headers}
+
+    Hui.commit(url) # commits, make new docs available for search
+    Hui.commit(url, false) # commits op only, new docs to be made available later
+  ```
+
+  Use `Hui.Request.update/3` for other types of commit, e.g. expunge deleted docs to
+  physically remove docs from the index, which could be a system-intensive operation.
+  """
   @spec commit(binary | Hui.URL.t, boolean) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
   def commit(url, wait_searcher \\ true)
   def commit(url, wait_searcher), do: Request.update(url, %Hui.U{commit: true, waitSearcher: wait_searcher})
 
+  @doc """
+  Commit any added or deleted Solr documents to the index, raise an exception in case of failure.
+  """
   @spec commit!(binary | Hui.URL.t, boolean) :: HTTPoison.Response.t
   def commit!(url, wait_searcher \\ true)
   def commit!(url, wait_searcher), do: Request.update(url, %Hui.U{commit: true, waitSearcher: wait_searcher})

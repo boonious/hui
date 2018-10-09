@@ -163,6 +163,9 @@ defmodule Hui.Request do
     # Commit and optimise index, keep max index segments at 10
     {status, resp} = Hui.Request.update(url, %Hui.U{commit: true, waitSearcher: true, optimize: true, maxSegments: 10})
 
+    # Commit index, expunge deleted docs
+    {status, resp} = Hui.Request.update(url, %Hui.U{commit: true, expungeDeletes: true})
+
     # Direct response or exception in case of failture
     # for implementing bang! style function
     bang = true
