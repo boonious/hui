@@ -109,6 +109,13 @@ defmodule HuiUpdateTest do
       Hui.update(:update_test, update_doc)
     end
 
+    test "should delete docs by ID", context do
+      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
+      expected_data = %Hui.U{delete_id: ["tt1650453", "tt1650453"], commit: true} |> Hui.U.encode
+      check_post_data_bypass_setup(context.bypass, expected_data)
+      Hui.delete(url, ["tt1650453", "tt1650453"])
+    end
+
     test "should handle missing or malformed URL", context do
       assert {:error, context.error_einval} == Hui.update(nil, context.update_doc)
       assert {:error, context.error_einval} == Hui.update("", context.update_doc)
@@ -176,6 +183,13 @@ defmodule HuiUpdateTest do
       assert resp.body == update_resp |> Poison.decode!
     end
 
+    test "should delete docs by ID", context do
+      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
+      expected_data = %Hui.U{delete_id: ["tt1650453", "tt1650453"], commit: true} |> Hui.U.encode
+      check_post_data_bypass_setup(context.bypass, expected_data)
+      Hui.delete!(url, ["tt1650453", "tt1650453"])
+    end
+
     test "should handle missing or malformed URL", context do
       assert_raise Hui.Error, ":einval", fn -> Hui.update!(nil, context.update_doc) end
       assert_raise Hui.Error, ":einval", fn -> Hui.update!("", context.update_doc) end
@@ -188,7 +202,7 @@ defmodule HuiUpdateTest do
       assert_raise Hui.Error, ":einval", fn -> Hui.Request.update([], bang, context.update_doc) end
       assert_raise Hui.Error, ":nxdomain", fn -> Hui.Request.update(:url_in_config, bang, context.update_doc) end
     end
-
+ 
   end
 
 end

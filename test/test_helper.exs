@@ -79,4 +79,12 @@ defmodule TestHelpers do
     for x <- id, do: assert Enum.member? docs, x
   end
 
+  def verify_docs_missing(url, id) do
+    ids = if is_list(id), do: Enum.join(id, " OR "), else: id
+    resp = Hui.search!(url, q: "*", fq: ["id:(#{ids})"])
+    assert resp.body["response"]["numFound"] == 0
+    docs = resp.body["response"]["docs"] |> Enum.map(&(Map.get(&1, "id")))
+    for x <- id, do: refute Enum.member? docs, x
+  end
+
 end

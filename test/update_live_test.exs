@@ -71,6 +71,33 @@ defmodule HuiUpdateLiveTest do
       verify_docs_exist(:default, ["tt0062622"])
     end
 
+    test "shoud delete documents by ID" do
+      url = %Hui.URL{url: "http://localhost:8983/solr/gettingstarted", handler: "update", headers: [{"Content-type", "application/json"}]}
+      doc_map1 = %{
+        "actor_ss" => ["Toni Servillo", "Carlo Verdone", "Sabrina Ferilli"],
+        "desc" => "Jep Gambardella has seduced his way through the lavish nightlife of Rome for decades, but after his 65th birthday and a shock from the past, Jep looks past the nightclubs and parties to find a timeless landscape of absurd, exquisite beauty.",
+        "directed_by" => ["Paolo Sorrentino"],
+        "genre" => ["Drama"],
+        "id" => "tt2358891",
+        "initial_release_date" => "2013-09-06",
+        "name" => "La grande bellezza"
+      }
+      doc_map2 = %{
+        "actor_ss" => ["Jean-Louis Trintignant", "Emmanuelle Riva", "Isabelle Huppert"],
+        "desc" => "Georges and Anne are an octogenarian couple. They are cultivated, retired music teachers. Their daughter, also a musician, lives in Britain with her family. One day, Anne has a stroke, and the couple's bond of love is severely tested.",
+        "directed_by" => ["Michael Haneke"],
+        "genre" => ["Drama", "Romance"],
+        "id" => "tt1602620",
+        "initial_release_date" => "2012-11-16",
+        "name" => "Amour"
+      }
+      Hui.update(url, [doc_map1, doc_map2])
+      verify_docs_exist(:default, ["tt2358891", "tt1602620"])
+
+      Hui.delete(url, ["tt2358891", "tt1602620"])
+      verify_docs_missing(:default, ["tt2358891", "tt1602620"])
+    end
+
   end
 
   describe "update (live / bang)" do
@@ -132,6 +159,24 @@ defmodule HuiUpdateLiveTest do
       Hui.Request.update(url, bang, "<commit/>")
 
       verify_docs_exist(:default, ["9781910701874"])
+    end
+
+    test "shoud delete documents by ID" do
+      url = %Hui.URL{url: "http://localhost:8983/solr/gettingstarted", handler: "update", headers: [{"Content-type", "application/json"}]}
+      doc_map1 = %{
+        "actor_ss" => ["Charlotte Rampling", "Charles Dance", "Ludivine Sagnier"],
+        "desc" => "A British mystery author visits her publisher's home in the South of France, where her interaction with his unusual daughter sets off some touchy dynamics.",
+        "directed_by" => ["François Ozon"],
+        "genre" => ["Drama", "Crime", "Mystery"],
+        "id" => "tt0324133",
+        "initial_release_date" => "2003-08-22",
+        "name" => "Swimming Pool"
+      }
+      Hui.update(url, doc_map1)
+      verify_docs_exist(:default, ["tt0324133"])
+
+      Hui.delete!(url, "tt0324133")
+      verify_docs_missing(:default, ["tt0324133"])
     end
 
   end

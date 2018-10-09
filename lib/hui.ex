@@ -391,7 +391,6 @@ defmodule Hui do
   ```
 
   See `Hui.Request.update/3` for more advanced update options.
-
   """
   @spec update(binary | Hui.URL.t, binary | map | list(map), boolean) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
   def update(url, docs, commit \\ true)
@@ -406,4 +405,11 @@ defmodule Hui do
   def update!(url, docs, _commit) when is_binary(docs), do: Request.update(url, true, docs)
   def update!(url, docs, commit) when is_map(docs) or is_list(docs), do: Request.update(url, true, %Hui.U{doc: docs, commit: commit})
 
+  @spec delete(binary | Hui.URL.t, binary | list(binary), boolean) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
+  def delete(url, ids, commit \\ true)
+  def delete(url, ids, commit) when is_binary(ids) or is_list(ids), do: Request.update(url, %Hui.U{delete_id: ids, commit: commit})
+
+  @spec delete!(binary | Hui.URL.t, binary | list(binary), boolean) :: HTTPoison.Response.t
+  def delete!(url, ids, commit \\ true)
+  def delete!(url, ids, commit) when is_binary(ids) or is_list(ids), do: Request.update(url, true, %Hui.U{delete_id: ids, commit: commit})
 end
