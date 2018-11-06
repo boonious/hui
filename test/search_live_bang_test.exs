@@ -2,16 +2,16 @@ defmodule HuiSearchLiveBangTest do
   use ExUnit.Case, async: true
   
   # tests using live Solr cores/collections that are
-  # excluded by default, use '--include live' or
-  # change tag value to true to run tests
+  # excluded by default, use '--only live' or
+  # change tag value of :live to true to run tests
   #
   # this required a configured working Solr core/collection
   # see: Configuration for further details
   # 
-  # the tests below use is based on the demo collection
+  # the tests below is based on the demo collection
   # which can be setup quickly
   # http://lucene.apache.org/solr/guide/solr-tutorial.html#solr-tutorial
-  # e.g. http://localhost:8983/solr/gettingstarted
+  # i.e. http://localhost:8983/solr/gettingstarted
   #
 
   describe "search (bang)" do

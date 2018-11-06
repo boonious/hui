@@ -15,10 +15,6 @@ defmodule HuiSearchBangTest do
     error_einval: error_einval, error_nxdomain: error_nxdomain}
   end
 
-  describe "http client" do
-
-  end
-
   describe "search (bang)" do
     # tests for Hui.Request.search/3 (bang = true)
 
