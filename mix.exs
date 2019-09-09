@@ -13,7 +13,12 @@ defmodule Hui.MixProject do
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       test_coverage: [tool: ExCoveralls],
-      preferred_cli_env: [coveralls: :test, "coveralls.detail": :test, "coveralls.post": :test, "coveralls.html": :test],
+      preferred_cli_env: [
+        coveralls: :test,
+        "coveralls.detail": :test,
+        "coveralls.post": :test,
+        "coveralls.html": :test
+      ],
 
       # Docs
       name: "Hui",
@@ -22,8 +27,9 @@ defmodule Hui.MixProject do
       source_url: "https://github.com/boonious/hui",
       homepage_url: "https://github.com/boonious/hui",
       docs: [
-        main: "Hui", # The main page in the docs
-        #logo: "path/to/logo.png",
+        # The main page in the docs
+        main: "Hui",
+        # logo: "path/to/logo.png",
         extras: ["README.md", "CHANGELOG.md"]
       ]
     ]
@@ -39,13 +45,13 @@ defmodule Hui.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:httpoison, "~> 1.4.0"},
+      {:httpoison, "~> 1.5.1"},
       {:poison, "~> 4.0.1"},
       {:ex_doc, "~> 0.19", only: :dev, runtime: false},
-      {:bypass, "~> 0.9", only: :test},
+      {:bypass, "~> 1.0", only: :test},
       {:dialyxir, "~> 1.0.0-rc.3", only: [:dev], runtime: false},
       {:excoveralls, "~> 0.10", only: :test},
-      {:cowboy, "~> 1.0"}
+      {:cowboy, "~> 2.6"}
     ]
   end
 
@@ -60,5 +66,4 @@ defmodule Hui.MixProject do
       }
     ]
   end
-
 end
