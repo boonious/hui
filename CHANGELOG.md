@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.3, 0.8.4 (2019-10-03)
+
+* update dependencies: newer versions of bypass, httpoison, cowboy
+
 ## 0.8.2 (2018-10-09)
 
 * `update/3`, `update!/3` functions for adding and updating Solr docs
