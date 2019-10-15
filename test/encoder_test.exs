@@ -7,4 +7,8 @@ defmodule HuiEncoderTest do
     assert Encoder.encode(%{q: "loch", rows: 10}) == "q=loch&rows=10"
   end
 
+  test "encode/2 keyword list" do
+    assert Encoder.encode([q: "loch", rows: 10]) == "q=loch&rows=10"
+  end
+
 end
