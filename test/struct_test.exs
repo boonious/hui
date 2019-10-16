@@ -142,17 +142,68 @@ defmodule HuiStructTest do
 
   end
 
-  describe "Query.Standard struct" do
+  describe "Standard, Common structs" do
 
     test "basic parameters setting" do
-      x = %Hui.Query.Standard{df: nil, q: "edinburgh", "q.op": nil, sow: nil}
+      x = %Hui.Query.Standard{ df: nil, q: "edinburgh", "q.op": nil, sow: nil }
       assert %Query.Standard{q: "edinburgh"} == x
 
-      x = %Hui.Query.Standard{q: "hui solr client"}
+      x = %Hui.Query.Standard{ q: "hui solr client" }
       assert x.q == "hui solr client"
 
-      x = %Hui.Query.Standard{q: "{!q.op=OR df=series_t}black amber"}
+      x = %Hui.Query.Standard{ q: "{!q.op=OR df=series_t}black amber" }
       assert x.q == "{!q.op=OR df=series_t}black amber"
+    end
+
+    test "SolrCloud parameters setting" do
+      x = %Hui.Query.Common{
+        _route_: nil,
+        cache: nil,
+        collection: "library,common",
+        cursorMark: nil,
+        debug: nil,
+        debugQuery: nil,
+        defType: nil,
+        distrib: true,
+        "distrib.singlePass": nil,
+        echoParams: nil,
+        explainOther: nil,
+        fl: nil,
+        fq: [],
+        "json.nl": nil,
+        "json.wrf": nil,
+        logParamsList: nil,
+        omitHeader: nil,
+        rows: nil,
+        segmentTerminateEarly: nil,
+        shards: "localhost:7574/solr/gettingstarted,localhost:8983/solr/gettingstarted",
+        "shards.info": true,
+        "shards.preference": nil,
+        "shards.tolerant": true,
+        sort: nil,
+        start: nil,
+        timeAllowed: nil,
+        tr: nil,
+        wt: nil
+      }
+
+      assert %Query.Common{
+        collection: "library,common",
+        distrib: true,
+        "shards.tolerant": true,
+        "shards.info": true,
+        shards: "localhost:7574/solr/gettingstarted,localhost:8983/solr/gettingstarted"
+      } == x
+    end
+
+    test "paging parameters setting" do
+      x = %Query.Common{ cursorMark: "*", sort: "id asc" }
+      assert x.cursorMark == "*"
+      assert x.sort == "id asc"
+
+      x = %Query.Common{ rows: 123, start: 200 }
+      assert x.rows == 123
+      assert x.start == 200
     end
 
   end
