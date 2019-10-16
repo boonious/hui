@@ -9,6 +9,7 @@ defmodule HuiStructTest do
 
   alias Hui.Query
 
+  # deprecated by Standard/Common structs and Encoder
   describe "query struct Hui.Q" do
 
     test "set basic parameters" do

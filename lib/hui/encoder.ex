@@ -7,7 +7,8 @@ defprotocol Hui.Encoder do
   """
 
   @type options :: keyword
-  @type query :: map
+  @type solr_struct :: Query.Standard.t | Query.Common.t
+  @type query :: map | solr_struct
 
   @doc """
   Transform `query` into IO data.

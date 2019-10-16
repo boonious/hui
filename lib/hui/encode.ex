@@ -17,7 +17,7 @@ defmodule Hui.Encode do
   defp _encode([head|tail]), do: [_encode(head) | _encode(tail)]
 
   defp _encode(keyword, separator \\ "&")
- 
+
   # encodes fq: [x, y] type keyword to "fq=x&fq=y"
   defp _encode({k,v}, sep) when is_list(v), do: [ v |> Enum.map_join("&", &_encode( {k,&1}, "" ) ), sep ]
 
