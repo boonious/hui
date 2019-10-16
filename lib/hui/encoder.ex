@@ -1,3 +1,6 @@
+alias Hui.Query
+alias Hui.Encode
+
 defprotocol Hui.Encoder do
   @moduledoc """
   A protocol that underpins Solr query encoding.
@@ -14,6 +17,10 @@ defprotocol Hui.Encoder do
   @spec encode(query, options) :: iodata
   def encode(query, opts \\ [])
 
+end
+
+defimpl Hui.Encoder, for: Query.Standard do
+  def encode(query, _opts), do: Encode.encode( query|> Map.to_list ) |> IO.iodata_to_binary
 end
 
 defimpl Hui.Encoder, for: [Map, List] do

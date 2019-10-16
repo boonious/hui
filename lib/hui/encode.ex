@@ -9,7 +9,7 @@ defmodule Hui.Encode do
   @spec encode(list(keyword)) :: iodata
   def encode(query) when is_list(query) do
     query
-    |> Enum.reject(fn {_,v} -> is_nil(v) or v == "" end)
+    |> Enum.reject(fn {k,v} -> is_nil(v) or v == "" or k == :__struct__ end)
     |> _encode
   end
 

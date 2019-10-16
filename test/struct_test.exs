@@ -7,6 +7,8 @@ defmodule HuiStructTest do
   doctest Hui.H
   doctest Hui.U
 
+  alias Hui.Query
+
   describe "query struct Hui.Q" do
 
     test "set basic parameters" do
@@ -136,6 +138,21 @@ defmodule HuiStructTest do
                  shards: "localhost:7574/solr/gettingstarted,localhost:8983/solr/gettingstarted"}
       assert "collection=library%2Ccommon&distrib=true&q=%2A&shards=localhost%3A7574%2Fsolr%2Fgettingstarted%2Clocalhost%3A8983%2Fsolr%2Fgettingstarted&shards.info=true&shards.tolerant=true" 
              = x |> Hui.URL.encode_query
+    end
+
+  end
+
+  describe "Query.Standard struct" do
+
+    test "basic parameters setting" do
+      x = %Hui.Query.Standard{df: nil, q: "edinburgh", "q.op": nil, sow: nil}
+      assert %Query.Standard{q: "edinburgh"} == x
+
+      x = %Hui.Query.Standard{q: "hui solr client"}
+      assert x.q == "hui solr client"
+
+      x = %Hui.Query.Standard{q: "{!q.op=OR df=series_t}black amber"}
+      assert x.q == "{!q.op=OR df=series_t}black amber"
     end
 
   end

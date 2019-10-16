@@ -5,7 +5,7 @@ defmodule HuiEncodeTest do
 
   test "encode/1 IO data" do
     query_list = [df: nil, q: "loch", "q.op": "", sow: nil]
-    assert Encode.encode(query_list) == [["q", "=", "loch", ""]] # omit nil and "" keywords
+    assert Encode.encode(query_list) == [["q", "=", "loch", ""]] # omit keywords with nil and "" values
 
     query_list = [df: "words_txt", q: "loch", "q.op": "AND", sow: true]
     assert Encode.encode(query_list) == [["df", "=", "words_txt", "&"], ["q", "=", "loch", "&"], ["q.op", "=", "AND", "&"], ["sow", "=", "true", ""]]
