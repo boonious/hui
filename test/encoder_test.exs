@@ -40,4 +40,11 @@ defmodule HuiEncoderTest do
     assert Encoder.encode(query) == "collection=library%2Ccommon&distrib=true&shards=localhost%3A7574%2Fsolr%2Fgettingstarted%2Clocalhost%3A8983%2Fsolr%2Fgettingstarted&shards.info=true&shards.tolerant=true"
   end
 
+  test "encode/2 list of structs" do
+    x = %Query.Common{rows: 5, fq: ["cat:book", "inStock:true", "price:[1.99 TO 9.99]"]}
+    y = %Query.Standard{q: "{!q.op=OR df=series_t}black amber"}
+
+    assert Encoder.encode([x,y]) == "fq=cat%3Abook&fq=inStock%3Atrue&fq=price%3A%5B1.99+TO+9.99%5D&rows=5&q=%7B%21q.op%3DOR+df%3Dseries_t%7Dblack+amber"
+  end
+
 end

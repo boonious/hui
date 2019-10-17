@@ -24,6 +24,18 @@ defimpl Hui.Encoder, for: [Query.Standard, Query.Common] do
   def encode(query, _opts), do: Encode.encode( query|> Map.to_list ) |> IO.iodata_to_binary
 end
 
-defimpl Hui.Encoder, for: [Map, List] do
+defimpl Hui.Encoder, for: Map do
   def encode(query, _opts), do: URI.encode_query(query)
+end
+
+defimpl Hui.Encoder, for: List do
+  # encode a list of map or structs
+  def encode([x|y], _opts) when is_map(x) do
+    [x|y] |> Enum.map_join("&", &Hui.Encoder.encode(&1))
+  end
+
+  # encode params in arbitrary keyword list
+  def encode([x|y], _opts) when is_tuple(x) do
+    URI.encode_query([x|y])
+  end
 end
