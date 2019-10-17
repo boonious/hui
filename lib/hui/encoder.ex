@@ -38,4 +38,6 @@ defimpl Hui.Encoder, for: List do
   def encode([x|y], _opts) when is_tuple(x) do
     URI.encode_query([x|y])
   end
+
+  def encode([], _opts), do: ""
 end

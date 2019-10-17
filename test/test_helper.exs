@@ -4,6 +4,11 @@ Application.ensure_all_started(:bypass)
 defmodule TestHelpers do
   import ExUnit.Assertions
 
+  def check_query_req_url(url, solr_params, expected_url_regex) do
+    {_status, resp} = Hui.Query.get(url, solr_params)
+    String.match?(resp.request_url, expected_url_regex)
+  end
+
   def check_search_req_url(url, %Hui.Q{} = solr_params, expected_url_regex) do
     {_status, resp} = Hui.Request.search(url, [solr_params])
     match1? = String.match?(resp.request_url, expected_url_regex)
