@@ -207,7 +207,7 @@ defmodule Hui.URL do
 
   @doc "Returns the string representation (URL path) of the given `t:Hui.URL.t/0` struct."
   @spec to_string(t) :: binary
-  def to_string(%__MODULE__{url: url, handler: handler}), do: "#{url}/#{handler}"
+  defdelegate to_string(uri), to: String.Chars.Hui.URL
 
   defp encode({k,v}) when is_list(v), do: Enum.reject(v, &invalid_param?/1) |> Enum.map_join("&", &encode({k,&1}))
   defp encode({k,v}) when is_binary(v), do: "#{k}=#{URI.encode_www_form(v)}"
@@ -245,4 +245,9 @@ defmodule Hui.URL do
     end
   end
 
+end
+
+# implement `to_string` for %Hui.URL{} in Elixir generally via the String.Chars protocol
+defimpl String.Chars, for: Hui.URL do
+  def to_string(%Hui.URL{url: url, handler: handler}), do: [url, "/", handler] |> IO.iodata_to_binary
 end

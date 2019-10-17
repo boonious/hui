@@ -29,8 +29,11 @@ defmodule HuiUrlTest do
     test "to_string should return a URL" do
       x = %Hui.URL{url: "http://localhost:8983/solr/newspapers", handler: "suggest"}
       y = %Hui.URL{url: "http://localhost:8983/solr/newspapers"}
-      assert "http://localhost:8983/solr/newspapers/suggest" = x |> Hui.URL.to_string
-      assert "http://localhost:8983/solr/newspapers/select" = y |> Hui.URL.to_string
+      assert x |> Hui.URL.to_string == "http://localhost:8983/solr/newspapers/suggest"
+      assert y |> Hui.URL.to_string == "http://localhost:8983/solr/newspapers/select"
+
+      assert to_string(x) == "http://localhost:8983/solr/newspapers/suggest"
+      assert to_string(y) == "http://localhost:8983/solr/newspapers/select"
     end
 
     test "encode_query should handle empty, nil values / lists" do
