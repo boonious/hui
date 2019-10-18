@@ -14,6 +14,7 @@ defmodule HuiStructSearchTest do
   describe "structured search" do
     @describetag :struct_search
 
+    #deprecated "by HuiQueryTest"
     test "should query via Hui.Q", context do
       Bypass.expect context.bypass, fn conn ->
         Plug.Conn.resp(conn, 200, context.simple_search_response_sample)
@@ -48,6 +49,7 @@ defmodule HuiStructSearchTest do
       assert check_search_req_url(url, solr_params, ~r/cursorMark=%2A&q=%2A&sort=id\+asc/)
     end
 
+    #deprecated "by HuiQueryTest"
     test "should DisMax query via Hui.D", context do
       Bypass.expect context.bypass, fn conn ->
         Plug.Conn.resp(conn, 200, context.simple_search_response_sample)

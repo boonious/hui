@@ -20,7 +20,7 @@ defprotocol Hui.Encoder do
 
 end
 
-defimpl Hui.Encoder, for: [Query.Standard, Query.Common] do
+defimpl Hui.Encoder, for: [Query.Standard, Query.Common, Query.DisMax] do
   def encode(query, _opts), do: Encode.encode( query|> Map.to_list ) |> IO.iodata_to_binary
 end
 

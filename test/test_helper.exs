@@ -6,7 +6,7 @@ defmodule TestHelpers do
 
   def check_query_req_url(url, solr_params, expected_url_regex) do
     {_status, resp} = Hui.Query.get(url, solr_params)
-    String.match?(resp.request_url, expected_url_regex)
+    assert String.match?(resp.request_url, expected_url_regex)
   end
 
   def check_search_req_url(url, %Hui.Q{} = solr_params, expected_url_regex) do

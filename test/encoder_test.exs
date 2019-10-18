@@ -47,4 +47,18 @@ defmodule HuiEncoderTest do
     assert Encoder.encode([x,y]) == "fq=cat%3Abook&fq=inStock%3Atrue&fq=price%3A%5B1.99+TO+9.99%5D&rows=5&q=%7B%21q.op%3DOR+df%3Dseries_t%7Dblack+amber"
   end
 
+  test "encode/2 Query.DisMax struct" do
+    query = %Query.DisMax{
+      q: "edinburgh",
+      qf: "description^2.3 title",
+      mm: "2<-25% 9<-3",
+      pf: "title",
+      ps: 1,
+      qs: 3,
+      bq: "edited:true"
+    }
+
+    assert Encoder.encode(query) == "bq=edited%3Atrue&mm=2%3C-25%25+9%3C-3&pf=title&ps=1&q=edinburgh&qf=description%5E2.3+title&qs=3"
+  end
+
 end

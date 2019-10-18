@@ -209,31 +209,103 @@ defmodule HuiStructTest do
 
   end
 
+  describe "DisMax struct" do
+
+    test "dismax parameters setting" do
+      x = %Hui.Query.DisMax{
+        bf: nil,
+        boost: nil,
+        bq: "edited:true",
+        lowercaseOperators: nil,
+        mm: "2<-25% 9<-3",
+        "mm.autoRelax": nil,
+        pf: "title",
+        pf2: nil,
+        pf3: nil,
+        ps: 1,
+        ps2: nil,
+        ps3: nil,
+        q: "edinburgh",
+        "q.alt": nil,
+        qf: "description^2.3 title",
+        qs: 3,
+        sow: nil,
+        stopwords: nil,
+        tie: nil,
+        uf: nil
+      }
+      assert %Hui.Query.DisMax{
+        q: "edinburgh",
+        qf: "description^2.3 title",
+        mm: "2<-25% 9<-3",
+        pf: "title",
+        ps: 1,
+        qs: 3,
+        bq: "edited:true"
+      } == x
+    end
+
+    test "extended dismax parameters setting" do
+      x = %Hui.Query.DisMax{
+        bf: nil,
+        boost: nil,
+        bq: nil,
+        lowercaseOperators: nil,
+        mm: nil,
+        "mm.autoRelax": true,
+        pf: nil,
+        pf2: "description^2.3 title",
+        pf3: nil,
+        ps: 3,
+        ps2: nil,
+        ps3: nil,
+        q: nil,
+        "q.alt": nil,
+        qf: nil,
+        qs: nil,
+        sow: true,
+        stopwords: nil,
+        tie: nil,
+        uf: "title *_s"
+      }
+
+      assert %Hui.Query.DisMax{
+        sow: true,
+        "mm.autoRelax": true,
+        ps: 3,
+        pf2: "description^2.3 title",
+        uf: "title *_s"
+      } == x
+    end
+
+  end
+
+  # deprecated by DisMax struct and Encoder
   describe "dismax struct Hui.D" do
 
    test "set dismax parameters" do
-    x = %Hui.D{
-      bf: nil,
-      boost: nil,
-      bq: "edited:true",
-      lowercaseOperators: nil,
-      mm: "2<-25% 9<-3",
-      "mm.autoRelax": nil,
-      pf: "title",
-      pf2: nil,
-      pf3: nil,
-      ps: 1,
-      ps2: nil,
-      ps3: nil,
-      q: "edinburgh",
-      "q.alt": nil,
-      qf: "description^2.3 title",
-      qs: 3,
-      sow: nil,
-      stopwords: nil,
-      tie: nil,
-      uf: nil
-    }
+     x = %Hui.D{
+       bf: nil,
+       boost: nil,
+       bq: "edited:true",
+       lowercaseOperators: nil,
+       mm: "2<-25% 9<-3",
+       "mm.autoRelax": nil,
+       pf: "title",
+       pf2: nil,
+       pf3: nil,
+       ps: 1,
+       ps2: nil,
+       ps3: nil,
+       q: "edinburgh",
+       "q.alt": nil,
+       qf: "description^2.3 title",
+       qs: 3,
+       sow: nil,
+       stopwords: nil,
+       tie: nil,
+       uf: nil
+     }
     assert x == %Hui.D{q: "edinburgh", qf: "description^2.3 title", mm: "2<-25% 9<-3", pf: "title", ps: 1, qs: 3, bq: "edited:true"}
    end
 
