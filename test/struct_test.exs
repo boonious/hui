@@ -280,6 +280,60 @@ defmodule HuiStructTest do
 
   end
 
+  describe "faceting structs" do
+
+    test "Facet parameter setting" do
+      assert %Query.Facet{
+        contains: nil,
+        "contains.ignoreCase": nil,
+        "enum.cache.minDf": nil,
+        excludeTerms: nil,
+        exists: nil,
+        facet: true,
+        field: ["type", "year"],
+        interval: nil,
+        limit: nil,
+        matches: nil,
+        method: nil,
+        mincount: nil,
+        missing: nil,
+        offset: nil,
+        "overrequest.count": nil,
+        "overrequest.ratio": nil,
+        pivot: [],
+        "pivot.mincount": nil,
+        prefix: nil,
+        query: "year:[2000 TO NOW]",
+        range: nil,
+        sort: nil,
+        threads: nil
+      } = %Query.Facet{field: ["type", "year"], query: "year:[2000 TO NOW]"}
+    end
+
+    test "FacetRange parameter setting" do
+      assert %Hui.Query.FacetRange{
+        per_field: false,
+        range: "year",
+        end: 1799,
+        gap: "+10YEARS",
+        hardend: nil,
+        include: nil,
+        method: nil,
+        other: nil,
+        start: 1700
+      } == %Hui.Query.FacetRange{range: "year", gap: "+10YEARS", start: 1700, end: 1799}
+    end
+
+    test "FacetInterval parameter setting" do
+      assert %Query.FacetInterval{
+        interval: "price",
+        set: ["[0,10]", "(10,100]"],
+        per_field: false
+      } == %Query.FacetInterval{interval: "price", set: ["[0,10]", "(10,100]"]}
+    end
+
+  end
+
   # deprecated by DisMax struct and Encoder
   describe "dismax struct Hui.D" do
 
