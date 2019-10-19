@@ -1,24 +1,11 @@
 defmodule Hui.Query.Facet do
   @moduledoc """
-  Struct related to [faceting](http://lucene.apache.org/solr/guide/7_4/faceting.html).
-  """
+  Struct related to [faceting](http://lucene.apache.org/solr/guide/faceting.html).
+  
+  ### Example
 
-  defstruct [facet: true, field: [], query: []]
-         ++ [:"pivot.mincount", pivot: []]
-         ++ [:prefix, :contains, :"contains.ignoreCase", :matches]
-         ++ [:sort, :limit, :offset, :mincount,
-             :missing, :method, :"enum.cache.minDf", :exists]
-         ++ [:excludeTerms, :"overrequest.count", :"overrequest.ratio",
-             :threads]
-         ++ [:interval, :range]
-
-  @typedoc """
-  Struct for faceting.
-
-  ## Example
-
-      iex> %Hui.Query.Facet{field: ["type", "year"], query: "year:[2000 TO NOW]"}
-      %Hui.F{
+      iex> x = %Hui.Query.Facet{field: ["type", "year"], query: "year:[2000 TO NOW]"}
+      %Hui.Query.Facet{
         contains: nil,
         "contains.ignoreCase": nil,
         "enum.cache.minDf": nil,
@@ -43,6 +30,20 @@ defmodule Hui.Query.Facet do
         sort: nil,
         threads: nil
       }
+    iex> x |> Hui.Encoder.encode
+    "facet=true&facet.field=type&facet.field=year&facet.query=year%3A%5B2000+TO+NOW%5D"
+  """
+  defstruct [facet: true, field: [], query: []]
+         ++ [:"pivot.mincount", pivot: []]
+         ++ [:prefix, :contains, :"contains.ignoreCase", :matches]
+         ++ [:sort, :limit, :offset, :mincount,
+             :missing, :method, :"enum.cache.minDf", :exists]
+         ++ [:excludeTerms, :"overrequest.count", :"overrequest.ratio",
+             :threads]
+         ++ [:interval, :range]
+
+  @typedoc """
+  Struct for faceting.
   """
   @type t :: %__MODULE__{facet: boolean, field: binary | list(binary), query: binary | list(binary),
                          "pivot.mincount": number, pivot: binary | list(binary),

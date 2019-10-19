@@ -1,8 +1,7 @@
 defmodule Hui.F do
-  @moduledoc """
-  Struct and functions related to [faceting](http://lucene.apache.org/solr/guide/7_4/faceting.html).
+  @moduledoc deprecated: """
+  Please use Hui.Query.Facet instead.
   """
-
   defstruct [facet: true, field: [], query: []]
          ++ [:"pivot.mincount", pivot: []]
          ++ [:prefix, :contains, :"contains.ignoreCase", :matches]
@@ -14,37 +13,6 @@ defmodule Hui.F do
 
   @typedoc """
   Struct for faceting.
-
-  `Hui.URL.encode_query/1` renders this struct into URL query string.
-
-  ## Example
-
-      iex> %Hui.F{field: ["type", "year"], query: "year:[2000 TO NOW]"}
-      %Hui.F{
-        contains: nil,
-        "contains.ignoreCase": nil,
-        "enum.cache.minDf": nil,
-        excludeTerms: nil,
-        exists: nil,
-        facet: true,
-        field: ["type", "year"],
-        interval: nil,
-        limit: nil,
-        matches: nil,
-        method: nil,
-        mincount: nil,
-        missing: nil,
-        offset: nil,
-        "overrequest.count": nil,
-        "overrequest.ratio": nil,
-        pivot: [],
-        "pivot.mincount": nil,
-        prefix: nil,
-        query: "year:[2000 TO NOW]",
-        range: nil,
-        sort: nil,
-        threads: nil
-      }
   """
   @type t :: %__MODULE__{facet: boolean, field: binary | list(binary), query: binary | list(binary),
                          "pivot.mincount": number, pivot: binary | list(binary),
