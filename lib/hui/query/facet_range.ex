@@ -137,16 +137,31 @@ defmodule Hui.Query.FacetRange do
       "facet=true&facet.field=type&f.year.facet.range.end=1799&f.year.facet.range.gap=%2B10YEARS&facet.range=year&f.year.facet.range.start=1700&f.price.facet.range.end=100&f.price.facet.range.gap=10&facet.range=price&f.price.facet.range.start=0"
 
   """
-  defstruct [:range, :start, :end, :gap]
-         ++ [:hardend, :include, :other, :method, per_field: false]
+  defstruct [
+    :end,
+    :gap,
+    :hardend,
+    :include,
+    :method,
+    :other,
+    :range,
+    :start,
+    per_field: false
+  ]
 
   @typedoc """
   Struct for range faceting parameters, use in conjunction with
   the faceting struct -`t:Hui.Query.Facet.t/0`.
   """
-  @type t :: %__MODULE__{range: binary, start: binary, end: binary, gap: binary,
-                         hardend: boolean, include: binary,
-                         other: binary, method: binary,
-                         per_field: boolean}
-
+  @type t :: %__MODULE__{
+          end: binary,
+          gap: binary,
+          hardend: boolean,
+          include: :lower | :upper | :edge | :outer | :all,
+          method: :filter | :dv,
+          other: :before | :after | :between | :none | :all,
+          per_field: boolean,
+          range: binary,
+          start: binary
+        }
 end

@@ -1,7 +1,7 @@
 defmodule Hui.Query.FacetInterval do
   @moduledoc """
   Struct related to [interval faceting](http://lucene.apache.org/solr/guide/faceting.html#interval-faceting) query.
-  
+
   ### Example
 
       iex> x = %Hui.Query.FacetInterval{interval: "price", set: ["[0,10]", "(10,100]"]}
@@ -93,5 +93,4 @@ defmodule Hui.Query.FacetInterval do
   the faceting struct - `t:Hui.Query.Facet.t/0`.
   """
   @type t :: %__MODULE__{interval: binary, set: binary | list(binary), per_field: boolean}
-
 end

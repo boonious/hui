@@ -163,6 +163,7 @@ defmodule HuiStructTest do
         collection: "library,common",
         cursorMark: nil,
         debug: nil,
+        "debug.explain.structured": nil,
         debugQuery: nil,
         defType: nil,
         distrib: true,
@@ -187,7 +188,6 @@ defmodule HuiStructTest do
         tr: nil,
         wt: nil
       }
-
       assert %Query.Common{
         collection: "library,common",
         distrib: true,
@@ -300,7 +300,7 @@ defmodule HuiStructTest do
         offset: nil,
         "overrequest.count": nil,
         "overrequest.ratio": nil,
-        pivot: [],
+        pivot: nil,
         "pivot.mincount": nil,
         prefix: nil,
         query: "year:[2000 TO NOW]",

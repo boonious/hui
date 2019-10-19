@@ -12,6 +12,7 @@ defmodule Hui.Query.Common do
     :collection,
     :cursorMark,
     :debug,
+    :"debug.explain.structured",
     :debugQuery,
     :defType,
     :distrib,
@@ -38,38 +39,40 @@ defmodule Hui.Query.Common do
     fq: []
   ]
 
+  @type debug_query_options :: :query | :timing | :results | :all
+
   @typedoc """
   Struct for the common and SolrCloud query parameters.
   """
   @type t :: %__MODULE__{
-    cache: boolean,
-    collection: binary,
-    cursorMark: binary,
-    debug: binary,
-    debugQuery: boolean,    
-    defType: binary,
-    distrib: boolean,
-    "distrib.singlePass": boolean,
-    echoParams: binary,
-    explainOther: binary,
-    fl: binary,
-    fq: binary | list(binary),
-    "json.nl": binary,
-    "json.wrf": binary,
-    logParamsList: binary,
-    omitHeader: boolean,
-    rows: integer,
-    segmentTerminateEarly: boolean,
-    shards: binary,
-    "shards.info": boolean,
-    "shards.preference": binary,
-    "shards.tolerant": boolean,
-    sort: binary,
-    start: number,
-    timeAllowed: number,
-    tr: binary,
-    wt: binary,
-    _route_: binary
-  }
-
+          cache: boolean,
+          collection: binary,
+          cursorMark: binary,
+          debug: debug_query_options | [debug_query_options],
+          "debug.explain.structured": boolean,
+          debugQuery: boolean,
+          defType: binary,
+          distrib: boolean,
+          "distrib.singlePass": boolean,
+          echoParams: :explicit | :all | :none,
+          explainOther: binary,
+          fl: binary,
+          fq: binary | list(binary),
+          "json.nl": binary,
+          "json.wrf": binary,
+          logParamsList: binary,
+          omitHeader: boolean,
+          rows: integer,
+          segmentTerminateEarly: boolean,
+          shards: binary,
+          "shards.info": boolean,
+          "shards.preference": binary,
+          "shards.tolerant": boolean,
+          sort: binary,
+          start: number,
+          timeAllowed: number,
+          tr: binary,
+          wt: binary,
+          _route_: binary
+        }
 end

@@ -36,26 +36,25 @@ defmodule Hui.Query.DisMax do
   Struct for DisMax/eDismax query.
   """
   @type t :: %__MODULE__{
-    bf: binary,
-    boost: binary,
-    bq: binary,
-    lowercaseOperators: binary,
-    mm: binary,
-    "mm.autoRelax": boolean,
-    pf: binary,
-    pf2: binary,
-    pf3: binary,
-    ps: integer,
-    ps2: integer,
-    ps3: integer,
-    q: binary,
-    "q.alt": binary,
-    qf: binary,
-    qs: integer,
-    sow: boolean,
-    stopwords: boolean,
-    tie: float,
-    uf: binary
-  }
-
+          bf: binary,
+          boost: binary,
+          bq: binary,
+          lowercaseOperators: binary,
+          mm: binary,
+          "mm.autoRelax": boolean,
+          pf: binary,
+          pf2: binary,
+          pf3: binary,
+          ps: integer,
+          ps2: integer,
+          ps3: integer,
+          q: binary,
+          "q.alt": binary,
+          qf: binary,
+          qs: integer,
+          sow: boolean,
+          stopwords: boolean,
+          tie: float,
+          uf: binary
+        }
 end

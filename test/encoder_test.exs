@@ -26,6 +26,9 @@ defmodule HuiEncoderTest do
 
     query = %Query.Common{wt: "json", fq: ["cat:book", "inStock:true", "price:[1.99 TO 9.99]"], fl: "id,name,author,price"}
     assert Encoder.encode(query) == "fl=id%2Cname%2Cauthor%2Cprice&fq=cat%3Abook&fq=inStock%3Atrue&fq=price%3A%5B1.99+TO+9.99%5D&wt=json"
+
+    query = %Query.Common{rows: 10, debug: [:query, :timing], "debug.explain.structured": true}
+    assert Encoder.encode(query) == "debug=query&debug=timing&debug.explain.structured=true&rows=10"
   end
 
   test "encode/2 Common struct for SolrCloud" do
@@ -62,8 +65,8 @@ defmodule HuiEncoderTest do
   end
 
   test "encode/2 Facet struct" do
-    assert Encoder.encode(%Query.Facet{field: ["type", "year"], query: "year:[2000 TO NOW]"})
-    == "facet=true&facet.field=type&facet.field=year&facet.query=year%3A%5B2000+TO+NOW%5D"
+    assert Encoder.encode(%Query.Facet{field: ["type", "year"], query: "year:[2000 TO NOW]", sort: :count})
+    == "facet=true&facet.field=type&facet.field=year&facet.query=year%3A%5B2000+TO+NOW%5D&facet.sort=count"
   end
 
   test "encode/2 FacetRange struct" do

@@ -12,5 +12,4 @@ defmodule Hui.Query.Standard do
   Struct for the standard query.
   """
   @type t :: %__MODULE__{q: binary, "q.op": binary, df: binary, sow: boolean}
-
 end
