@@ -115,4 +115,15 @@ defmodule HuiEncoderTest do
     == "facet=true&facet.field=type&facet.interval=price&facet.interval.set=%5B0%2C10%5D&facet.interval.set=%2810%2C100%5D"
   end
 
+  test "encode/2 Facet struct in conjunction with multiple FacetIntervals" do
+    x = %Query.FacetInterval{interval: "price", set: ["[0,10]", "(10,100]"], per_field: true}
+    y = %Query.FacetInterval{interval: "age", set: ["[0,30]", "(30,60]", "[60, 100]"], per_field: true}
+    z = %Query.Facet{field: "type", interval: [x, y]}
+
+    assert Hui.Encoder.encode(z)
+    == "facet=true&facet.field=type&" <>
+    "facet.interval=price&f.price.facet.interval.set=%5B0%2C10%5D&f.price.facet.interval.set=%2810%2C100%5D&" <>
+    "facet.interval=age&f.age.facet.interval.set=%5B0%2C30%5D&f.age.facet.interval.set=%2830%2C60%5D&f.age.facet.interval.set=%5B60%2C+100%5D"    
+  end
+
 end
