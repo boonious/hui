@@ -1,6 +1,6 @@
 defmodule Hui.H do
-  @moduledoc """
-  Struct and functions related to results [highlighting](http://lucene.apache.org/solr/guide/highlighting.html).
+  @moduledoc deprecated: """
+  Please use Hui.Query.Highlight instead
   """
 
   defstruct [hl: true, per_field: false] ++

@@ -1,6 +1,6 @@
 defmodule Hui.H1 do
-  @moduledoc """
-  Struct and functions related to results highlighting - Unified Highlighter.
+  @moduledoc deprecated: """
+  Please use Hui.Query.HighlighterUnified instead
   """
 
   defstruct [hl: true, per_field: false, method: "unified"] ++

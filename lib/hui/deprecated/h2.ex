@@ -1,6 +1,6 @@
 defmodule Hui.H2 do
-  @moduledoc """
-  Struct and functions related to results highlighting - Original Highlighter.
+  @moduledoc deprecated: """
+  Please use Hui.Query.HighlighterOriginal instead
   """
 
   defstruct [hl: true, per_field: false, method: "original"] ++

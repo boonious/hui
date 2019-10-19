@@ -5,7 +5,10 @@ defmodule Hui.Encode do
 
   alias Hui.Query
 
-  @type solr_query :: Keyword.t | Query.Facet.t | Query.FacetRange.t | Query.FacetInterval.t
+  @type faceting_struct :: Query.Facet.t | Query.FacetRange.t | Query.FacetInterval.t
+  @type highlighting_struct :: Query.Highlight.t
+
+  @type solr_query :: Keyword.t | faceting_struct | highlighting_struct
 
   @doc """
   Encodes list of Solr query keywords to IO data.
@@ -21,11 +24,15 @@ defmodule Hui.Encode do
   def encode(%Query.FacetInterval{} = query), do: encode(query, {"facet.interval", query.interval, query.per_field})
   def encode(%Query.FacetRange{} = query), do: encode(query, {"facet.range", query.range, query.per_field})
   def encode(%Query.Facet{} = query), do: encode(query, {"facet", "", false})
+  def encode(%Query.Highlight{} = query), do: encode(query, {"hl", query.field, query.per_field})
+  def encode(%Query.HighlighterUnified{} = query), do: encode(query, {"hl", query.field, query.per_field})
+  def encode(%Query.HighlighterOriginal{} = query), do: encode(query, {"hl", query.field, query.per_field})
+  def encode(%Query.HighlighterFastVector{} = query), do: encode(query, {"hl", query.field, query.per_field})
 
   def encode(query, info) when is_map(query) do
     query
     |> Map.to_list
-    |> Enum.reject(fn {k,v} -> is_nil(v) or v == "" or v == [] or k == :__struct__ end)
+    |> Enum.reject(fn {k,v} -> is_nil(v) or v == "" or v == [] or k == :__struct__ or k == :per_field end)
     |> _transform(info)
     |> _encode
   end
@@ -53,9 +60,9 @@ defmodule Hui.Encode do
   defp _transform({k,v}, {k_prefix, field, per_field}) do
     case {k, k_prefix, per_field} do
       {:facet, _, _} -> {:facet, v}
+      {:hl, _, _} -> {:hl, v}
       {:range, "facet.range", _} -> {:"facet.range", v}
       {:interval, "facet.interval", _} -> {:"facet.interval", v}
-      {:per_field, _, _} -> {k, nil} # set value to nil, do not render this field
       {_, _, true} -> {:"f.#{field}.#{k_prefix}.#{k}", v}
       {_, _, false} -> {:"#{k_prefix}.#{k}", v}
     end

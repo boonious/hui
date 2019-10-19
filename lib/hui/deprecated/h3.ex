@@ -1,6 +1,6 @@
 defmodule Hui.H3 do
-  @moduledoc """
-  Struct and functions related to results highlighting - FastVector Highlighter. 
+  @moduledoc deprecated: """
+  Please use Hui.Query.HighlighterFastVector instead
   """
 
   defstruct [hl: true, per_field: false, method: "fastVector"] ++

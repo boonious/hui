@@ -7,7 +7,12 @@ defprotocol Hui.Encoder do
   """
 
   @type options :: keyword
-  @type solr_struct :: Query.Standard.t | Query.Common.t | Query.Facet.t | Query.FacetRange.t | Query.FacetInterval.t
+
+  @type querying_struct :: Query.Standard.t | Query.Common.t | Query.DisMax.t
+  @type faceting_struct :: Query.Facet.t | Query.FacetRange.t | Query.FacetInterval.t
+  @type highlighting_struct :: Query.Highlight.t
+
+  @type solr_struct :: querying_struct | faceting_struct | highlighting_struct
   @type query :: map | solr_struct
 
   @doc """
@@ -26,6 +31,13 @@ end
 
 defimpl Hui.Encoder, for: [Query.Facet, Query.FacetRange, Query.FacetInterval] do
   def encode(query, _opts), do: Encode.encode(query) |> IO.iodata_to_binary
+end
+
+defimpl Hui.Encoder, for: [Query.Highlight, Query.HighlighterUnified, Query.HighlighterOriginal, Query.HighlighterFastVector] do
+  def encode(query, _opts) do
+    field = if Map.has_key?(query, :field), do: query.field, else: ""
+    Encode.encode(query, {"hl", field, query.per_field}) |> IO.iodata_to_binary
+  end
 end
 
 defimpl Hui.Encoder, for: Map do

@@ -334,6 +334,98 @@ defmodule HuiStructTest do
 
   end
 
+  describe "result highlighting structs" do
+
+    test "Highlight parameters setting" do
+      x = %Query.Highlight{
+        encoder: nil,
+        field: nil,
+        fl: "title,words",
+        fragsize: 250,
+        highlightMultiTerm: nil,
+        hl: true,
+        maxAnalyzedChars: nil,
+        method: nil,
+        per_field: false,
+        q: nil,
+        qparser: nil,
+        requireFieldMatch: nil,
+        snippets: 3,
+        "tag.post": nil,
+        "tag.pre": nil,
+        usePhraseHighlighter: true
+      }
+
+      assert %Query.Highlight{fl: "title,words", usePhraseHighlighter: true, fragsize: 250, snippets: 3}
+      == x
+    end
+
+    test "HighlighterUnified parameters setting" do
+      x = %Query.HighlighterUnified{
+            "bs.country": nil,
+            "bs.language": nil,
+            "bs.separator": nil,
+            "bs.type": :SEPARATOR,
+            "bs.variant": nil,
+            defaultSummary: true,
+            offsetSource: :POSTINGS,
+            per_field: false,
+            "score.b": nil,
+            "score.k1": 0,
+            "score.pivot": nil,
+            "tag.ellipsis": nil,
+            weightMatches: true
+          }
+
+      assert %Query.HighlighterUnified{offsetSource: :POSTINGS, defaultSummary: true, "score.k1": 0, "bs.type": :SEPARATOR, weightMatches: true}  
+      == x
+    end
+
+    test "HighlighterOriginal parameters setting " do
+      x = %Hui.Query.HighlighterOriginal{
+        alternateField: nil,
+        formatter: nil,
+        fragmenter: nil,
+        highlightAlternate: nil,
+        maxAlternateFieldLength: nil,
+        maxMultiValuedToExamine: nil,
+        maxMultiValuedToMatch: nil,
+        mergeContiguous: true,
+        payloads: nil,
+        per_field: false,
+        preserveMulti: true,
+        "regex.maxAnalyzedChars": nil,
+        "regex.pattern": nil,
+        "regex.slop": nil,
+        "simple.post": "</b>",
+        "simple.pre": "<b>"
+      }
+
+      assert x == %Query.HighlighterOriginal{mergeContiguous: true, "simple.pre": "<b>", "simple.post": "</b>", preserveMulti: true}
+    end
+
+    test "HighlighterFastVector parameters setting" do
+      x = %Query.HighlighterFastVector{
+        alternateField: nil,
+        boundaryScanner: "breakIterator",
+        "bs.chars": nil,
+        "bs.country": "US",
+        "bs.language": "EN",
+        "bs.maxScan": nil,
+        "bs.type": "WORD",
+        fragListBuilder: nil,
+        fragmentsBuilder: nil,
+        highlightAlternate: nil,
+        maxAlternateFieldLength: nil,
+        multiValuedSeparatorChar: nil,
+        per_field: false,
+        phraseLimit: nil
+      }
+
+      assert x == %Query.HighlighterFastVector{boundaryScanner: "breakIterator", "bs.type": "WORD", "bs.language": "EN", "bs.country": "US"}
+    end
+  end
+
   # deprecated by DisMax struct and Encoder
   describe "dismax struct Hui.D" do
 
@@ -391,6 +483,7 @@ defmodule HuiStructTest do
 
   end
 
+  # deprecated by Facet struct and Encoder
   describe "facet struct Hui.F" do
 
     test "parameter setting" do
@@ -502,6 +595,7 @@ defmodule HuiStructTest do
 
   end
 
+  # deprecated by highlighting structs and Encoder
   describe "higlighting struct Hui.H" do
 
     test "set Hui.H parameters" do
