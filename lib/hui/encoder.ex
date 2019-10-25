@@ -29,6 +29,7 @@ defimpl Hui.Encoder, for: [Query.Standard, Query.Common, Query.DisMax] do
   def encode(query, _opts), do: Encode.encode( query|> Map.to_list ) |> IO.iodata_to_binary
 end
 
+# TODO: refactor implementation w.r.t. more generic `encode` functions by making use of `options` for passing prefixes and separators
 defimpl Hui.Encoder, for: [Query.Facet, Query.FacetRange, Query.FacetInterval] do
   def encode(query, _opts), do: Encode.encode(query) |> IO.iodata_to_binary
 end
@@ -37,6 +38,24 @@ defimpl Hui.Encoder, for: [Query.Highlight, Query.HighlighterUnified, Query.High
   def encode(query, _opts) do
     field = if Map.has_key?(query, :field), do: query.field, else: ""
     Encode.encode(query, {"hl", field, query.per_field}) |> IO.iodata_to_binary
+  end
+end
+
+defimpl Hui.Encoder, for: Query.MoreLikeThis do
+  def encode(query, _opts) do
+    Encode.encode(query, {"mlt", "", false}) |> IO.iodata_to_binary
+  end
+end
+
+defimpl Hui.Encoder, for: Query.Suggest do
+  def encode(query, _opts) do
+    Encode.encode(query, {"suggest", "", false}) |> IO.iodata_to_binary
+  end
+end
+
+defimpl Hui.Encoder, for: Query.SpellCheck do
+  def encode(query, _opts) do
+    Encode.encode(query, {"spellcheck", "", false}) |> IO.iodata_to_binary
   end
 end
 

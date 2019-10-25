@@ -1,6 +1,6 @@
 defmodule Hui.M do
-  @moduledoc """
-  Struct and functions related to MoreLikeThis query.
+  @moduledoc deprecated: """
+  Please use Hui.Query.MoreLikeThis instead
   """
   defstruct [mlt: true] ++
             [:count, :fl, :mintf, :mindf, :maxdf, :maxdfpct,

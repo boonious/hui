@@ -1,6 +1,6 @@
 defmodule Hui.S do
-  @moduledoc """
-  Struct and functions related to suggester.
+  @moduledoc deprecated: """
+  Please use Hui.Query.Suggester instead
   """
   defstruct [suggest: true] ++
             [:dictionary, :q, :count, :cfq, :build, :reload, :buildAll, :reloadAll]

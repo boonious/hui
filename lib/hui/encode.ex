@@ -20,6 +20,9 @@ defmodule Hui.Encode do
     |> _encode
   end
 
+  # TODO: refactor these functions into something more generic
+  # consolidate `info` and `separator` via options 
+
   # encode structs requiring facet and per field prefixes
   def encode(%Query.FacetInterval{} = query), do: encode(query, {"facet.interval", query.interval, query.per_field})
   def encode(%Query.FacetRange{} = query), do: encode(query, {"facet.range", query.range, query.per_field})
@@ -61,6 +64,9 @@ defmodule Hui.Encode do
     case {k, k_prefix, per_field} do
       {:facet, _, _} -> {:facet, v}
       {:hl, _, _} -> {:hl, v}
+      {:mlt, _, _} -> {:mlt, v}
+      {:suggest, _, _} -> {:suggest, v}
+      {:spellcheck, _, _} -> {:spellcheck, v}
       {:range, "facet.range", _} -> {:"facet.range", v}
       {:interval, "facet.interval", _} -> {:"facet.interval", v}
       {_, _, true} -> {:"f.#{field}.#{k_prefix}.#{k}", v}

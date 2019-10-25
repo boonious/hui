@@ -1,6 +1,6 @@
 defmodule Hui.Sp do
-  @moduledoc """
-  Struct and functions related to spell checking.
+  @moduledoc deprecated: """
+  Please use Hui.Query.SpellCheck instead
   """
   defstruct [spellcheck: true] ++
             [:q, :build, :reload, :count, :queryAnalyzerFieldtype, :onlyMorePopular,

@@ -140,9 +140,24 @@ defmodule HuiEncoderTest do
     assert Encoder.encode(%Query.HighlighterUnified{offsetSource: :POSTINGS, defaultSummary: true, "score.k1": 0, "bs.type": :SEPARATOR, weightMatches: true})
     == "hl.bs.type=SEPARATOR&hl.defaultSummary=true&hl.offsetSource=POSTINGS&hl.score.k1=0&hl.weightMatches=true"
   end
-  @tag :testing123
+
   test "encode HighlighterFastVector struct" do
     assert Encoder.encode(%Query.HighlighterFastVector{boundaryScanner: "breakIterator", "bs.type": "WORD", "bs.language": "EN", "bs.country": "US"})
     == "hl.boundaryScanner=breakIterator&hl.bs.country=US&hl.bs.language=EN&hl.bs.type=WORD"
+  end
+
+  test "encode MoreLikeThis struct" do
+    assert Encoder.encode(%Query.MoreLikeThis{fl: "manu,cat", mindf: 10, mintf: 200, "match.include": true, count: 10})
+    == "mlt.count=10&mlt.fl=manu%2Ccat&mlt.match.include=true&mlt.mindf=10&mlt.mintf=200&mlt=true"
+  end
+
+  test "encode Suggest struct" do
+    assert Encoder.encode(%Query.Suggest{q: "ha", count: 10, dictionary: ["name_infix", "surname_prefix"], reload: true, build: true})
+    == "suggest.build=true&suggest.count=10&suggest.dictionary=name_infix&suggest.dictionary=surname_prefix&suggest.q=ha&suggest.reload=true&suggest=true"
+  end
+
+  test "encode SpellCheck struct" do
+    assert Encoder.encode(%Query.SpellCheck{q: "delll ultra sharp", count: 10, "collateParam.q.op": "AND", dictionary: "default"})
+    == "spellcheck.collateParam.q.op=AND&spellcheck.count=10&spellcheck.dictionary=default&spellcheck.q=delll+ultra+sharp&spellcheck=true"    
   end
 end

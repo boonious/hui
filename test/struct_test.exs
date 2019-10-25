@@ -745,8 +745,8 @@ defmodule HuiStructTest do
 
   describe "other query structs" do
 
-    test "set suggester Hui.S parameters" do
-      x = %Hui.S{
+    test "Suggest parameters setting" do
+      x = %Query.Suggest{
         build: true,
         buildAll: nil,
         cfq: nil,
@@ -757,11 +757,12 @@ defmodule HuiStructTest do
         reloadAll: nil,
         suggest: true
       }
-      assert x == %Hui.S{q: "ha", count: 10, dictionary: ["name_infix", "surname_prefix"], reload: true, build: true}
+
+      assert x == %Query.Suggest{q: "ha", count: 10, dictionary: ["name_infix", "surname_prefix"], reload: true, build: true}
     end
 
-    test "set spell checking Hui.Sp parameters" do
-      x = %Hui.Sp{
+    test "SpellCheck parameters setting" do
+      x = %Query.SpellCheck{
         accuracy: nil,
         alternativeTermCount: nil,
         build: nil,
@@ -785,11 +786,12 @@ defmodule HuiStructTest do
         "shards.qt": nil,
         spellcheck: true
       }
-      assert x == %Hui.Sp{q: "delll ultra sharp", count: 10, "collateParam.q.op": "AND", dictionary: "default"}
+
+      assert x == %Query.SpellCheck{q: "delll ultra sharp", count: 10, "collateParam.q.op": "AND", dictionary: "default"}
     end
 
-    test "set MoreLikeThis Hui.M parameters" do
-      x = %Hui.M{
+    test "MoreLikeThis parameters setting" do
+      x = %Query.MoreLikeThis{
         boost: nil,
         count: 10,
         fl: "manu,cat",
@@ -807,25 +809,8 @@ defmodule HuiStructTest do
         mlt: true,
         qf: nil
       }
-      assert x == %Hui.M{fl: "manu,cat", mindf: 10, mintf: 200, "match.include": true, count: 10}
-    end
 
-    test "Hui.S can be encoded into URL query string" do
-      x = %Hui.S{q: "ha", count: 10, dictionary: ["name_infix", "surname_prefix"], reload: true, build: true}
-      y = "suggest.build=true&suggest.count=10&suggest.dictionary=name_infix&suggest.dictionary=surname_prefix&suggest.q=ha&suggest.reload=true&suggest=true"
-      assert y == x |> Hui.URL.encode_query
-    end
-
-    test "Hui.Sp can be encoded into URL query string" do
-      x = %Hui.Sp{q: "delll ultra sharp", count: 10, "collateParam.q.op": "AND", dictionary: "default"}
-      y = "spellcheck.collateParam.q.op=AND&spellcheck.count=10&spellcheck.dictionary=default&spellcheck.q=delll+ultra+sharp&spellcheck=true"
-      assert y == x |> Hui.URL.encode_query
-    end
-
-    test "Hui.M can be encoded into URL query string" do
-      x = %Hui.M{fl: "manu,cat", mindf: 10, mintf: 200, "match.include": true, count: 10}
-      y = "mlt.count=10&mlt.fl=manu%2Ccat&mlt.match.include=true&mlt.mindf=10&mlt.mintf=200&mlt=true"
-      assert y == x |> Hui.URL.encode_query
+      assert x == %Query.MoreLikeThis{fl: "manu,cat", mindf: 10, mintf: 200, "match.include": true, count: 10}
     end
   end
 
