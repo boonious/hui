@@ -36,19 +36,21 @@ defmodule Hui.Encode do
   # consolidate `info` and `separator` via options 
 
   # encode structs requiring facet and per field prefixes
-  def encode(%Query.FacetInterval{} = query), do: encode(query, {"facet.interval", query.interval, query.per_field})
-  def encode(%Query.FacetRange{} = query), do: encode(query, {"facet.range", query.range, query.per_field})
-  def encode(%Query.Facet{} = query), do: encode(query, {"facet", "", false})
-  def encode(%Query.Highlight{} = query), do: encode(query, {"hl", query.field, query.per_field})
-  def encode(%Query.HighlighterUnified{} = query), do: encode(query, {"hl", query.field, query.per_field})
-  def encode(%Query.HighlighterOriginal{} = query), do: encode(query, {"hl", query.field, query.per_field})
-  def encode(%Query.HighlighterFastVector{} = query), do: encode(query, {"hl", query.field, query.per_field})
+  def encode(%Query.FacetInterval{} = query) do
+    encode(query, %Options{prefix: "facet.interval", per_field: (if query.per_field, do: query.interval, else: nil )})
+  end
 
-  def encode(query, info) when is_map(query) do
+  def encode(%Query.FacetRange{} = query) do
+    encode(query, %Options{prefix: "facet.range", per_field: (if query.per_field, do: query.range, else: nil )}) 
+  end
+
+  def encode(%Query.Facet{} = query), do: encode(query, %Options{prefix: "facet"})
+
+  def encode(query, opts) when is_map(query) do
     query
     |> Map.to_list
     |> Enum.reject(fn {k,v} -> is_nil(v) or v == "" or v == [] or k == :__struct__ or k == :per_field end)
-    |> _transform(info)
+    |> _transform(opts)
     |> _encode
   end
 
@@ -69,10 +71,10 @@ defmodule Hui.Encode do
 
   # render keywords according to Solr prefix / per field syntax
   # e.g. transform `field: "year"` into `"facet.field": "year"`, `f.[field].facet.gap` etc.
-  defp _transform([head|[]], info), do: [_transform(head, info)]
-  defp _transform([head|tail], info), do: [_transform(head, info) | _transform(tail, info)]
-  defp _transform({k,v}, {k_prefix, field, per_field}) do
-    case {k, k_prefix, per_field} do
+  defp _transform([head|[]], opts), do: [_transform(head, opts)]
+  defp _transform([head|tail], opts), do: [_transform(head, opts) | _transform(tail, opts)]
+  defp _transform({k,v}, %Options{prefix: k_prefix, per_field: field}) do
+    case {k, k_prefix, field} do
       {:facet, _, _} -> {:facet, v}
       {:hl, _, _} -> {:hl, v}
       {:mlt, _, _} -> {:mlt, v}
@@ -80,8 +82,8 @@ defmodule Hui.Encode do
       {:spellcheck, _, _} -> {:spellcheck, v}
       {:range, "facet.range", _} -> {:"facet.range", v}
       {:interval, "facet.interval", _} -> {:"facet.interval", v}
-      {_, _, true} -> {:"f.#{field}.#{k_prefix}.#{k}", v}
-      {_, _, false} -> {:"#{k_prefix}.#{k}", v}
+      {_, _, nil} -> {:"#{k_prefix}.#{k}", v}
+      {_, _, _} -> {:"f.#{field}.#{k_prefix}.#{k}", v}
     end
   end
 

@@ -36,26 +36,29 @@ end
 
 defimpl Hui.Encoder, for: [Query.Highlight, Query.HighlighterUnified, Query.HighlighterOriginal, Query.HighlighterFastVector] do
   def encode(query, _opts) do
-    field = if Map.has_key?(query, :field), do: query.field, else: ""
-    Encode.encode(query, {"hl", field, query.per_field}) |> IO.iodata_to_binary
+    options = %Encode.Options{prefix: "hl", per_field: (if query.per_field, do: query.field, else: nil )}
+    Encode.encode(query, options) |> IO.iodata_to_binary
   end
 end
 
 defimpl Hui.Encoder, for: Query.MoreLikeThis do
   def encode(query, _opts) do
-    Encode.encode(query, {"mlt", "", false}) |> IO.iodata_to_binary
+    options = %Encode.Options{prefix: "mlt"}
+    Encode.encode(query, options) |> IO.iodata_to_binary
   end
 end
 
 defimpl Hui.Encoder, for: Query.Suggest do
   def encode(query, _opts) do
-    Encode.encode(query, {"suggest", "", false}) |> IO.iodata_to_binary
+    options = %Encode.Options{prefix: "suggest"}
+    Encode.encode(query, options) |> IO.iodata_to_binary
   end
 end
 
 defimpl Hui.Encoder, for: Query.SpellCheck do
   def encode(query, _opts) do
-    Encode.encode(query, {"spellcheck", "", false}) |> IO.iodata_to_binary
+    options = %Encode.Options{prefix: "spellcheck"}
+    Encode.encode(query, options) |> IO.iodata_to_binary
   end
 end
 
