@@ -9,6 +9,18 @@ defmodule Hui.Encode do
   @type highlighting_struct :: Query.Highlight.t
 
   @type solr_query :: Keyword.t | faceting_struct | highlighting_struct
+  @type options :: Options.t()
+
+  defmodule Options do
+    defstruct [:per_field, :prefix, format: :url, separator: "&"]
+
+    @type t :: %__MODULE__{
+            format: :url,
+            per_field: binary,
+            prefix: binary,
+            separator: binary
+          }
+  end
 
   @doc """
   Encodes list of Solr query keywords to IO data.
@@ -40,21 +52,20 @@ defmodule Hui.Encode do
     |> _encode
   end
 
-  defp _encode([head|[]]), do: [_encode(head, "")]
-  defp _encode([head|tail]), do: [_encode(head) | _encode(tail)]
-
-  defp _encode(keyword, separator \\ "&")
+  defp _encode(query,  opts \\ %Options{})
+  defp _encode([head|[]], opts), do: [_encode(head, %{opts | separator: ""})]
+  defp _encode([head|tail], opts), do: [_encode(head, opts) | _encode(tail, opts)]
 
   # do not render nil valued or empty keyword
   defp _encode({_,nil}, _), do: ""
   defp _encode([], _), do: ""
 
   # when value is a also struct, e.g. %Hui.Query.FacetRange/Interval{}
-  defp _encode({_,v}, sep) when is_map(v), do: [ encode(v), sep ]
+  defp _encode({_,v}, opts) when is_map(v), do: [ encode(v), opts.separator ]
 
   # encodes fq: [x, y] type keyword to "fq=x&fq=y"
-  defp _encode({k,v}, sep) when is_list(v), do: [ v |> Enum.map_join("&", &_encode( {k,&1}, "" ) ), sep ]
-  defp _encode({k,v}, sep), do: [to_string(k), "=", URI.encode_www_form(to_string(v)), sep]
+  defp _encode({k,v}, opts) when is_list(v), do: [ v |> Enum.map_join("&", &_encode( {k,&1}, %{opts | separator: ""} ) ), opts.separator ]
+  defp _encode({k,v}, opts), do: [to_string(k), "=", URI.encode_www_form(to_string(v)), opts.separator]
 
   # render keywords according to Solr prefix / per field syntax
   # e.g. transform `field: "year"` into `"facet.field": "year"`, `f.[field].facet.gap` etc.
