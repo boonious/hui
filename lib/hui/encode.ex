@@ -32,26 +32,12 @@ defmodule Hui.Encode do
     |> _encode
   end
 
-  # TODO: refactor these functions into something more generic
-  # consolidate `info` and `separator` via options 
-
-  # encode structs requiring facet and per field prefixes
-  def encode(%Query.FacetInterval{} = query) do
-    encode(query, %Options{prefix: "facet.interval", per_field: (if query.per_field, do: query.interval, else: nil )})
-  end
-
-  def encode(%Query.FacetRange{} = query) do
-    encode(query, %Options{prefix: "facet.range", per_field: (if query.per_field, do: query.range, else: nil )}) 
-  end
-
-  def encode(%Query.Facet{} = query), do: encode(query, %Options{prefix: "facet"})
-
   def encode(query, opts) when is_map(query) do
     query
     |> Map.to_list
     |> Enum.reject(fn {k,v} -> is_nil(v) or v == "" or v == [] or k == :__struct__ or k == :per_field end)
     |> _transform(opts)
-    |> _encode
+    |> _encode(opts)
   end
 
   defp _encode(query,  opts \\ %Options{})
@@ -63,7 +49,10 @@ defmodule Hui.Encode do
   defp _encode([], _), do: ""
 
   # when value is a also struct, e.g. %Hui.Query.FacetRange/Interval{}
-  defp _encode({_,v}, opts) when is_map(v), do: [ encode(v), opts.separator ]
+  defp _encode({_,v}, opts) when is_map(v) do
+    sep = opts.separator
+    if Map.has_key?(v, :__struct__), do: [Hui.Encoder.encode(v), sep], else: [encode(v), sep]
+  end
 
   # encodes fq: [x, y] type keyword to "fq=x&fq=y"
   defp _encode({k,v}, opts) when is_list(v), do: [ v |> Enum.map_join("&", &_encode( {k,&1}, %{opts | separator: ""} ) ), opts.separator ]

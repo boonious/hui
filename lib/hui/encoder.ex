@@ -29,9 +29,22 @@ defimpl Hui.Encoder, for: [Query.Standard, Query.Common, Query.DisMax] do
   def encode(query, _opts), do: Encode.encode( query|> Map.to_list ) |> IO.iodata_to_binary
 end
 
-# TODO: refactor implementation w.r.t. more generic `encode` functions by making use of `options` for passing prefixes and separators
-defimpl Hui.Encoder, for: [Query.Facet, Query.FacetRange, Query.FacetInterval] do
-  def encode(query, _opts), do: Encode.encode(query) |> IO.iodata_to_binary
+defimpl Hui.Encoder, for: Query.Facet do
+  def encode(query, _opts), do: Encode.encode(query, %Encode.Options{prefix: "facet"}) |> IO.iodata_to_binary
+end
+
+defimpl Hui.Encoder, for: Query.FacetRange do
+  def encode(query, _opts) do
+    options = %Encode.Options{prefix: "facet.range", per_field: (if query.per_field, do: query.range, else: nil )}
+    Encode.encode(query, options) |> IO.iodata_to_binary
+  end
+end
+
+defimpl Hui.Encoder, for: Query.FacetInterval do
+  def encode(query, _opts) do
+    options = %Encode.Options{prefix: "facet.interval", per_field: (if query.per_field, do: query.interval, else: nil )}
+    Encode.encode(query, options) |> IO.iodata_to_binary
+  end
 end
 
 defimpl Hui.Encoder, for: [Query.Highlight, Query.HighlighterUnified, Query.HighlighterOriginal, Query.HighlighterFastVector] do
