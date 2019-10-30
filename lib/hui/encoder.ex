@@ -33,71 +33,40 @@ defimpl Hui.Encoder, for: [Query.Standard, Query.Common, Query.DisMax] do
   def encode(query, _opts), do: Encode.encode(query |> Map.to_list()) |> IO.iodata_to_binary()
 end
 
-defimpl Hui.Encoder, for: Query.Facet do
-  def encode(query, _opts),
-    do: Encode.encode(query, %Encode.Options{prefix: "facet"}) |> IO.iodata_to_binary()
-end
-
-defimpl Hui.Encoder, for: Query.FacetRange do
+# for structs without per-field encoding requirement
+defimpl Hui.Encoder, for: [Query.Facet, Query.MoreLikeThis, Query.SpellCheck, Query.Suggest] do
   def encode(query, _opts) do
-    options = %Encode.Options{
-      prefix: "facet.range",
-      per_field: if(query.per_field, do: query.range, else: nil)
-    }
+    {prefix, _} = Hui.URLPrefixField.prefix_field()[query.__struct__]
+    options = %Encode.Options{prefix: prefix}
 
     Encode.encode(query, options) |> IO.iodata_to_binary()
   end
 end
 
-defimpl Hui.Encoder, for: Query.FacetInterval do
-  def encode(query, _opts) do
-    options = %Encode.Options{
-      prefix: "facet.interval",
-      per_field: if(query.per_field, do: query.interval, else: nil)
-    }
-
-    Encode.encode(query, options) |> IO.iodata_to_binary()
-  end
-end
-
+# for structs with per-field encoding requirement
 defimpl Hui.Encoder,
   for: [
+    Query.FacetRange,
+    Query.FacetInterval,
     Query.Highlight,
     Query.HighlighterUnified,
     Query.HighlighterOriginal,
     Query.HighlighterFastVector
   ] do
   def encode(query, _opts) do
+    {prefix, field_key} = Hui.URLPrefixField.prefix_field()[query.__struct__]
+    per_field_field = query |> Map.get(field_key)
+
     options = %Encode.Options{
-      prefix: "hl",
-      per_field: if(query.per_field, do: query.field, else: nil)
+      prefix: prefix,
+      per_field: if(query.per_field, do: per_field_field, else: nil)
     }
 
     Encode.encode(query, options) |> IO.iodata_to_binary()
   end
 end
 
-defimpl Hui.Encoder, for: Query.MoreLikeThis do
-  def encode(query, _opts) do
-    options = %Encode.Options{prefix: "mlt"}
-    Encode.encode(query, options) |> IO.iodata_to_binary()
-  end
-end
-
-defimpl Hui.Encoder, for: Query.Suggest do
-  def encode(query, _opts) do
-    options = %Encode.Options{prefix: "suggest"}
-    Encode.encode(query, options) |> IO.iodata_to_binary()
-  end
-end
-
-defimpl Hui.Encoder, for: Query.SpellCheck do
-  def encode(query, _opts) do
-    options = %Encode.Options{prefix: "spellcheck"}
-    Encode.encode(query, options) |> IO.iodata_to_binary()
-  end
-end
-
+# general map data struct encoding
 defimpl Hui.Encoder, for: Map do
   def encode(query, _opts), do: URI.encode_query(query)
 end
