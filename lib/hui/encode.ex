@@ -3,7 +3,7 @@ defmodule Hui.Encode do
   Utilities for encoding Solr query and update data structures.
   """
 
-  @type solr_query :: Hui.Encoder.query()
+  @type query :: Hui.Query.solr_query()
   @type options :: Hui.Encode.Options.t()
 
   defmodule Options do
@@ -20,7 +20,7 @@ defmodule Hui.Encode do
   @doc """
   Encodes list of Solr query keywords to IO data.
   """
-  @spec encode(solr_query, options) :: iodata
+  @spec encode(query, options) :: iodata
   def encode(query, opts \\ %Options{})
 
   def encode(query, _opts) when is_list(query) do

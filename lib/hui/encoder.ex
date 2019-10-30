@@ -7,18 +7,7 @@ defprotocol Hui.Encoder do
   """
 
   @type options :: keyword
-
-  @type querying_struct :: Query.Standard.t() | Query.Common.t() | Query.DisMax.t()
-  @type faceting_struct :: Query.Facet.t() | Query.FacetRange.t() | Query.FacetInterval.t()
-  @type highlighting_struct ::
-          Query.Highlight.t()
-          | Query.HighlighterUnified.t()
-          | Query.HighlighterOriginal.t()
-          | Query.HighlighterFastVector.t()
-  @type misc_struct :: Query.MoreLikeThis.t() | Query.Suggest.t() | Query.SpellCheck.t()
-
-  @type solr_struct :: querying_struct | faceting_struct | highlighting_struct | misc_struct
-  @type query :: Keyword.t() | map | solr_struct | [solr_struct]
+  @type query :: Hui.Query.solr_query()
 
   @doc """
   Transform `query` into IO data.
