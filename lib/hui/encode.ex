@@ -65,17 +65,11 @@ defmodule Hui.Encode do
   defp _transform([head | []], opts), do: [_transform(head, opts)]
   defp _transform([head | tail], opts), do: [_transform(head, opts) | _transform(tail, opts)]
 
-  defp _transform({k, v}, %Options{prefix: k_prefix, per_field: field}) do
-    case {k, k_prefix, field} do
-      {:facet, _, _} -> {:facet, v}
-      {:hl, _, _} -> {:hl, v}
-      {:mlt, _, _} -> {:mlt, v}
-      {:suggest, _, _} -> {:suggest, v}
-      {:spellcheck, _, _} -> {:spellcheck, v}
-      {:range, "facet.range", _} -> {:"facet.range", v}
-      {:interval, "facet.interval", _} -> {:"facet.interval", v}
-      {_, _, nil} -> {:"#{k_prefix}.#{k}", v}
-      {_, _, _} -> {:"f.#{field}.#{k_prefix}.#{k}", v}
+  defp _transform({k, v}, %Options{prefix: k_prefix, per_field: per_field_field}) do
+    cond do
+      String.ends_with?(k_prefix, to_string(k)) -> {k_prefix, v}
+      per_field_field == nil -> {:"#{k_prefix}.#{k}", v}
+      per_field_field != nil -> {:"f.#{per_field_field}.#{k_prefix}.#{k}", v}
     end
   end
 end
