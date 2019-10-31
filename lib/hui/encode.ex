@@ -67,9 +67,10 @@ defmodule Hui.Encode do
 
   defp _transform({k, v}, %Options{prefix: k_prefix, per_field: per_field_field}) do
     cond do
-      String.ends_with?(k_prefix, to_string(k)) -> {k_prefix, v}
-      per_field_field == nil -> {:"#{k_prefix}.#{k}", v}
-      per_field_field != nil -> {:"f.#{per_field_field}.#{k_prefix}.#{k}", v}
+      k_prefix && String.ends_with?(k_prefix, to_string(k)) -> {k_prefix, v}
+      k_prefix && per_field_field == nil -> {:"#{k_prefix}.#{k}", v}
+      k_prefix && per_field_field != nil -> {:"f.#{per_field_field}.#{k_prefix}.#{k}", v}
+      true -> {k, v}
     end
   end
 end
