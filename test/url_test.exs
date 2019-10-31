@@ -16,7 +16,7 @@ defmodule HuiUrlTest do
     test "configured_url should return %Hui.URL stuct for a given config key" do
       assert {:ok, %Hui.URL{url: "http://localhost:8983/solr/gettingstarted", handler: "select"}} = Hui.URL.configured_url(:default)
       assert {:ok, %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "suggest"}} = Hui.URL.configured_url(:suggester)
-      assert {:error, "URL not found in configuration"} = Hui.URL.configured_url(:random_url_not_in_config)
+      assert {:error, %Hui.Error{reason: :nxdomain}} = Hui.URL.configured_url(:random_url_not_in_config)
     end
 
     # Using the config :hui examples in config.exs

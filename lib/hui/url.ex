@@ -83,7 +83,7 @@ defmodule Hui.URL do
     headers = if Application.get_env(:hui, config_key)[:headers], do: Application.get_env(:hui, config_key)[:headers], else: []
     options = if Application.get_env(:hui, config_key)[:options], do: Application.get_env(:hui, config_key)[:options], else: []
     case {url,handler} do
-      {nil, _} -> {:error, "URL not found in configuration"}
+      {nil, _} -> {:error, %Hui.Error{reason: :nxdomain}}
       {_, nil} -> {:ok, %Hui.URL{url: url, headers: headers, options: options}}
       {_, _} -> {:ok, %Hui.URL{url: url, handler: handler, headers: headers, options: options}}
     end
