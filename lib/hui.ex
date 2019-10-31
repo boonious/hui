@@ -12,9 +12,14 @@ defmodule Hui do
   """
 
   import Hui.Guards
-  alias Hui.Request
+  alias Hui.Request # deprecated
+
+  alias Hui.Query
 
   @type url :: binary | atom | Hui.URL.t
+  @type query :: Hui.Query.solr_query()
+
+  @error_nxdomain %Hui.Error{reason: :nxdomain} # invalid / non existing host or domain
 
   @doc """
   Issue a keyword list or structured query to the default Solr endpoint.
@@ -39,8 +44,10 @@ defmodule Hui do
 
   ```
   """
-  @spec q(Hui.Q.t | Request.query_struct_list | Keyword.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
-  def q(%Hui.Q{} = query), do: search(:default, [query])
+  @spec q(query) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
+  # deprecated - to be removed in a future version
+  def q(%Hui.Q{} = query), do: Request.search(:default, [query])
+
   def q(query) when is_list(query), do: search(:default, query)
 
   @doc """
@@ -70,10 +77,9 @@ defmodule Hui do
         :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
   def q(keywords, rows \\ nil, start \\ nil, filters \\ nil, facet_fields \\ nil, sort \\ nil)
   def q(keywords, _, _, _, _, _) when is_nil_empty(keywords), do: {:error, %Hui.Error{reason: :einval}}
+
   def q(keywords, rows, start, filters, facet_fields, sort) do
-    q = %Hui.Q{q: keywords, rows: rows, start: start, fq: filters, sort: sort}
-    f = %Hui.F{field: facet_fields}
-    Request.search(:default, false, [q,f])
+    search(:default, keywords, rows, start, filters, facet_fields, sort)
   end
 
   @doc """
@@ -186,9 +192,32 @@ defmodule Hui do
   }
   ```
   """
-  @spec search(url, Hui.Q.t | Request.query_struct_list | Keyword.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
+  @spec search(url, query) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
+  # deprecated - will be removed in a future version
   def search(url, %Hui.Q{} = query), do: Request.search(url, [query])
-  def search(url, query) when is_list(query), do: Request.search(url, query)
+
+  def search(url, query) when not(is_binary(query)), do: _search(url, query)
+
+  defp _search(url, query) do
+    {status, url_struct} = parse_url(url)
+    if status == :ok, do: _parse_resp(Query.get(url_struct, query)), else: {:error, @error_nxdomain}
+  end
+
+  defp parse_url(%Hui.URL{} = url), do: {:ok, url}
+  defp parse_url(url) when is_atom(url), do: Hui.URL.configured_url(url)
+  defp parse_url(url) when is_binary(url) do
+    uri = URI.parse(url)
+
+    if uri.scheme != nil && uri.host =~ ~r/./ do
+      {:ok, %Hui.URL{url: url}}
+    else
+      {:error, @error_nxdomain}
+    end
+  end
+  defp parse_url(_), do: {:error, @error_nxdomain}
+  
+  defp _parse_resp({:error, %HTTPoison.Error{id: _, reason: reason}}), do: {:error, %Hui.Error{reason: reason}}
+  defp _parse_resp(resp), do: resp
 
   @doc """
   Issue a keyword list or structured query to a specified Solr endpoint, raise an exception in case of failure.
@@ -209,9 +238,11 @@ defmodule Hui do
   def search(url, keywords, rows \\ nil, start \\ nil, filters \\ nil, facet_fields \\ nil, sort \\ nil)
   def search(url, keywords, _, _, _, _, _) when is_nil_empty(keywords) or is_nil_empty(url), do: {:error, %Hui.Error{reason: :einval}}
   def search(url, keywords, rows, start, filters, facet_fields, sort) do
-    q = %Hui.Q{q: keywords, rows: rows, start: start, fq: filters, sort: sort}
-    f = %Hui.F{field: facet_fields}
-    Request.search(url, false, [q,f])
+    x = %Query.Standard{q: keywords} 
+    y = %Query.Common{rows: rows, start: start, fq: filters, sort: sort} 
+    z = %Query.Facet{field: facet_fields}
+
+    _search(url, [x,y,z])
   end
 
   @doc """

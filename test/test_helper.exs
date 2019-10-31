@@ -9,6 +9,7 @@ defmodule TestHelpers do
     assert String.match?(resp.request_url, expected_url_regex)
   end
 
+  # deprecated - %Hui.Q{}
   def check_search_req_url(url, %Hui.Q{} = solr_params, expected_url_regex) do
     {_status, resp} = Hui.Request.search(url, [solr_params])
     match1? = String.match?(resp.request_url, expected_url_regex)
@@ -18,13 +19,9 @@ defmodule TestHelpers do
     match1? and match2?
   end
 
-  def check_search_req_url(url, solr_params, expected_url_regex) when is_list(solr_params) do
-    {_status, resp} = Hui.Request.search(url, solr_params)
-    match1? = String.match?(resp.request_url, expected_url_regex)
-
-    {_status, resp} = Hui.search(url, solr_params)
-    match2? = String.match?(resp.request_url, expected_url_regex)
-    match1? and match2?
+  def check_search_req_url(url, query, expected_url_regex) when is_list(query) do
+    {_status, resp} = Hui.search(url, query)
+    assert String.match?(resp.request_url, expected_url_regex)
   end
 
   # for search bang tests

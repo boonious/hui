@@ -24,7 +24,7 @@ defmodule Hui.Query do
   @type solr_query :: Keyword.t() | map | solr_struct | [solr_struct]
   @type solr_url :: Hui.URL.t()
 
-  @spec get(solr_url, solr_query) :: {:ok, HTTPoison.Response.t()} | {:error, Hui.Error.t()}
+  @spec get(solr_url, solr_query) :: {:ok, HTTPoison.Response.t()} | {:error, HTTPoison.Error.t()}
   def get(%URL{} = url, query \\ []) do
     endpoint = to_string(url)
     query = Encoder.encode(query)
