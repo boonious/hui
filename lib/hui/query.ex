@@ -31,4 +31,17 @@ defmodule Hui.Query do
 
     get([endpoint, "?", query] |> IO.iodata_to_binary(), url.headers, url.options)
   end
+
+  # implement HTTPoison.Base callback:
+  # decode JSON data, return other response formats as raw text
+  def process_response_body(""), do: ""
+
+  def process_response_body(body) do
+    {status, solr_results} = Poison.decode(body)
+
+    case status do
+      :ok -> solr_results
+      :error -> body
+    end
+  end
 end
