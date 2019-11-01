@@ -57,8 +57,10 @@ defmodule Hui do
   See `q/1`.
   """
   @spec q!(Hui.Q.t | Request.query_struct_list | Keyword.t) :: HTTPoison.Response.t
+  # deprecated - to be removed in a future version
   def q!(%Hui.Q{} = query), do: Request.search(:default, true, [query])
-  def q!(query) when is_list(query), do: Request.search(:default, true, query)
+
+  def q!(query) when is_list(query), do: search!(:default, query)
 
   @doc """
   Convenience function for issuing various typical queries to the default Solr endpoint.
@@ -92,9 +94,7 @@ defmodule Hui do
   def q!(keywords, rows \\ nil, start \\ nil, filters \\ nil, facet_fields \\ nil, sort \\ nil)
   def q!(keywords, _, _, _, _, _) when is_nil_empty(keywords), do: raise %Hui.Error{reason: :einval}
   def q!(keywords, rows, start, filters, facet_fields, sort) do
-    q = %Hui.Q{q: keywords, rows: rows, start: start, fq: filters, sort: sort}
-    f = %Hui.F{field: facet_fields}
-    Request.search(:default, true, [q,f])
+    search!(:default, keywords, rows, start, filters, facet_fields, sort)
   end
 
   @doc """
@@ -169,7 +169,7 @@ defmodule Hui do
   # deprecated - will be removed in a future version
   def search(url, %Hui.Q{} = query), do: Request.search(url, [query])
 
-  def search(url, query) when not(is_binary(query)), do: _search(url, query)
+  def search(url, query) when is_list(query), do: _search(url, query)
 
   defp _search(url, query) do
     {status, url_struct} = parse_url(url)
@@ -198,8 +198,15 @@ defmodule Hui do
   See `search/2`.
   """
   @spec search!(url, Hui.Q.t | Request.query_struct_list | Keyword.t) :: HTTPoison.Response.t
+  # deprecated - will be removed in a future version
   def search!(url, %Hui.Q{} = query), do: Request.search(url, true, [query])
-  def search!(url, query) when is_list(query), do: Request.search(url, true, query)
+
+  def search!(url, query) when is_list(query), do: _search!(url, query)
+
+  defp _search!(url, query) do
+    {status, url_struct} = parse_url(url)
+    if status == :ok, do: Query.get!(url_struct, query), else: raise @error_nxdomain
+  end
 
   @doc """
   Convenience function for issuing various typical queries to a specified Solr endpoint.
@@ -229,9 +236,11 @@ defmodule Hui do
   def search!(url, keywords, rows \\ nil, start \\ nil, filters \\ nil, facet_fields \\ nil, sort \\ nil)
   def search!(url, keywords, _, _, _, _, _) when is_nil_empty(keywords) or is_nil_empty(url), do: raise %Hui.Error{reason: :einval}
   def search!(url, keywords, rows, start, filters, facet_fields, sort) do
-    q = %Hui.Q{q: keywords, rows: rows, start: start, fq: filters, sort: sort}
-    f = %Hui.F{field: facet_fields}
-    Request.search(url, true, [q,f])
+    x = %Query.Standard{q: keywords} 
+    y = %Query.Common{rows: rows, start: start, fq: filters, sort: sort} 
+    z = %Query.Facet{field: facet_fields}
+
+    _search!(url, [x,y,z])
   end
 
   @doc """

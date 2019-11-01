@@ -3,7 +3,7 @@ defmodule Hui.Query do
 
   Hui.Query module provides underpinning HTTP-based request functions for Solr, including:
 
-  - `get/2`
+  - `get/2`, `get!/2`
   """
 
   use HTTPoison.Base
@@ -18,6 +18,7 @@ defmodule Hui.Query do
           | Query.HighlighterUnified.t()
           | Query.HighlighterOriginal.t()
           | Query.HighlighterFastVector.t()
+
   @type misc_struct :: Query.MoreLikeThis.t() | Query.Suggest.t() | Query.SpellCheck.t()
   @type solr_struct :: querying_struct | faceting_struct | highlighting_struct | misc_struct
 

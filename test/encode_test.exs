@@ -3,7 +3,7 @@ defmodule HuiEncodeTest do
 
   alias Hui.Encode
 
-  test "encode/1 IO data" do
+  test "encode IO data" do
     query_list = [df: "words_txt", q: "loch", "q.op": "AND", sow: true]
 
     assert Encode.encode(query_list) == [
@@ -14,19 +14,19 @@ defmodule HuiEncodeTest do
            ]
   end
 
-  test "encode/1 omit nil or empty keywords" do
+  test "encode omit nil or empty keywords" do
     query_list = [df: nil, q: "loch", "q.op": "", sow: nil]
     assert Encode.encode(query_list) == [["q", "=", "loch", ""]]
   end
 
   # TODO: more tests for specific Solr query syntax
-  test "encode/1 Solr queries" do
+  test "encode Solr queries" do
     query_list = [q: "series_t:(blac? OR ambe*)"]
     assert Encode.encode(query_list) == [["q", "=", "series_t%3A%28blac%3F+OR+ambe%2A%29", ""]]
   end
 
   # fq: [x, y] => "fq=x&fq=y"
-  test "encode/1 keyword with listed values" do
+  test "encode keyword with listed values" do
     query_list = [q: "loch", fq: ["type:image"]]
     assert Encode.encode(query_list) == [["q", "=", "loch", "&"], ["fq=type%3Aimage", ""]]
 
@@ -43,7 +43,7 @@ defmodule HuiEncodeTest do
            ]
   end
 
-  test "encode/1 map" do
+  test "encode map" do
     query_map = %{
       q: "harry",
       wt: "json",

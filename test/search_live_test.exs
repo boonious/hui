@@ -1,6 +1,8 @@
 defmodule HuiSearchLiveTest do
   use ExUnit.Case, async: true
-  
+  import TestHelpers
+
+  alias Hui.Query
   # tests using live Solr cores/collections that are
   # excluded by default, use '--only live' or
   # change tag value of :live to true to run tests
@@ -13,106 +15,103 @@ defmodule HuiSearchLiveTest do
   # http://lucene.apache.org/solr/guide/solr-tutorial.html#solr-tutorial
   # i.e. http://localhost:8983/solr/gettingstarted
   #
-  describe "search" do
+  describe "search functions" do
     @describetag live: false
 
-    test "should perform keywords query" do
-      {_status, resp} = Hui.q("*")
+    test "perform keywords query" do
+      {_, resp} = Hui.q("*")
       assert length(resp.body["response"]["docs"]) >= 0
       assert String.match?(resp.request_url, ~r/q=*/)
 
-      {_status, resp} = Hui.search(:default, q: "*")
+      {_, resp} = Hui.search(:default, q: "*")
       assert length(resp.body["response"]["docs"]) >= 0
       assert String.match?(resp.request_url, ~r/q=*/)
     end
 
-    test "convenience functions should query with various Solr parameters" do
-      {_status, resp} = Hui.q("apache documentation")
+    test "query with various Solr parameters" do
+      {_, resp} = Hui.q("apache documentation")
       assert String.match?(resp.request_url, ~r/q=apache\+documentation/)
 
-      expected_url_str = "fq=stream_content_type_str%3Atext%2Fhtml&q=apache\\\+documentation&rows=1&start=5&facet=true&facet.field=subject"
-      {_status, resp} = Hui.q("apache documentation", 1, 5, "stream_content_type_str:text/html", ["subject"])
-      assert String.match?(resp.request_url, ~r/#{expected_url_str}/)
+      expected = "q=a&fq=type%3Atext&rows=1&start=5&facet=true&facet.field=subject"
 
-      {_status, resp} = Hui.search(:default, "apache documentation", 1, 5, "stream_content_type_str:text/html", ["subject"])
-      assert String.match?(resp.request_url, ~r/#{expected_url_str}/)
+      {_, resp} = Hui.q("a", 1, 5, "type:text", ["subject"])
+      assert String.match?(resp.request_url, ~r/#{expected}/)
+
+      {_, resp} = Hui.search(:default, "a", 1, 5, "type:text", ["subject"])
+      assert String.match?(resp.request_url, ~r/#{expected}/)
     end
 
-    test "should work with other URL endpoint access types" do
-      {_status, resp} = Hui.search("http://localhost:8983/solr/gettingstarted", q: "*")
+    test "work with other URL endpoint access types" do
+      {_, resp} = Hui.search("http://localhost:8983/solr/gettingstarted", q: "*")
       assert length(resp.body["response"]["docs"]) >= 0
       assert String.match?(resp.request_url, ~r/q=*/)
 
-      {_status, resp} = Hui.search(%Hui.URL{url: "http://localhost:8983/solr/gettingstarted"}, q: "*")
+      {_, resp} = Hui.search(%Hui.URL{url: "http://localhost:8983/solr/gettingstarted"}, q: "*")
+
       assert length(resp.body["response"]["docs"]) >= 0
       assert String.match?(resp.request_url, ~r/q=*/)
     end
 
-    test "should query with other Solr parameters" do
-      solr_params = [q: "*", rows: 10, facet: true, fl: "*"]
-      {_status, resp} = Hui.q(solr_params)
-      assert length(resp.body["response"]["docs"]) >= 0
-      assert String.match?(resp.request_url, ~r/q=%2A&rows=10&facet=true&fl=%2A/)
+    test "query with other Solr parameters" do
+      query = [q: "*", rows: 10, facet: true, fl: "*"]
 
-      {_status, resp} = Hui.search(:default, solr_params)
-      assert length(resp.body["response"]["docs"]) >= 0
-      assert String.match?(resp.request_url, ~r/q=%2A&rows=10&facet=true&fl=%2A/)
+      expected_url = ~r/q=%2A&rows=10&facet=true&fl=%2A/
+      expected_params = %{"facet" => "true", "fl" => "*", "q" => "*", "rows" => "10"}
+      test_all_search_live(query, expected_params, expected_url)
     end
 
-    test "should query via Hui.Q struct" do
-      solr_params = %Hui.Q{q: "*", rows: 10, fq: ["cat:electronics", "popularity:[0 TO *]"], echoParams: "explicit"}
-      expected_response_header_params = %{
+    test "query via structs" do
+      x = %Query.Standard{q: "*"}
+
+      y = %Query.Common{
+        rows: 10,
+        fq: ["cat:electronics", "popularity:[0 TO *]"],
+        echoParams: "explicit"
+      }
+
+      expected_params = %{
         "echoParams" => "explicit",
         "fq" => ["cat:electronics", "popularity:[0 TO *]"],
         "q" => "*",
         "rows" => "10"
       }
 
-      {_status, resp} = Hui.Request.search(:default, [solr_params])
-      requested_params = resp.body["responseHeader"]["params"]
-      assert expected_response_header_params == requested_params
-      assert String.match?(resp.request_url, ~r/fq=cat%3Aelectronics&fq=popularity%3A%5B0\+TO\+%2A%5D&q=%2A&rows=10/)
+      expected_url =
+        ~r/q=%2A&echoParams=explicit&fq=cat%3Aelectronics&fq=popularity%3A%5B0\+TO\+%2A%5D&rows=10/
 
-      {_status, resp} = Hui.search(:default, solr_params)
-      requested_params = resp.body["responseHeader"]["params"]
-      assert expected_response_header_params == requested_params
-      assert String.match?(resp.request_url, ~r/fq=cat%3Aelectronics&fq=popularity%3A%5B0\+TO\+%2A%5D&q=%2A&rows=10/)
-
-      {_status, resp} = Hui.q(solr_params)
-      requested_params = resp.body["responseHeader"]["params"]
-      assert expected_response_header_params == requested_params
-      assert String.match?(resp.request_url, ~r/fq=cat%3Aelectronics&fq=popularity%3A%5B0\+TO\+%2A%5D&q=%2A&rows=10/)
+      test_all_search_live([x, y], expected_params, expected_url)
     end
 
-    test "should DisMax query via Hui.D struct" do
-      solr_params =  %Hui.D{q: "edinburgh", qf: "description^2.3 title", mm: "2<-25% 9<-3", pf: "title", ps: 1, qs: 3, bq: "edited:true"}
-      solr_params_ext1 = %Hui.Q{rows: 10, fq: ["cat:electronics", "popularity:[0 TO *]"], echoParams: "explicit"}
-      solr_params_ext2 = %Hui.F{field: ["popularity"]}
-
-      expected_query_url = "bq=edited%3Atrue&mm=2%3C-25%25\\\+9%3C-3&pf=title&ps=1&q=edinburgh&qf=description%5E2.3\\\+title&qs=3"
-      expected_query_url_ext = "&echoParams=explicit&fq=cat%3Aelectronics&fq=popularity%3A%5B0\\\+TO\\\+%2A%5D&rows=10&facet=true&facet.field=popularity"
-
-      expected_response_header_params = %{
-        "bq" => "edited:true",
-        "mm" => "2<-25% 9<-3",
-        "pf" => "title",
-        "ps" => "1",
-        "q" => "edinburgh",
-        "qf" => "description^2.3 title",
-        "qs" => "3"
+    test "query via more complex structs" do
+      x = %Query.DisMax{
+        q: "edinburgh",
+        qf: "description^2.3 title",
+        mm: "2<-25% 9<-3",
+        pf: "title",
+        ps: 1,
+        qs: 3,
+        bq: "edited:true"
       }
 
-      {_status, resp} = Hui.Request.search(:default, [solr_params])
-      requested_params = resp.body["responseHeader"]["params"]
-      assert expected_response_header_params == requested_params
-      assert String.match?(resp.request_url, ~r/#{expected_query_url}/)
+      y = %Query.Common{
+        rows: 10,
+        fq: ["cat:electronics", "popularity:[0 TO *]"],
+        echoParams: "explicit"
+      }
 
-      # include extra common and faceting parameters from Hui.Q, Hui.F
-      expected_response_header_params = %{
+      z = %Query.Facet{field: ["cat", "author_str"], mincount: 1}
+
+      expected_url =
+        "bq=edited%3Atrue&mm=2%3C-25%25\\\+9%3C-3&pf=title&ps=1&q=edinburgh&qf=description%5E2.3\\\+title&qs=3" <>
+          "&echoParams=explicit&fq=cat%3Aelectronics&fq=popularity%3A%5B0\\\+TO\\\+%2A%5D&" <>
+          "rows=10&facet=true&facet.field=cat&facet.field=author_str&facet.mincount=1"
+
+      expected_params = %{
         "bq" => "edited:true",
         "echoParams" => "explicit",
         "facet" => "true",
-        "facet.field" => "popularity",
+        "facet.field" => ["cat", "author_str"],
+        "facet.mincount" => "1",
         "fq" => ["cat:electronics", "popularity:[0 TO *]"],
         "mm" => "2<-25% 9<-3",
         "pf" => "title",
@@ -122,50 +121,20 @@ defmodule HuiSearchLiveTest do
         "qs" => "3",
         "rows" => "10"
       }
-      {_status, resp} = Hui.Request.search(:default, [solr_params, solr_params_ext1, solr_params_ext2])
-      requested_params = resp.body["responseHeader"]["params"]
-      assert expected_response_header_params == requested_params
-      assert String.match?(resp.request_url, ~r/#{expected_query_url}#{expected_query_url_ext}/)
 
-      {_status, resp} = Hui.q([solr_params, solr_params_ext1, solr_params_ext2])
-      assert expected_response_header_params == requested_params
-      assert String.match?(resp.request_url, ~r/#{expected_query_url}#{expected_query_url_ext}/)
-
-      {_status, resp} = Hui.search(:default, [solr_params, solr_params_ext1, solr_params_ext2])
-      assert expected_response_header_params == requested_params
-      assert String.match?(resp.request_url, ~r/#{expected_query_url}#{expected_query_url_ext}/)
-
+      test_all_search_live([x, y, z], expected_params, ~r/#{expected_url}/)
     end
 
-    test "should query via Hui.F faceting struct" do
-      x = %Hui.Q{q: "author:I*", rows: 5, echoParams: "explicit"}
-      y = %Hui.F{field: ["cat", "author_str"], mincount: 1}
-      solr_params = [x, y]
+    test "provide results highlighting via struct" do
+      x = %Query.Standard{q: "features:photo"}
+      y = %Query.Common{rows: 1, echoParams: "explicit"}
+      z = %Query.Highlight{fl: "features", usePhraseHighlighter: true, fragsize: 250, snippets: 3}
 
-      {_status, resp} = Hui.Request.search(:default, solr_params)
-      requested_params = resp.body["responseHeader"]["params"]
-      assert x.q == requested_params["q"]
-      assert x.rows |> to_string == requested_params["rows"]
-      assert "true" == requested_params["facet"]
-      assert String.match?(resp.request_url, ~r/q=author%3AI%2A&rows=5&facet=true&facet.field=cat&facet.field=author_str&facet.mincount=1/)
+      expected_url =
+        "q=features%3Aphoto&echoParams=explicit&rows=1&hl.fl=features&hl.fragsize=250&" <>
+          "hl=true&hl.snippets=3&hl.usePhraseHighlighter=true"
 
-      {_status, resp} =  Hui.q(solr_params)
-      assert x.q == requested_params["q"]
-      assert x.rows |> to_string == requested_params["rows"]
-      assert "true" == requested_params["facet"]
-      assert String.match?(resp.request_url, ~r/q=author%3AI%2A&rows=5&facet=true&facet.field=cat&facet.field=author_str&facet.mincount=1/)
-
-      {_status, resp} =  Hui.search(:default, solr_params)
-      assert x.q == requested_params["q"]
-      assert x.rows |> to_string == requested_params["rows"]
-      assert "true" == requested_params["facet"]
-      assert String.match?(resp.request_url, ~r/q=author%3AI%2A&rows=5&facet=true&facet.field=cat&facet.field=author_str&facet.mincount=1/)
-    end
-
-    test "should provide results highlighting via Hui.H struct" do
-      x = %Hui.Q{q: "features:photo", rows: 1, echoParams: "explicit"}
-      y = %Hui.H{fl: "features", usePhraseHighlighter: true, fragsize: 250, snippets: 3 }
-      expected_response_header_params = %{
+      expected_params = %{
         "echoParams" => "explicit",
         "hl" => "true",
         "hl.fl" => "features",
@@ -176,90 +145,31 @@ defmodule HuiSearchLiveTest do
         "rows" => "1"
       }
 
-      {_status, resp} = Hui.Request.search(:default, [x,y])
-      requested_params = resp.body["responseHeader"]["params"]
-      assert expected_response_header_params == requested_params
-      assert resp.body["highlighting"]
-      assert String.match?(resp.request_url, ~r/q=features%3Aphoto&rows=1&hl.fl=features&hl.fragsize=250&hl=true&hl.snippets=3&hl.usePhraseHighlighter=true/)
+      test_all_search_live([x, y, z], expected_params, ~r/#{expected_url}/)
     end
-
-    test "should provide results highlighting via Hui.H1/Hui.H2/Hui.H3 structs" do
-      x = %Hui.Q{q: "features:photo", rows: 1, echoParams: "explicit"}
-      y1 = %Hui.H1{fl: "features", offsetSource: "ANALYSIS", defaultSummary: true, "score.k1": 0}
-      y2 = %Hui.H2{fl: "features", mergeContiguous: true, "simple.pre": "<b>", "simple.post": "</b>", preserveMulti: true}
-      y3 = %Hui.H3{fl: "features", boundaryScanner: "breakIterator", "bs.type": "WORD", "bs.language": "EN", "bs.country": "US"}
-
-      expected_response_header_params = %{
-        "echoParams" => "explicit",
-        "hl" => "true",
-        "hl.defaultSummary" => "true",
-        "hl.fl" => "features",
-        "hl.method" => "unified",
-        "hl.offsetSource" => "ANALYSIS",
-        "hl.score.k1" => "0",
-        "q" => "features:photo",
-        "rows" => "1"
-      }
-      {_status, resp} = Hui.Request.search(:default, [x,y1])
-      requested_params = resp.body["responseHeader"]["params"]
-      assert expected_response_header_params == requested_params
-      assert resp.body["highlighting"]
-      assert String.match?(resp.request_url, ~r/hl.defaultSummary=true&hl.fl=features&hl=true&hl.method=unified&hl.offsetSource=ANALYSIS&hl.score.k1=0/)
-
-      expected_response_header_params = %{
-        "echoParams" => "explicit",
-        "hl" => "true",
-        "hl.fl" => "features",
-        "hl.mergeContiguous" => "true",
-        "hl.method" => "original",
-        "hl.preserveMulti" => "true",
-        "hl.simple.post" => "</b>",
-        "hl.simple.pre" => "<b>",
-        "q" => "features:photo",
-        "rows" => "1"
-      }
-      {_status, resp} = Hui.Request.search(:default, [x,y2])
-      requested_params = resp.body["responseHeader"]["params"]
-      assert expected_response_header_params == requested_params
-      assert resp.body["highlighting"]
-      assert String.match?(resp.request_url, ~r/hl.fl=features&hl=true&hl.mergeContiguous=true&hl.method=original&hl.preserveMulti=true&hl.simple.post=%3C%2Fb%3E&hl.simple.pre=%3Cb%3E/)
-
-      expected_response_header_params = %{
-        "echoParams" => "explicit",
-        "hl" => "true",
-        "hl.boundaryScanner" => "breakIterator",
-        "hl.bs.country" => "US",
-        "hl.bs.language" => "EN",
-        "hl.bs.type" => "WORD",
-        "hl.fl" => "features",
-        "hl.method" => "fastVector",
-        "q" => "features:photo",
-        "rows" => "1"
-      }
-      {_status, resp} = Hui.Request.search(:default, [x,y3])
-      requested_params = resp.body["responseHeader"]["params"]
-      assert expected_response_header_params == requested_params
-      assert resp.body["highlighting"]
-      assert String.match?(resp.request_url, ~r/hl.boundaryScanner=breakIterator&hl.bs.country=US&hl.bs.language=EN&hl.bs.type=WORD&hl.fl=features&hl=true&hl.method=fastVector/)
-    end
-
   end
 
-  describe "suggester" do
+  describe "suggest" do
     @describetag live: false
 
-    test "should query via Hui.S" do
+    test "query via Hui.S" do
       x = %Hui.S{q: "ha", count: 10, dictionary: ["name_infix", "ln_prefix", "fn_prefix"]}
+
       expected_response_header_params = %{
         "suggest" => "true",
         "suggest.count" => "10",
         "suggest.dictionary" => ["name_infix", "ln_prefix", "fn_prefix"],
         "suggest.q" => "ha"
       }
-      {_status, resp} = Hui.suggest(:default, x)
+
+      {_, resp} = Hui.suggest(:default, x)
       requested_params = resp.body["responseHeader"]["params"]
       assert expected_response_header_params == requested_params
-      assert String.match?(resp.request_url, ~r/suggest.count=10&suggest.dictionary=name_infix&suggest.dictionary=ln_prefix&suggest.dictionary=fn_prefix&suggest.q=ha&suggest=true/)
+
+      assert String.match?(
+               resp.request_url,
+               ~r/suggest.count=10&suggest.dictionary=name_infix&suggest.dictionary=ln_prefix&suggest.dictionary=fn_prefix&suggest.q=ha&suggest=true/
+             )
     end
 
     test "convenience function" do
@@ -270,13 +180,59 @@ defmodule HuiSearchLiveTest do
         "suggest.q" => "ha",
         "suggest.cfq" => "1939"
       }
-      {_status, resp} = Hui.suggest(:default, "ha", 5, ["name_infix", "ln_prefix", "fn_prefix"], "1939")
+
+      {_, resp} = Hui.suggest(:default, "ha", 5, ["name_infix", "ln_prefix", "fn_prefix"], "1939")
+
       requested_params = resp.body["responseHeader"]["params"]
-      expected_url_str = "suggest.cfq=1939&suggest.count=5&suggest.dictionary=name_infix&suggest.dictionary=ln_prefix&suggest.dictionary=fn_prefix&suggest.q=ha&suggest=true"
+
+      expected_url_str =
+        "suggest.cfq=1939&suggest.count=5&suggest.dictionary=name_infix&suggest.dictionary=ln_prefix&suggest.dictionary=fn_prefix&suggest.q=ha&suggest=true"
+
       assert expected_response_header_params == requested_params
       assert String.match?(resp.request_url, ~r/#{expected_url_str}/)
     end
-
   end
 
+  describe "suggest!" do
+    @describetag live: false
+
+    test "should query via Hui.S" do
+      x = %Hui.S{q: "ha", count: 10, dictionary: ["name_infix", "ln_prefix", "fn_prefix"]}
+
+      expected_response_header_params = %{
+        "suggest" => "true",
+        "suggest.count" => "10",
+        "suggest.dictionary" => ["name_infix", "ln_prefix", "fn_prefix"],
+        "suggest.q" => "ha"
+      }
+
+      resp = Hui.suggest!(:default, x)
+      requested_params = resp.body["responseHeader"]["params"]
+      assert expected_response_header_params == requested_params
+
+      assert String.match?(
+               resp.request_url,
+               ~r/suggest.count=10&suggest.dictionary=name_infix&suggest.dictionary=ln_prefix&suggest.dictionary=fn_prefix&suggest.q=ha&suggest=true/
+             )
+    end
+
+    test "convenience function" do
+      expected_response_header_params = %{
+        "suggest" => "true",
+        "suggest.count" => "5",
+        "suggest.dictionary" => ["name_infix", "ln_prefix", "fn_prefix"],
+        "suggest.q" => "ha",
+        "suggest.cfq" => "1939"
+      }
+
+      resp = Hui.suggest!(:default, "ha", 5, ["name_infix", "ln_prefix", "fn_prefix"], "1939")
+      requested_params = resp.body["responseHeader"]["params"]
+
+      expected_url_str =
+        "suggest.cfq=1939&suggest.count=5&suggest.dictionary=name_infix&suggest.dictionary=ln_prefix&suggest.dictionary=fn_prefix&suggest.q=ha&suggest=true"
+
+      assert expected_response_header_params == requested_params
+      assert String.match?(resp.request_url, ~r/#{expected_url_str}/)
+    end
+  end
 end

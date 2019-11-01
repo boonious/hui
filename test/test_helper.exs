@@ -18,12 +18,16 @@ defmodule TestHelpers do
     assert String.match?(resp.request_url, regex)
   end
 
-  def check_search_req_url(url, query, regex) do
+  def test_search_req_url(url, query, regex) do
     {_status, resp} = Hui.search(url, query)
+    assert String.match?(resp.request_url, regex)
+
+    # include tests for search!
+    resp = Hui.search!(url, query)
     assert String.match?(resp.request_url, regex)
   end
 
-  def check_search_req_url(url, query) do
+  def test_search_req_url(url, query) do
     {_status, resp} = Hui.search(url, query)
 
     regex = Hui.Encoder.encode(query) 
@@ -31,16 +35,33 @@ defmodule TestHelpers do
             |> Regex.compile!
 
     assert String.match?(resp.request_url, regex)
+
+    # include tests for search!
+    resp = Hui.search!(url, query)
+    assert String.match?(resp.request_url, regex)
   end
 
-  def check_search_req_url!(url, solr_params, expected_url_regex) when is_list(solr_params) do
-    bang = true
-    resp = Hui.Request.search(url, bang, solr_params)
-    match1? = String.match?(resp.request_url, expected_url_regex)
+  def test_all_search_live(query, expected_params,  expected_url) do
+    {_, resp} = Hui.q(query)
+    requested_params = resp.body["responseHeader"]["params"]
+    assert expected_params == requested_params
+    assert String.match?(resp.request_url, expected_url)
 
-    resp = Hui.search!(url, solr_params)
-    match2? = String.match?(resp.request_url, expected_url_regex)
-    match1? and match2?
+    {_, resp} = Hui.search(:default, query)
+    requested_params = resp.body["responseHeader"]["params"]
+    assert expected_params == requested_params
+    assert String.match?(resp.request_url, expected_url)
+
+    # bang functions test
+    resp = Hui.q!(query)
+    requested_params = resp.body["responseHeader"]["params"]
+    assert expected_params == requested_params
+    assert String.match?(resp.request_url, expected_url)
+
+    resp = Hui.search!(:default, query)
+    requested_params = resp.body["responseHeader"]["params"]
+    assert expected_params == requested_params
+    assert String.match?(resp.request_url, expected_url)
   end
 
   # for update tests
