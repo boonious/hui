@@ -4,9 +4,14 @@ Application.ensure_all_started(:bypass)
 defmodule TestHelpers do
   import ExUnit.Assertions
 
-  def check_query_get_req_url(url, query, expected_url_regex) do
+  def test_get_req_url(url, query) do
     {_status, resp} = Hui.Query.get(url, query)
-    assert String.match?(resp.request_url, expected_url_regex)
+
+    regex = Hui.Encoder.encode(query) 
+            |> String.replace("+", "\\+")
+            |> Regex.compile!
+
+    assert String.match?(resp.request_url, regex)
   end
 
   # deprecated - %Hui.Q{}
