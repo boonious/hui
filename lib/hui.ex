@@ -169,7 +169,7 @@ defmodule Hui do
   # deprecated - will be removed in a future version
   def search(url, %Hui.Q{} = query), do: Request.search(url, [query])
 
-  def search(url, query) when is_list(query), do: _search(url, query)
+  def search(url, query) when is_list(query) or is_map(query), do: _search(url, query)
 
   defp _search(url, query) do
     {status, url_struct} = parse_url(url)
@@ -201,7 +201,7 @@ defmodule Hui do
   # deprecated - will be removed in a future version
   def search!(url, %Hui.Q{} = query), do: Request.search(url, true, [query])
 
-  def search!(url, query) when is_list(query), do: _search!(url, query)
+  def search!(url, query) when is_list(query) or is_map(query), do: _search!(url, query)
 
   defp _search!(url, query) do
     {status, url_struct} = parse_url(url)
@@ -243,55 +243,44 @@ defmodule Hui do
     _search!(url, [x,y,z])
   end
 
-  @doc """
-  Issue a spell checking query to a specified Solr endpoint.
+  @doc false
+  @spec spellcheck(url, Query.SpellCheck.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
+  @deprecated "Please use search/2 with Hui.Query.SpellCheck query struct."
+  def spellcheck(url, %Hui.Sp{} = query), do: Request.search(url, [query])
 
-  ### Example
-
-  ```
-    spellcheck_query = %Hui.Sp{q: "delll ultra sharp", count: 10, "collateParam.q.op": "AND", dictionary: "default"}
-    Hui.spellcheck(:library, spellcheck_query)
-  ```
-  """
-  @spec spellcheck(url, Hui.Sp.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
-  def spellcheck(url, %Hui.Sp{} = spellcheck_query_struct), do: Request.search(url, [spellcheck_query_struct])
-
-  @doc """
-  Issue a spell checking query to a specified Solr endpoint, raise an exception in case of failure.
-  """
+  @doc false
   @spec spellcheck!(url, Hui.Sp.t) :: HTTPoison.Response.t
-  def spellcheck!(url, %Hui.Sp{} = spellcheck_query_struct), do: Request.search(url, true, [spellcheck_query_struct])
+  @deprecated "Please use search!/2 with Hui.Query.SpellCheck struct."
+  def spellcheck!(url, %Hui.Sp{} = query), do: Request.search(url, true, [query])
 
-  @doc """
-  Issue a spell checking query to a specified Solr endpoint.
-  """
+  @doc false
   @spec spellcheck(url, Hui.Sp.t, Hui.Q.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
-  def spellcheck(url, %Hui.Sp{} = spellcheck_query_struct, %Hui.Q{} = query_struct), do: Request.search(url, [query_struct, spellcheck_query_struct])
+  @deprecated "Please use search/2 with Hui.Query.SpellCheck struct."
+  def spellcheck(url, %Hui.Sp{} = query_sp, %Hui.Q{} = query), do: Request.search(url, [query, query_sp])
 
-  @doc """
-  Issue a spell checking query to a specified Solr endpoint, raise an exception in case of failure.
-  """
+  @doc false
   @spec spellcheck!(url, Hui.Sp.t, Hui.Q.t) :: HTTPoison.Response.t
-  def spellcheck!(url, %Hui.Sp{} = spellcheck_query_struct, %Hui.Q{} = query_struct), do: Request.search(url, true, [query_struct, spellcheck_query_struct])
+  @deprecated "Please use search/2 with Hui.Query.SpellCheck struct."
+  def spellcheck!(url, %Hui.Sp{} = query_sp, %Hui.Q{} = query), do: Request.search(url, true, [query, query_sp])
 
   @doc """
-  Issue a structured suggester query to a specified Solr endpoint.
+  Issue a structured suggest query to a specified Solr endpoint.
 
   ### Example
 
   ```
-    suggest_query = %Hui.S{q: "ha", count: 10, dictionary: "name_infix"}
+    suggest_query = %Hui.Query.Suggest{q: "ha", count: 10, dictionary: "name_infix"}
     Hui.suggest(:library, suggest_query)
   ```
   """
-  @spec suggest(url, Hui.S.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
-  def suggest(url, %Hui.S{} = suggest_query_struct), do: Request.search(url, [suggest_query_struct])
+  @spec suggest(url, Query.Suggest.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
+  def suggest(url, %Query.Suggest{} = query), do: search(url, query)
 
   @doc """
   Issue a structured suggester query to a specified Solr endpoint, raise an exception in case of failure.
   """
-  @spec suggest!(url, Hui.S.t) :: HTTPoison.Response.t
-  def suggest!(url, %Hui.S{} = suggest_query_struct), do: Request.search(url, true, [suggest_query_struct])
+  @spec suggest!(url, Query.Suggest.t) :: HTTPoison.Response.t
+  def suggest!(url, %Query.Suggest{} = query), do: search!(url, query)
 
   @doc """
   Convenience function for issuing a suggester query to a specified Solr endpoint.
@@ -308,8 +297,8 @@ defmodule Hui do
   def suggest(url, q, count \\ nil, dictionaries \\ nil, context \\ nil)
   def suggest(url, q, _, _, _) when is_nil_empty(q) or is_nil_empty(url), do: {:error, %Hui.Error{reason: :einval}}
   def suggest(url, q, count, dictionaries, context) do
-    suggest_query = %Hui.S{q: q, count: count, dictionary: dictionaries, cfq: context}
-    Request.search(url, false, [suggest_query])
+    query = %Query.Suggest{q: q, count: count, dictionary: dictionaries, cfq: context}
+    search(url, query)
   end
 
   @doc """
@@ -321,27 +310,17 @@ defmodule Hui do
   def suggest!(url, q, count \\ nil, dictionaries \\ nil, context \\ nil)
   def suggest!(url, q, _, _, _) when is_nil_empty(q) or is_nil_empty(url), do: raise %Hui.Error{reason: :einval}
   def suggest!(url, q, count, dictionaries, context) do
-    suggest_query = %Hui.S{q: q, count: count, dictionary: dictionaries, cfq: context}
-    Request.search(url, true, [suggest_query])
+    query = %Query.Suggest{q: q, count: count, dictionary: dictionaries, cfq: context}
+    search!(url, query)
   end
 
-  @doc """
-  Issue a MoreLikeThis (mlt) query to a specified Solr endpoint.
-
-  ### Example
-
-  ```
-    query = %Hui.Q{q: "apache", rows: 10, wt: "xml"}
-    mlt = %Hui.M{fl: "manu,cat", mindf: 10, mintf: 200, "match.include": true, count: 10}
-    Hui.mlt(:library, query, mlt)
-  ```
-  """
+  @doc false
   @spec mlt(url, Hui.Q.t, Hui.M.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
+  @deprecated "Please use search/2 with Hui.Query.MoreLikeThis struct."
   def mlt(url, %Hui.Q{} = query_struct, %Hui.M{} = mlt_query_struct), do: Request.search(url, [query_struct, mlt_query_struct])
 
-  @doc """
-  Issue a MoreLikeThis (mlt) query to a specified Solr endpoint, raise an exception in case of failure.
-  """
+  @doc false
+  @deprecated "Please use search/2 with Hui.Query.MoreLikeThis struct."
   @spec mlt!(url, Hui.Q.t, Hui.M.t) :: HTTPoison.Response.t
   def mlt!(url, %Hui.Q{} = query_struct, %Hui.M{} = mlt_query_struct), do: Request.search(url, true, [query_struct, mlt_query_struct])
 

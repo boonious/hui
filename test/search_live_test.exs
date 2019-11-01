@@ -43,6 +43,7 @@ defmodule HuiSearchLiveTest do
 
     test "work with other URL endpoint access types" do
       {_, resp} = Hui.search("http://localhost:8983/solr/gettingstarted", q: "*")
+
       assert length(resp.body["response"]["docs"]) >= 0
       assert String.match?(resp.request_url, ~r/q=*/)
 
@@ -152,10 +153,14 @@ defmodule HuiSearchLiveTest do
   describe "suggest" do
     @describetag live: false
 
-    test "query via Hui.S" do
-      x = %Hui.S{q: "ha", count: 10, dictionary: ["name_infix", "ln_prefix", "fn_prefix"]}
+    test "query via struct" do
+      x = %Query.Suggest{q: "ha", count: 10, dictionary: ["name_infix", "ln_prefix", "fn_prefix"]}
 
-      expected_response_header_params = %{
+      expected_url =
+        "suggest.count=10&suggest.dictionary=name_infix&" <>
+          "suggest.dictionary=ln_prefix&suggest.dictionary=fn_prefix&suggest.q=ha&suggest=true"
+
+      expected_params = %{
         "suggest" => "true",
         "suggest.count" => "10",
         "suggest.dictionary" => ["name_infix", "ln_prefix", "fn_prefix"],
@@ -164,16 +169,22 @@ defmodule HuiSearchLiveTest do
 
       {_, resp} = Hui.suggest(:default, x)
       requested_params = resp.body["responseHeader"]["params"]
-      assert expected_response_header_params == requested_params
+      assert expected_params == requested_params
+      assert String.match?(resp.request_url, ~r/#{expected_url}/)
 
-      assert String.match?(
-               resp.request_url,
-               ~r/suggest.count=10&suggest.dictionary=name_infix&suggest.dictionary=ln_prefix&suggest.dictionary=fn_prefix&suggest.q=ha&suggest=true/
-             )
+      resp = Hui.suggest!(:default, x)
+      requested_params = resp.body["responseHeader"]["params"]
+      assert expected_params == requested_params
+      assert String.match?(resp.request_url, ~r/#{expected_url}/)
     end
 
     test "convenience function" do
-      expected_response_header_params = %{
+      expected_url =
+        "suggest.cfq=1939&suggest.count=5&" <>
+          "suggest.dictionary=name_infix&suggest.dictionary=ln_prefix&suggest.dictionary=fn_prefix&" <>
+          "suggest.q=ha&suggest=true"
+
+      expected_params = %{
         "suggest" => "true",
         "suggest.count" => "5",
         "suggest.dictionary" => ["name_infix", "ln_prefix", "fn_prefix"],
@@ -182,57 +193,14 @@ defmodule HuiSearchLiveTest do
       }
 
       {_, resp} = Hui.suggest(:default, "ha", 5, ["name_infix", "ln_prefix", "fn_prefix"], "1939")
-
       requested_params = resp.body["responseHeader"]["params"]
-
-      expected_url_str =
-        "suggest.cfq=1939&suggest.count=5&suggest.dictionary=name_infix&suggest.dictionary=ln_prefix&suggest.dictionary=fn_prefix&suggest.q=ha&suggest=true"
-
-      assert expected_response_header_params == requested_params
-      assert String.match?(resp.request_url, ~r/#{expected_url_str}/)
-    end
-  end
-
-  describe "suggest!" do
-    @describetag live: false
-
-    test "should query via Hui.S" do
-      x = %Hui.S{q: "ha", count: 10, dictionary: ["name_infix", "ln_prefix", "fn_prefix"]}
-
-      expected_response_header_params = %{
-        "suggest" => "true",
-        "suggest.count" => "10",
-        "suggest.dictionary" => ["name_infix", "ln_prefix", "fn_prefix"],
-        "suggest.q" => "ha"
-      }
-
-      resp = Hui.suggest!(:default, x)
-      requested_params = resp.body["responseHeader"]["params"]
-      assert expected_response_header_params == requested_params
-
-      assert String.match?(
-               resp.request_url,
-               ~r/suggest.count=10&suggest.dictionary=name_infix&suggest.dictionary=ln_prefix&suggest.dictionary=fn_prefix&suggest.q=ha&suggest=true/
-             )
-    end
-
-    test "convenience function" do
-      expected_response_header_params = %{
-        "suggest" => "true",
-        "suggest.count" => "5",
-        "suggest.dictionary" => ["name_infix", "ln_prefix", "fn_prefix"],
-        "suggest.q" => "ha",
-        "suggest.cfq" => "1939"
-      }
+      assert expected_params == requested_params
+      assert String.match?(resp.request_url, ~r/#{expected_url}/)
 
       resp = Hui.suggest!(:default, "ha", 5, ["name_infix", "ln_prefix", "fn_prefix"], "1939")
       requested_params = resp.body["responseHeader"]["params"]
-
-      expected_url_str =
-        "suggest.cfq=1939&suggest.count=5&suggest.dictionary=name_infix&suggest.dictionary=ln_prefix&suggest.dictionary=fn_prefix&suggest.q=ha&suggest=true"
-
-      assert expected_response_header_params == requested_params
-      assert String.match?(resp.request_url, ~r/#{expected_url_str}/)
+      assert expected_params == requested_params
+      assert String.match?(resp.request_url, ~r/#{expected_url}/)
     end
   end
 end

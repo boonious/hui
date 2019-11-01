@@ -262,7 +262,7 @@ defmodule HuiSearchTest do
     end
   end
 
-  describe "suggester" do
+  describe "suggest" do
     test "convenience function", context do
       Bypass.expect(context.bypass, fn conn ->
         Plug.Conn.resp(conn, 200, "")
@@ -270,13 +270,13 @@ defmodule HuiSearchTest do
 
       url = %Hui.URL{url: "http://localhost:#{context.bypass.port}"}
 
-      {_, resp} = Hui.suggest(url, "t")
-      assert String.match?(resp.request_url, ~r/suggest.q=t&suggest=true/)
-
       expected =
         "suggest.cfq=1939&suggest.count=5&" <>
           "suggest.dictionary=name_infix&suggest.dictionary=ln_prefix&suggest.dictionary=fn_prefix&" <>
           "suggest.q=ha&suggest=true"
+
+      {_, resp} = Hui.suggest(url, "t")
+      assert String.match?(resp.request_url, ~r/suggest.q=t&suggest=true/)
 
       {_, resp} = Hui.suggest(url, "ha", 5, ["name_infix", "ln_prefix", "fn_prefix"], "1939")
       assert String.match?(resp.request_url, ~r/#{expected}/)
@@ -294,18 +294,18 @@ defmodule HuiSearchTest do
         Plug.Conn.resp(conn, 200, "")
       end)
 
-      experted_url =
+      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}"}
+
+      experted =
         "suggest.cfq=1939&suggest.count=5&" <>
           "suggest.dictionary=name_infix&suggest.dictionary=ln_prefix&suggest.dictionary=fn_prefix&" <>
           "suggest.q=ha&suggest=true"
-
-      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}"}
 
       resp = Hui.suggest!(url, "t")
       assert String.match?(resp.request_url, ~r/suggest.q=t&suggest=true/)
 
       resp = Hui.suggest!(url, "ha", 5, ["name_infix", "ln_prefix", "fn_prefix"], "1939")
-      assert String.match?(resp.request_url, ~r/#{experted_url}/)
+      assert String.match?(resp.request_url, ~r/#{experted}/)
     end
 
     test "handle malformed parameters" do

@@ -150,7 +150,7 @@ defmodule HuiQueryTest do
       url = %URL{url: "http://localhost:#{context.bypass.port}"}
       x = %Query.Suggest{q: "ha", count: 10, dictionary: ["name_infix", "ln_prefix", "fn_prefix"]}
 
-      assert test_get_req_url(url, [x])
+      test_get_req_url(url, x)
     end
 
     test "spellchecking struct", context do
@@ -167,7 +167,7 @@ defmodule HuiQueryTest do
         dictionary: "default"
       }
 
-      assert test_get_req_url(url, x)
+      test_get_req_url(url, x)
 
       # {_status, resp} = Hui.spellcheck(url, solr_params)
       # assert String.match?(resp.request_url, ~r/#{experted_url}/)
