@@ -25,11 +25,19 @@ defmodule Hui.Query do
   @type solr_url :: Hui.URL.t()
 
   @spec get(solr_url, solr_query) :: {:ok, HTTPoison.Response.t()} | {:error, HTTPoison.Error.t()}
-  def get(%URL{} = url, query \\ []) do
-    endpoint = to_string(url)
-    query = Encoder.encode(query)
+  def get(%URL{} = solr_url, solr_query) do
+    endpoint = to_string(solr_url)
+    query = Encoder.encode(solr_query)
 
-    get([endpoint, "?", query] |> IO.iodata_to_binary(), url.headers, url.options)
+    get([endpoint, "?", query] |> IO.iodata_to_binary(), solr_url.headers, solr_url.options)
+  end
+
+  @spec get!(solr_url, solr_query) :: {:ok, HTTPoison.Response.t()} | {:error, HTTPoison.Error.t()}
+  def get!(%URL{} = solr_url, solr_query) do
+    endpoint = to_string(solr_url)
+    query = Encoder.encode(solr_query)
+
+    get!([endpoint, "?", query] |> IO.iodata_to_binary(), solr_url.headers, solr_url.options)
   end
 
   # implement HTTPoison.Base callback:

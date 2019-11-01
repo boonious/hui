@@ -16,7 +16,7 @@ defmodule HuiQueryTest do
      simple_search_response_sample_xml: resp_xml}
   end
 
-  describe "Query.get/2" do
+  describe "Query.get/2, Query.get!/2" do
     test "a list of structs", context do
       Bypass.expect(context.bypass, fn conn ->
         Plug.Conn.resp(conn, 200, context.simple_search_response_sample)

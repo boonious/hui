@@ -12,16 +12,10 @@ defmodule TestHelpers do
             |> Regex.compile!
 
     assert String.match?(resp.request_url, regex)
-  end
 
-  # deprecated - %Hui.Q{}
-  def check_search_req_url(url, %Hui.Q{} = solr_params, expected_url_regex) do
-    {_status, resp} = Hui.Request.search(url, [solr_params])
-    match1? = String.match?(resp.request_url, expected_url_regex)
-
-    {_status, resp} = Hui.search(url, solr_params)
-    match2? = String.match?(resp.request_url, expected_url_regex)
-    match1? and match2?
+    # include tests for Query.get!
+    resp = Hui.Query.get!(url, query)
+    assert String.match?(resp.request_url, regex)
   end
 
   def check_search_req_url(url, query, regex) do
@@ -37,17 +31,6 @@ defmodule TestHelpers do
             |> Regex.compile!
 
     assert String.match?(resp.request_url, regex)
-  end
-
-  # for search bang tests
-  def check_search_req_url!(url, %Hui.Q{} = solr_params, expected_url_regex) do
-    bang = true
-    resp = Hui.Request.search(url, bang, [solr_params])
-    match1? = String.match?(resp.request_url, expected_url_regex)
-
-    resp = Hui.search!(url, solr_params)
-    match2? = String.match?(resp.request_url, expected_url_regex)
-    match1? and match2?
   end
 
   def check_search_req_url!(url, solr_params, expected_url_regex) when is_list(solr_params) do
