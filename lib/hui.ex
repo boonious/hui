@@ -24,24 +24,25 @@ defmodule Hui do
   @doc """
   Issue a keyword list or structured query to the default Solr endpoint.
 
-  The query can either be a keyword list, a standard query struct (`Hui.Q`)
-  or a struct list. This function is a shortcut for `search/2` with `:default` as URL key.
+  The query can either be a keyword list or a list of Hui structs - see `t:Hui.Query.solr_struct/0`. 
+  This function is a shortcut for `search/2` with `:default` as URL key.
 
   ### Example
 
   ```
-    Hui.q(%Hui.Q{q: "loch", fq: ["type:illustration", "format:image/jpeg"]})
     Hui.q(q: "loch", rows: 5, facet: true, "facet.field": ["year", "subject"])
 
     # supply a list of Hui structs for more complex query, e.g. faceting
-    Hui.q( [%Hui.Q{q: "author:I*", rows: 5}, %Hui.F{field: ["cat", "author_str"], mincount: 1}])
+    alias Hui.Query
+
+    Hui.q([%Query.Standard{q: "author:I*"}, %Query.Facet{field: ["cat", "author"], mincount: 1}])
 
     # DisMax
-    x = %Hui.D{q: "run", qf: "description^2.3 title", mm: "2<-25% 9<-3", pf: "title", ps: 1, qs: 3}
-    y = %Hui.Q{rows: 10, start: 10, fq: ["edited:true"]}
-    z = %Hui.F{field: ["cat", "author_str"], mincount: 1}
-    Hui.q([x, y, z])
+    x = %Query.Dismax{q: "run", qf: "description^2.3 title", mm: "2<-25% 9<-3"}
+    y = %Query.Common{rows: 10, start: 10, fq: ["edited:true"]}
+    z = %Query.Facet{field: ["cat", "author"], mincount: 1}
 
+    Hui.q([x, y, z])
   ```
   """
   @spec q(query) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
@@ -102,68 +103,41 @@ defmodule Hui do
   ### Example - parameters 
   
   ```
-    # structured query with permitted or qualified Solr parameters
     url = "http://localhost:8983/solr/collection"
-    Hui.search(url, %Hui.Q{q: "loch", rows: 5, wt: "xml", fq: ["type:illustration", "format:image/jpeg"]})
+
     # a keyword list of arbitrary parameters
     Hui.search(url, q: "edinburgh", rows: 10)
 
     # supply a list of Hui structs for more complex query e.g. DisMax
-    x = %Hui.D{q: "run", qf: "description^2.3 title", mm: "2<-25% 9<-3", pf: "title", ps: 1, qs: 3}
-    y = %Hui.Q{rows: 10, start: 10, fq: ["edited:true"]}
-    z = %Hui.F{field: ["cat", "author_str"], mincount: 1}
+    alias Hui.Query
+
+    x = %Query.DisMax{q: "run", qf: "description^2.3 title", mm: "2<-25% 9<-3"}
+    y = %Query.Common{rows: 10, start: 10, fq: ["edited:true"]}
+    z = %Query.Facet{field: ["cat", "author_str"], mincount: 1}
     Hui.search(url, [x, y, z])
 
     # SolrCloud query
-    x = %Hui.Q{q: "john", collection: "library,commons", rows: 10, distrib: true, "shards.tolerant": true, "shards.info": true}
-    Hui.search(url, x)
+    x = %Query.DisMax{q: "john"} 
+    y = %Query.Common{collection: "library,commons", rows: 10, distrib: true, "shards.tolerant": true, "shards.info": true}
+    Hui.search(url, [x,y])
 
-    # Add results highlighting (snippets) with `Hui.H`
-    x = %Hui.Q{q: "features:photo", rows: 5}
-    y = %Hui.H{fl: "features", usePhraseHighlighter: true, fragsize: 250, snippets: 3 }
+    # With results highlighting (snippets)
+    x = %Query.Standard{q: "features:photo"}
+    y = %Query.Highlight{fl: "features", usePhraseHighlighter: true, fragsize: 250, snippets: 3 }
     Hui.search(url, [x, y])
   ```
-
-  ### Example - URL endpoints
-
-  ```
-    url = "http://localhost:8983/solr/collection"
-    Hui.search(url, q: "loch")
-
-    url = :library
-    Hui.search(url, q: "edinburgh", rows: 10)
-
-    url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "suggest"}
-    Hui.search(url, suggest: true, "suggest.dictionary": "mySuggester", "suggest.q": "el")
-
-  ```
-
-  See `Hui.URL.configured_url/1` and `Hui.URL.encode_query/1` for more details on Solr parameter keyword list.
-
-  `t:Hui.URL.t/0` struct also enables HTTP headers and HTTPoison options to be specified
-  in keyword lists. HTTPoison options provide further controls for a request, e.g. `timeout`, `recv_timeout`,
-  `max_redirect`, `params` etc.
-
-  ```
-    # setting up a header and a 10s receiving connection timeout
-    url = %Hui.URL{url: "..", headers: [{"accept", "application/json"}], options: [recv_timeout: 10000]}
-    Hui.search(url, q: "solr rocks")
-  ```
-
-  See `HTTPoison.request/5` for more details on HTTPoison options.
 
   ### Example - faceting
 
   ```
-    x = %Hui.Q{q: "author:I*", rows: 5}
-    y = %Hui.F{field: ["cat", "author_str"], mincount: 1}
-    Hui.search(:library, [x, y])
+    alias Hui.Query
 
-    # more elaborated faceting query
-    x = %Hui.Q{q: "*", rows: 5}
-    range1 = %Hui.F.Range{range: "price", start: 0, end: 100, gap: 10, per_field: true}
-    range2 = %Hui.F.Range{range: "popularity", start: 0, end: 5, gap: 1, per_field: true}
-    y = %Hui.F{field: ["cat", "author_str"], mincount: 1, range: [range1, range2]}
+    range1 = %Query.FacetRange{range: "price", start: 0, end: 100, gap: 10, per_field: true}
+    range2 = %Query.FacetRange{range: "popularity", start: 0, end: 5, gap: 1, per_field: true}
+
+    x = %Query.DisMax{q: "ivan"}
+    y = %Query.Facet{field: ["cat", "author_str"], mincount: 1, range: [range1, range2]}
+
     Hui.search(:default, [x, y])
   ```
 
@@ -184,8 +158,7 @@ defmodule Hui do
       "facet.field" => ["cat", "author_str"],
       "facet.mincount" => "1",
       "facet.range" => ["price", "popularity"],
-      "q" => "*",
-      "rows" => "5"
+      "q" => "ivan"
     },
     "status" => 0,
     "zkConnected" => true

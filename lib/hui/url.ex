@@ -4,6 +4,33 @@ defmodule Hui.URL do
 
   Use the module `t:Hui.URL.t/0` struct to specify
   Solr core or collection URLs with request handlers.
+
+  ### Hui URL endpoints
+
+  ```
+    # binary
+    url = "http://localhost:8983/solr/collection"
+    Hui.search(url, q: "loch")
+
+    # key referring to config setting
+    url = :library
+    Hui.search(url, q: "edinburgh", rows: 10)
+
+    # Hui.URL struct
+    url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "suggest"}
+    Hui.search(url, suggest: true, "suggest.dictionary": "mySuggester", "suggest.q": "el")
+
+  ```
+
+  `t:Hui.URL.t/0` struct also enables HTTP headers and [HTTPoison options](https://hexdocs.pm/httpoison/HTTPoison.html#request/5)
+  to be specified in keyword lists. HTTPoison options provide further controls for a request, e.g. `timeout`, `recv_timeout`,
+  `max_redirect`, `params` etc.
+
+  ```
+    # setting up a header and a 10s receiving connection timeout
+    url = %Hui.URL{url: "..", headers: [{"accept", "application/json"}], options: [recv_timeout: 10000]}
+    Hui.search(url, q: "solr rocks")
+  ```
   """
 
   defstruct [:url, handler: "select", headers: [], options: []]
