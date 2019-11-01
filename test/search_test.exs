@@ -46,7 +46,7 @@ defmodule HuiSearchTest do
         Plug.Conn.resp(conn, 200, "")
       end)
 
-      assert check_search_req_url("http://localhost:#{context.bypass.port}", [q: "*"], ~r/q=*/)
+      assert check_search_req_url("http://localhost:#{context.bypass.port}", q: "*")
     end
 
     test "should query with other Solr parameters", context do
@@ -54,13 +54,8 @@ defmodule HuiSearchTest do
         Plug.Conn.resp(conn, 200, context.simple_search_response_sample)
       end)
 
-      solr_params = [q: "*", rows: 10, fq: ["cat:electronics", "popularity:[0 TO *]"]]
-
-      assert check_search_req_url(
-               "http://localhost:#{context.bypass.port}",
-               solr_params,
-               ~r/q=%2A&rows=10&fq=cat%3Aelectronics&fq=popularity%3A%5B0\+TO\+%2A%5D/
-             )
+      query = [q: "*", rows: 10, fq: ["cat:electronics", "popularity:[0 TO *]"]]
+      assert check_search_req_url("http://localhost:#{context.bypass.port}", query)
     end
   end
 
@@ -70,16 +65,13 @@ defmodule HuiSearchTest do
         Plug.Conn.resp(conn, 200, "")
       end)
 
-      solr_params = [suggest: true, "suggest.dictionary": "mySuggester", "suggest.q": "el"]
-
       url = %Hui.URL{
         url: "http://localhost:#{context.bypass.port}/solr/newspapers",
         handler: "suggest"
       }
 
-      experted_request_url = Hui.Encoder.encode(solr_params)
-
-      assert check_search_req_url(url, solr_params, ~r/#{experted_request_url}/)
+      query = [suggest: true, "suggest.dictionary": "mySuggester", "suggest.q": "el"]
+      assert check_search_req_url(url, query)
     end
 
     test "should facilitate HTTP headers setting via %Hui.URL{}", context do
@@ -98,7 +90,6 @@ defmodule HuiSearchTest do
       # test with the HTTPoison "timeout" option, "0" setting mimicking a request timeout
       url = %Hui.URL{url: "http://localhost:#{context.bypass.port}/", options: [timeout: 0]}
       assert {:error, %Hui.Error{reason: :checkout_timeout}} = Hui.search(url, q: "*")
-      assert {:error, %Hui.Error{reason: :checkout_timeout}} = Hui.Request.search(url, q: "*")
 
       # test with the low-level HTTPoison "params" option, for appending additional query string params
       Bypass.expect(context.bypass, fn conn -> Plug.Conn.resp(conn, 200, "") end)
@@ -118,11 +109,11 @@ defmodule HuiSearchTest do
         Plug.Conn.resp(conn, 200, "")
       end)
 
-      solr_params = [q: "edinburgh", rows: 10]
+      query = [q: "edinburgh", rows: 10]
       {_, url} = Hui.URL.configured_url(:library)
-      {_status, resp} = Hui.search(:library, solr_params)
-      experted_request_url = Hui.URL.to_string(url) <> "?" <> Hui.URL.encode_query(solr_params)
+      experted_request_url = Hui.URL.to_string(url) <> "?" <> Hui.URL.encode_query(query)
 
+      {_, resp} = Hui.search(:library, query)
       assert experted_request_url == resp.request_url
     end
 
@@ -136,7 +127,7 @@ defmodule HuiSearchTest do
         Plug.Conn.resp(conn, 200, context.simple_search_response_sample)
       end)
 
-      {_status, resp} = Hui.search("http://localhost:#{context.bypass.port}", q: "*")
+      {_, resp} = Hui.search("http://localhost:#{context.bypass.port}", q: "*")
       assert is_map(resp.body)
     end
 
@@ -145,7 +136,7 @@ defmodule HuiSearchTest do
         Plug.Conn.resp(conn, 200, context.simple_search_response_sample_xml)
       end)
 
-      {_status, resp} = Hui.search("http://localhost:#{context.bypass.port}", q: "*")
+      {_, resp} = Hui.search("http://localhost:#{context.bypass.port}", q: "*")
       refute is_map(resp.body)
       assert is_binary(resp.body)
     end
@@ -165,25 +156,15 @@ defmodule HuiSearchTest do
         Plug.Conn.resp(conn, 200, "")
       end)
 
-      {_status, resp} =
-        Hui.q("apache documentation", 1, 5, ["edited:true"], ["subject", "year"], "id desc")
-
-      assert resp == %Hui.Error{reason: :econnrefused}
-
       url = "http://localhost:#{context.bypass.port}"
-      {_status, resp} = Hui.search(url, "apache documentation")
+
+      {_, resp} = Hui.search(url, "apache documentation")
       assert String.match?(resp.request_url, ~r/q=apache\+documentation/)
 
-      expected_url_str =
-        "q=apache\\\+documentation&fq=content_type%3Atext%2Fhtml&rows=1&start=5&facet=true&facet.field=subject&facet.field=year"
+      expected = "q=a&fq=type%3Atext&rows=1&start=5&facet=true&facet.field=type&facet.field=year"
 
-      {_status, resp} =
-        Hui.search(url, "apache documentation", 1, 5, "content_type:text/html", [
-          "subject",
-          "year"
-        ])
-
-      assert String.match?(resp.request_url, ~r/#{expected_url_str}/)
+      {_, resp} = Hui.search(url, "a", 1, 5, "type:text", ["type", "year"])
+      assert String.match?(resp.request_url, ~r/#{expected}/)
     end
   end
 
@@ -193,18 +174,18 @@ defmodule HuiSearchTest do
         Plug.Conn.resp(conn, 200, "")
       end)
 
-      experted_url =
-        "suggest.cfq=1939&suggest.count=5&suggest.dictionary=name_infix&suggest.dictionary=ln_prefix&suggest.dictionary=fn_prefix&suggest.q=ha&suggest=true"
-
       url = %Hui.URL{url: "http://localhost:#{context.bypass.port}"}
 
-      {_status, resp} = Hui.suggest(url, "t")
+      {_, resp} = Hui.suggest(url, "t")
       assert String.match?(resp.request_url, ~r/suggest.q=t&suggest=true/)
 
-      {_status, resp} =
-        Hui.suggest(url, "ha", 5, ["name_infix", "ln_prefix", "fn_prefix"], "1939")
+      expected =
+        "suggest.cfq=1939&suggest.count=5&" <>
+          "suggest.dictionary=name_infix&suggest.dictionary=ln_prefix&suggest.dictionary=fn_prefix&" <>
+          "suggest.q=ha&suggest=true"
 
-      assert String.match?(resp.request_url, ~r/#{experted_url}/)
+      {_, resp} = Hui.suggest(url, "ha", 5, ["name_infix", "ln_prefix", "fn_prefix"], "1939")
+      assert String.match?(resp.request_url, ~r/#{expected}/)
     end
 
     test "function should handle malformed parameters", context do

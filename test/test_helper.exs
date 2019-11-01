@@ -19,9 +19,19 @@ defmodule TestHelpers do
     match1? and match2?
   end
 
-  def check_search_req_url(url, query, expected_url_regex) when is_list(query) do
+  def check_search_req_url(url, query, regex) do
     {_status, resp} = Hui.search(url, query)
-    assert String.match?(resp.request_url, expected_url_regex)
+    assert String.match?(resp.request_url, regex)
+  end
+
+  def check_search_req_url(url, query) do
+    {_status, resp} = Hui.search(url, query)
+
+    regex = Hui.Encoder.encode(query) 
+            |> String.replace("+", "\\+")
+            |> Regex.compile!
+
+    assert String.match?(resp.request_url, regex)
   end
 
   # for search bang tests
