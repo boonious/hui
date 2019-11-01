@@ -49,13 +49,53 @@ defmodule HuiSearchTest do
       assert check_search_req_url("http://localhost:#{context.bypass.port}", q: "*")
     end
 
-    test "should query with other Solr parameters", context do
+    test "should handle a list of query parameters", context do
       Bypass.expect(context.bypass, fn conn ->
         Plug.Conn.resp(conn, 200, context.simple_search_response_sample)
       end)
 
       query = [q: "*", rows: 10, fq: ["cat:electronics", "popularity:[0 TO *]"]]
       assert check_search_req_url("http://localhost:#{context.bypass.port}", query)
+    end
+
+    test "should handle a Hui struct", context do
+      Bypass.expect(context.bypass, fn conn ->
+        Plug.Conn.resp(conn, 200, context.simple_search_response_sample)
+      end)
+
+      query = %Hui.Query.DisMax{
+        q: "run",
+        qf: "description^2.3 title",
+        mm: "2<-25% 9<-3",
+        pf: "title",
+        ps: 1,
+        qs: 3
+      }
+
+      assert check_search_req_url("http://localhost:#{context.bypass.port}", query)
+
+      query = %Hui.Query.Common{rows: 10, start: 10, fq: ["edited:true"]}
+      assert check_search_req_url("http://localhost:#{context.bypass.port}", query)
+    end
+
+    test "should handle a list of Hui structs", context do
+      Bypass.expect(context.bypass, fn conn ->
+        Plug.Conn.resp(conn, 200, context.simple_search_response_sample)
+      end)
+
+      x = %Hui.Query.DisMax{
+        q: "run",
+        qf: "description^2.3 title",
+        mm: "2<-25% 9<-3",
+        pf: "title",
+        ps: 1,
+        qs: 3
+      }
+
+      y = %Hui.Query.Common{rows: 10, start: 10, fq: ["edited:true"]}
+      z = %Hui.Query.Facet{field: ["cat", "author_str"], mincount: 1}
+
+      assert check_search_req_url("http://localhost:#{context.bypass.port}", [x, y, z])
     end
   end
 
