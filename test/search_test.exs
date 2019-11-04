@@ -4,6 +4,18 @@ defmodule HuiSearchTest do
 
   doctest Hui
 
+  setup_all do
+    # set the default Solr endpoint globally
+    # for simple "ping" tests
+    bypass = Bypass.open()
+    Bypass.expect(bypass, fn conn ->
+      Plug.Conn.resp(conn, 200, "")
+    end)
+
+    Application.put_env :hui, :default,  url: "http://localhost:#{bypass.port}"
+    :ok
+  end
+
   # testing with Bypass
   setup do
     resp = File.read!("./test/data/simple_search_response.json")
@@ -45,6 +57,24 @@ defmodule HuiSearchTest do
       assert_raise HTTPoison.Error, ":econnrefused", fn ->
         Hui.search!("http://localhost:#{context.bypass.port}", q: "http test")
       end
+    end
+  end
+
+  describe "q functions (:default configured %Hui.URL)" do
+    # simple tests since `q` forward calls
+    # to `search` which is tested further below
+    test "call configured default URL" do
+      {_, resp} = Hui.q("a", 1, 5, "type:text", ["type", "year"])
+      assert resp.status_code == 200
+
+      {_, resp} = Hui.q([q: "test"])
+      assert resp.status_code == 200
+
+      resp = Hui.q!("a", 1, 5, "type:text", ["type", "year"])
+      assert resp.status_code == 200
+
+      resp = Hui.q!([q: "test"])
+      assert resp.status_code == 200
     end
   end
 
