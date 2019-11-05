@@ -7,12 +7,24 @@ defmodule HuiSearchTest do
   setup_all do
     # set the default Solr endpoint globally
     # for simple "ping" tests
+
+    default_config = Application.get_env(:hui, :default)
+
     bypass = Bypass.open()
+
     Bypass.expect(bypass, fn conn ->
       Plug.Conn.resp(conn, 200, "")
     end)
 
-    Application.put_env :hui, :default,  url: "http://localhost:#{bypass.port}"
+    bypass_url = "http://localhost:#{bypass.port}"
+    config = default_config |> Enum.map(&if elem(&1, 0) == :url, do: {:url, bypass_url}, else: &1)
+
+    Application.put_env(:hui, :default, config)
+
+    on_exit(fn ->
+      Application.put_env(:hui, :default, default_config)
+    end)
+
     :ok
   end
 
@@ -67,13 +79,13 @@ defmodule HuiSearchTest do
       {_, resp} = Hui.q("a", 1, 5, "type:text", ["type", "year"])
       assert resp.status_code == 200
 
-      {_, resp} = Hui.q([q: "test"])
+      {_, resp} = Hui.q(q: "test")
       assert resp.status_code == 200
 
       resp = Hui.q!("a", 1, 5, "type:text", ["type", "year"])
       assert resp.status_code == 200
 
-      resp = Hui.q!([q: "test"])
+      resp = Hui.q!(q: "test")
       assert resp.status_code == 200
     end
   end

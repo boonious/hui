@@ -63,9 +63,10 @@ defmodule Hui.URL do
   @doc """
   Returns a configured default Solr endpoint as `t:Hui.URL.t/0` struct.
 
-      iex> Hui.URL.default_url!
+  ```
+      Hui.URL.default_url!
       %Hui.URL{handler: "select", url: "http://localhost:8983/solr/gettingstarted", headers: [{"accept", "application/json"}], options: [recv_timeout: 10000]}
-
+  ```
   The default endpoint can be specified in application configuration as below:
 
   ```
