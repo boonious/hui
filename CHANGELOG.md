@@ -1,5 +1,10 @@
 # Changelog
 
+# 0.9.0 (2019-11-06)
+
+* new query structs: `Hui.Query.Standard`, `Hui.Query.DisMax`, `Hui.Query.Common`, Faceting: `Hui.Query.Facet`, `Hui.Query.FacetRange`, `Hui.Query.FacetInterval`, `Hui.Query.Highlight`, `Hui.Query.HighlighterFastVector`, `Hui.Query.HighlighterOriginal`, `Hui.Query.HighlighterUnified`, `Hui.Query.SpellCheck`, `Hui.Query.Suggest` `Hui.Query.MoreLikeThis`
+* `Hui.Encoder` protocol and implementation for encoding the new query structs
+
 ## 0.8.3, 0.8.4 (2019-10-03)
 
 * update dependencies: newer versions of bypass, httpoison, cowboy

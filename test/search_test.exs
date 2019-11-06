@@ -18,7 +18,6 @@ defmodule HuiSearchTest do
 
     bypass_url = "http://localhost:#{bypass.port}"
     config = default_config |> Enum.map(&if elem(&1, 0) == :url, do: {:url, bypass_url}, else: &1)
-
     Application.put_env(:hui, :default, config)
 
     on_exit(fn ->

@@ -25,6 +25,30 @@ defmodule Hui.Query do
   @type solr_query :: Keyword.t() | map | solr_struct | [solr_struct]
   @type solr_url :: Hui.URL.t()
 
+  @doc """
+  Issues a get request of Solr query to a specific endpoint.
+
+  The query can be a keyword list or a list of Hui query structs (`t:solr_query/0`).
+
+  ## Example - parameters
+
+  ```
+    url = %Hul.URL{url: "http://..."}
+
+    # query via a list of keywords, which are unbound and sent to Solr directly
+    Hui.Query.get(url, q: "glen cova", facet: "true", "facet.field": ["type", "year"])
+
+    # query via Hui structs
+    alias Hui.Query
+    Hui.Query.get(url, %Query.DisMax{q: "glen cova"})
+    Hui.Query.get(url, [%Query.DisMax{q: "glen"}, %Query.Facet{field: ["type", "year"]}])
+  ```
+
+  The use of structs is more idiomatic and succinct. It is bound to qualified Solr fields.
+
+  See `t:Hui.URL.t/0` struct about specifying HTTP headers and HTTPoison options
+  of a request, e.g. `timeout`, `recv_timeout`, `max_redirect` etc.
+  """
   @spec get(solr_url, solr_query) :: {:ok, HTTPoison.Response.t()} | {:error, HTTPoison.Error.t()}
   def get(%URL{} = solr_url, solr_query) do
     endpoint = to_string(solr_url)
@@ -33,7 +57,14 @@ defmodule Hui.Query do
     get([endpoint, "?", query] |> IO.iodata_to_binary(), solr_url.headers, solr_url.options)
   end
 
-  @spec get!(solr_url, solr_query) :: {:ok, HTTPoison.Response.t()} | {:error, HTTPoison.Error.t()}
+  @doc """
+  Issues a get request of Solr query to a specific endpoint, raising an exception in case of failure.
+
+  If the request does not fail, the response is returned.
+
+  See `get/2` for more detailed information.
+  """
+  @spec get!(solr_url, solr_query) :: HTTPoison.Response.t()
   def get!(%URL{} = solr_url, solr_query) do
     endpoint = to_string(solr_url)
     query = Encoder.encode(solr_query)

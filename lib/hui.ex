@@ -7,7 +7,7 @@ defmodule Hui do
   
   - Searching Solr: `q/1`, `q/6`, `search/2`, `search/7`
   - Updating: `update/3`, `delete/3`, `delete_by_query/3`, `commit/2`
-  - Other: `suggest/2`, `suggest/5`, `spellcheck/3`
+  - Other: `suggest/2`, `suggest/5`
   - [README](https://hexdocs.pm/hui/readme.html#usage)
   """
 

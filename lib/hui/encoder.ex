@@ -10,9 +10,28 @@ defprotocol Hui.Encoder do
   @type query :: Hui.Query.solr_query()
 
   @doc """
-  Transform `query` into IO data.
+  Transform various Solr query types - `t:Hui.Query.solr_query/0` into string.
 
-  The argument `opts` can be used to control encoding, e.g. specifying output formats.
+  The argument `opts` will be used to specify encoding format
+  (not used currently).
+
+  ## Example - encoding keyword list
+
+      iex> Hui.Encoder.encode(q: "loch", start: 10, rows: 10, fq: ["type:image", "year:[2001 TO 2007]"])
+      "q=loch&start=10&rows=10&fq=type%3Aimage&fq=year%3A%5B2001+TO+2007%5D"
+
+      iex> Hui.Encoder.encode(q: "loch", facet: true, "facet.field": ["type", "year"])
+      "q=loch&facet=true&facet.field=type&facet.field=year"
+
+  ## Example - encoding query structs
+
+      iex> %Hui.Query.DisMax{q: "loch", qf: "description^2.3 title", mm: "2<-25% 9<-3"} |> Hui.Encoder.encode
+      "mm=2%3C-25%25+9%3C-3&q=loch&qf=description%5E2.3+title"
+
+      iex> %Hui.Query.Highlight{fl: "title,words", usePhraseHighlighter: true, fragsize: 250} |> Hui.Encoder.encode
+      "hl.fl=title%2Cwords&hl.fragsize=250&hl=true&hl.usePhraseHighlighter=true"
+
+  See `Hui.Query.Facet`, `Hui.Query.FacetRange`, `Hui.Query.FacetInterval` for more examples.
   """
   @spec encode(query, options) :: iodata
   def encode(query, opts \\ [])

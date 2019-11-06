@@ -18,7 +18,7 @@ defmodule Hui.Encode do
   end
 
   @doc """
-  Encodes list of Solr query keywords to IO data.
+  Utility function that encodes various Solr query types  - `t:Hui.Query.solr_query/0` to IO data.
   """
   @spec encode(query, options) :: iodata
   def encode(query, opts \\ %Options{})

@@ -12,48 +12,48 @@ a data collection in distributed server architecture (cloud).
 ### Example - searching
 
 ```elixir
+
   Hui.q("scott") # keywords search
   Hui.q(q: "loch", rows: 5) # arbitrary keyword list
-  Hui.q(%Hui.Q{q: "loch", rows: 5, start: 20}) # structured query
-  Hui.q([%Hui.Q{q: "author:I*", rows: 5}, %Hui.F{field: ["cat", "author_str"], mincount: 1}]) # with faceting
- 
-  # `:library` is a URL reference key - see below
-  Hui.search(:library, %Hui.Q{q: "loch", fq: ["type:illustration", "format:image/jpeg"]})
+  
+  # with query structs
+  alias Hui.Query
 
-  # SolrCloud query
-  x = %Hui.Q{q: "john", collection: "library,commons", rows: 10, distrib: true, "shards.tolerant": true, "shards.info": true}
-  Hui.search(:library, x)
+  Hui.q([%Query.Standard{q: "author:I*"}, %Query.Facet{field: ["cat", "author_str"], mincount: 1}])
+
+  # `:library` is a URL reference key - see below
+  Hui.search(:library, [%Qeury.Standard{q: "loch"}, %Query.Common{fq: ["type:illustration", "format:image/jpeg"]}])
 
   # Suggester query
-  suggest_query = %Hui.S{q: "ha", count: 10, dictionary: ["name_infix", "ln_prefix", "fn_prefix"]}
+  suggest_query = %Query.Suggest{q: "ha", count: 10, dictionary: ["name_infix", "ln_prefix", "fn_prefix"]}
   Hui.suggest(:library, suggest_query)
 
-  # MoreLikeThis query
-  query = %Hui.Q{q: "apache", rows: 10, wt: "xml"}
-  mlt = %Hui.M{fl: "manu,cat", mindf: 10, mintf: 200, "match.include": true, count: 10}
-  Hui.mlt(:library, query, mlt)
+  # DisMax and SolrCloud query
+  x = %Query.DisMax{q: "market", qf: "description^2.3 title", mm: "2<-25% 9<-3", pf: "title", ps: 1, qs: 3}
+  y = %Query.Common{collection: "library,commons", rows: 10, distrib: true, "shards.tolerant": true, "shards.info": true}
+  Hui.search(:library, [x, y])
 
-  # DisMax structured query via a list of existing Hui structs
-  x = %Hui.D{q: "market", qf: "description^2.3 title", mm: "2<-25% 9<-3", pf: "title", ps: 1, qs: 3}
-  y = %Hui.Q{rows: 10, start: 10, fq: ["edited:true"]}
-  z = %Hui.F{field: ["cat", "author_str"], mincount: 1}
+  # with MoreLikeThis
+  z = %Query.MoreLikeThis{fl: "manu,cat", mindf: 10, mintf: 200, "match.include": true, count: 10}
   Hui.search(:library, [x, y, z])
 
-  # Add results highlighting (snippets) with `Hui.H`
-  x = %Hui.Q{q: "features:photo", rows: 5}
-  y = %Hui.H{fl: "features", usePhraseHighlighter: true, fragsize: 250, snippets: 3 } 
-  Hui.search(:library, [x, y])
+  # with faceting
+  z = %Query.Facet{field: ["cat", "author_str"], mincount: 1}
+  Hui.search(:library, [x, y, z])
+
+  # with results highlighting
+  z = %Query.Highlight{fl: "features", usePhraseHighlighter: true, fragsize: 250, snippets: 3 } 
+  Hui.search(:library, [x, y, z])
 
   # more elaborated faceting query
-  x = %Hui.Q{q: "*", rows: 5}
-  range1 = %Hui.F.Range{range: "price", start: 0, end: 100, gap: 10, per_field: true}
-  range2 = %Hui.F.Range{range: "popularity", start: 0, end: 5, gap: 1, per_field: true}
-  y = %Hui.F{field: ["cat", "author_str"], mincount: 1, range: [range1, range2]}
-  Hui.search(:library, [x, y])
-  # =>this spawns a request with the following query string
+  range1 = %Query.FacetRange{range: "price", start: 0, end: 100, gap: 10, per_field: true}
+  range2 = %Query.FacetRange{range: "popularity", start: 0, end: 5, gap: 1, per_field: true}
+  z = %Query.Facet{field: ["cat", "author_str"], mincount: 1, range: [range1, range2]}
+  Hui.search(:library, [x, y, z])
+
+  # the above spawns a request with the following query string
   #
-  # q=%2A&rows=5&facet=true&facet.field=cat&
-  # facet.field=author_str&facet.mincount=1&
+  # q=...&
   # f.price.facet.range.end=100&
   # f.price.facet.range.gap=10&facet.range=price&
   # f.price.facet.range.start=0&
@@ -68,7 +68,7 @@ a data collection in distributed server architecture (cloud).
 
 ```
 
-The `q` examples queries a `:default` endpoint - see `Configuration` below.
+The `q` examples send requests to a `:default` configured endpoint (see `Configuration` below).
 Query parameters could be a string,
 a [Keyword list](https://elixir-lang.org/getting-started/keywords-and-maps.html#keyword-lists) or
 built-in query [Structs](https://elixir-lang.org/getting-started/structs.html)
@@ -78,7 +78,7 @@ Queries may also be issued to other endpoints and request handlers:
 
 ```elixir
   # URL binary string
-  Hui.search("http://localhost:8983/solr/collection", %Hui.Q{q: "loch"})
+  Hui.search("http://localhost:8983/solr/collection", q: "loch")
 
   # URL key referring to an endpoint in configuration - see "Configuration"
   url = :library
@@ -86,13 +86,13 @@ Queries may also be issued to other endpoints and request handlers:
 
   # URL in a struct
   url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "suggest"}
-  Hui.search(url, %Hui.S{q: "el", dictionary: "mySuggester"})
+  Hui.search(url, %Hui.Query.Suggest{q: "el", dictionary: "mySuggester"})
   # spawns => http://http://localhost:8983/solr/collection/suggest?suggest=true&suggest.dictionary=mySuggester&suggest.q=el
 
 ```
 
 See the [API reference](https://hexdocs.pm/hui/api-reference.html#content)
-and [Solr reference guide](http://lucene.apache.org/solr/guide/7_4/searching.html)
+and [Solr reference guide](http://lucene.apache.org/solr/guide/searching.html)
 for more details on available search parameters.
 
 ### Example - updating
@@ -181,39 +181,43 @@ application in Elixir and Phoenix.
 The following struct modules provide an **idiomatic** and **structured** way for
 creating and encoding Solr parameters:
 
-- Standard and common query: `Hui.Q`
-- DisMax query: `Hui.D`
-- Faceting: `Hui.F`, `Hui.F.Range`, `Hui.F.Interval`
-- Results highlighting: `Hui.H`, `Hui.H1`, `Hui.H2`, `Hui.H3`
-- Misc: spell-checking `Hui.Sp`, suggester `Hui.S`, MoreLikeThis `Hui.M`
+- Standard, DisMax, common query: `Hui.Query.Standard`, `Hui.Query.DisMax`, `Hui.Query.Common`
+- Faceting: `Hui.Query.Facet`, `Hui.Query.FacetRange`, `Hui.Query.FacetInterval`
+- Results Highlighting: `Hui.Query.Highlight`, `Hui.Query.HighlighterFastVector`, `Hui.Query.HighlighterOriginal`, `Hui.Query.HighlighterUnified`
+- Others: `Hui.Query.SpellCheck`, `Hui.Query.Suggest` `Hui.Query.MoreLikeThis`
 - Update (add/delete/commit/optimize data): `Hui.U`
 
-For example, instead of prefixing and repeating `fq=filter`, `facet.field=fieldname`, `facet.range.gap=10`,
-multiple filter and facet fields can be specified using
+For example, multiple filters and facet fields can be specified using
 `fq: ["field1", "field2"]`, `field: ["field1", "field2"]`, `gap: 10` Elixir codes.
 
 "Per-field" faceting for multiple ranges and intervals can be specified in a succinct and unified
 way, e.g. `gap` instead of the long-winded `f.[fieldname].facet.range.gap` (per field) or `facet.range.gap`
-(single field range). Per-field use case for a facet can easily be set (or unset) with the `per_field`
-key - see below.
+(single field). Per-field use case for a facet can be set via the `per_field` key - see below.
+
+Hui includes a [protocol](https://elixir-lang.org/getting-started/protocols.html) (with implementation):
+- `Hui.Encoder` for encoding the query structs into binary (JSON format forthcoming)
+
+A custom query struct may be developed by implementing the Encoder protocol.
 
 ```elixir
-  x = %Hui.Q{q: "loch", fq: ["type:image/jpeg", "year:2001"], fl: "id,title", rows: 20}
-  x |> Hui.URL.encode_query
-  # -> "fl=id%2Ctitle&fq=type%3Aimage%2Fjpeg&fq=year%3A2001&q=loch&rows=20"
+  alias Hui.Query
+  x = %Query.DisMax{q: "loch"}
+  y = %Query.Common{fq: ["type:image/jpeg", "year:2001"], fl: "id,title", rows: 20}
+  [x,y] |> Hui.Encoder.encode
+  # -> "q=loch&fl=id%2Ctitle&fq=type%3Aimage%2Fjpeg&fq=year%3A2001&rows=20"
 
-  x = %Hui.F{field: ["type", "year", "subject"], query: "edited:true"}
-  x |> Hui.URL.encode_query
+  x = %Query.Facet{field: ["type", "year", "subject"], query: "edited:true"}
+  x |> Hui.Encoder.encode
   # -> "facet=true&facet.field=type&facet.field=year&facet.field=subject&facet.query=edited%3Atrue"
   # there's no need to set "facet: true" as it is implied and a default setting in the struct
 
   # a unified way to specify per-field or singe-field range
-  x = %Hui.F.Range{range: "age", gap: 10, start: 0, end: 100}
-  x |> Hui.URL.encode_query
+  x = %Query.FacetRange{range: "age", gap: 10, start: 0, end: 100}
+  x |> Hui.Encoder.encode
   # -> "facet.range.end=100&facet.range.gap=10&facet.range=age&facet.range.start=0"
 
   x = %{x | per_field: true} # toggle per field faceting
-  x |> Hui.URL.encode_query
+  x |> Hui.Encoder.encode
   # -> "f.age.facet.range.end=100&f.age.facet.range.gap=10&facet.range=age&f.age.facet.range.start=0"
 ```
 
@@ -232,11 +236,11 @@ various JSON-formatted update and grouped commands to be created.
 
 ```
 
-The structs also provide binding to and introspection of the available fields.
+The structs and their associated type spec also provide binding to and introspection of the available fields.
 
 ```elixir
-  iex> %Hui.F{field: ["type", "year"], query: "year:[2000 TO NOW]"}
-  %Hui.F{
+  iex> %Hui.Query.Facet{field: ["type", "year"], query: "year:[2000 TO NOW]"}
+  %Hui.Query.Facet{
     contains: nil,
     "contains.ignoreCase": nil,
     "enum.cache.minDf": nil,
@@ -295,12 +299,6 @@ It is accessible via the `body` key.
 
 **Note**: other response formats such as XML, are currently being returned in raw text.
 
-### Other low-level HTTP client features
-
-Under the hood, Hui uses `HTTPoison` - an HTTP client to interact with Solr.
-The existing low-level functions of HTTPoison e.g. `get/1`, `get/3`
-remain available in the `Hui.Request` module.
-
 ## Installation
 
 Hui is [available in Hex](https://hex.pm/packages/hui), the package can be installed
@@ -309,7 +307,7 @@ by adding `hui` to your list of dependencies in `mix.exs`:
 ```elixir
   def deps do
     [
-      {:hui, "~> 0.8.4"}
+      {:hui, "~> 0.9.0"}
     ]
   end
 ```
