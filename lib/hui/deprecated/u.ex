@@ -1,6 +1,6 @@
 defmodule Hui.U do
-  @moduledoc """
-  Struct and functions related to Solr updating.
+  @moduledoc deprecated: """
+  Please use Hui.Query.Update instead
   """
 
   defstruct [:doc, :commitWithin, :overwrite, :optimize, :commit, 
