@@ -16,6 +16,8 @@ defmodule Hui.Request do
   use HTTPoison.Base 
   import Hui.Guards
 
+  alias Hui.Query
+
   @type highlighter_struct :: Hui.H.t | Hui.H1.t | Hui.H2.t | Hui.H3.t
   @type misc_struct :: Hui.S.t | Hui.Sp.t | Hui.M.t
   @type query_struct_list :: list(Hui.Q.t | Hui.D.t | Hui.F.t | highlighter_struct | misc_struct)
@@ -87,18 +89,19 @@ defmodule Hui.Request do
       "name" => "Persona"
     }
 
-    # Hui.U struct command for updating and committing the docs to Solr within 5 seconds
-    x = %Hui.U{doc: [doc1, doc2], commitWithin: 5000, overwrite: true}
+    # Hui.Query.Update struct command for updating and committing the docs to Solr within 5 seconds
+    alias Hui.Query
+    x = %Query.Update{doc: [doc1, doc2], commitWithin: 5000, overwrite: true}
     {status, resp} = Hui.Request.update(url, x)
 
     # Delete the docs by IDs, with a URL key from configuration
-    {status, resp} = Hui.Request.update(:library_update, %Hui.U{delete_id: ["tt1316540", "tt1650453"]})
+    {status, resp} = Hui.Request.update(:library_update, %Query.Update{delete_id: ["tt1316540", "tt1650453"]})
 
     # Commit and optimise index, keep max index segments at 10
-    {status, resp} = Hui.Request.update(url, %Hui.U{commit: true, waitSearcher: true, optimize: true, maxSegments: 10})
+    {status, resp} = Hui.Request.update(url, %Query.Update{commit: true, waitSearcher: true, optimize: true, maxSegments: 10})
 
     # Commit index, expunge deleted docs
-    {status, resp} = Hui.Request.update(url, %Hui.U{commit: true, expungeDeletes: true})
+    {status, resp} = Hui.Request.update(url, %Query.Update{commit: true, expungeDeletes: true})
 
     # Direct response or exception in case of failture
     # for implementing bang! style function
@@ -122,12 +125,12 @@ defmodule Hui.Request do
   @spec update(solr_url, boolean, binary | Hui.U.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t} | HTTPoison.Response.t
   def update(url, bang \\ false, data)
   def update(%Hui.URL{} = url, bang, data) when is_binary(data), do: _update(url, bang, data)
-  def update(%Hui.URL{} = url, bang, %Hui.U{} = data), do: _update(url, bang, data |> Hui.U.encode)
+  def update(%Hui.URL{} = url, bang, %Query.Update{} = data), do: _update(url, bang, data |> Query.Update.encode)
 
   def update(url, true, _data) when is_nil_empty(url), do: raise @error_einval
   def update(url, _bang, _data) when is_nil_empty(url), do: {:error, @error_einval}
 
-  def update(url, bang, %Hui.U{} = data) when is_atom(url), do: update(url, bang, data |> Hui.U.encode)
+  def update(url, bang, %Query.Update{} = data) when is_atom(url), do: update(url, bang, data |> Query.Update.encode)
   def update(url, bang, data) when is_atom(url) and is_binary(data) do
     {status, url_struct} = Hui.URL.configured_url(url)
     case {status, bang} do

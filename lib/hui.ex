@@ -387,7 +387,7 @@ defmodule Hui do
   @spec update(binary | Hui.URL.t, binary | map | list(map), boolean) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
   def update(url, docs, commit \\ true)
   def update(url, docs, _commit) when is_binary(docs), do: Request.update(url, docs)
-  def update(url, docs, commit) when is_map(docs) or is_list(docs), do: Request.update(url, %Hui.U{doc: docs, commit: commit})
+  def update(url, docs, commit) when is_map(docs) or is_list(docs), do: Request.update(url, %Query.Update{doc: docs, commit: commit})
 
   @doc """
   Updates or adds Solr documents to an index or collection, raise an exception in case of failure.
@@ -395,7 +395,7 @@ defmodule Hui do
   @spec update!(binary | Hui.URL.t, binary | map | list(map), boolean) :: HTTPoison.Response.t
   def update!(url, docs, commit \\ true)
   def update!(url, docs, _commit) when is_binary(docs), do: Request.update(url, true, docs)
-  def update!(url, docs, commit) when is_map(docs) or is_list(docs), do: Request.update(url, true, %Hui.U{doc: docs, commit: commit})
+  def update!(url, docs, commit) when is_map(docs) or is_list(docs), do: Request.update(url, true, %Query.Update{doc: docs, commit: commit})
 
   @doc """
   Deletes Solr documents.
@@ -421,14 +421,14 @@ defmodule Hui do
   """
   @spec delete(binary | Hui.URL.t, binary | list(binary), boolean) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
   def delete(url, ids, commit \\ true)
-  def delete(url, ids, commit) when is_binary(ids) or is_list(ids), do: Request.update(url, %Hui.U{delete_id: ids, commit: commit})
+  def delete(url, ids, commit) when is_binary(ids) or is_list(ids), do: Request.update(url, %Query.Update{delete_id: ids, commit: commit})
 
   @doc """
   Deletes Solr documents, raise an exception in case of failure.
   """
   @spec delete!(binary | Hui.URL.t, binary | list(binary), boolean) :: HTTPoison.Response.t
   def delete!(url, ids, commit \\ true)
-  def delete!(url, ids, commit) when is_binary(ids) or is_list(ids), do: Request.update(url, true, %Hui.U{delete_id: ids, commit: commit})
+  def delete!(url, ids, commit) when is_binary(ids) or is_list(ids), do: Request.update(url, true, %Query.Update{delete_id: ids, commit: commit})
 
   @doc """
   Deletes Solr documents by filter queries.
@@ -452,14 +452,14 @@ defmodule Hui do
   """
   @spec delete_by_query(binary | Hui.URL.t, binary | list(binary), boolean) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
   def delete_by_query(url, queries, commit \\ true)
-  def delete_by_query(url, queries, commit) when is_binary(queries) or is_list(queries), do: Request.update(url, %Hui.U{delete_query: queries, commit: commit})
+  def delete_by_query(url, queries, commit) when is_binary(queries) or is_list(queries), do: Request.update(url, %Query.Update{delete_query: queries, commit: commit})
 
   @doc """
   Deletes Solr documents by filter queries, raise an exception in case of failure.
   """
   @spec delete_by_query!(binary | Hui.URL.t, binary | list(binary), boolean) :: HTTPoison.Response.t
   def delete_by_query!(url, queries, commit \\ true)
-  def delete_by_query!(url, queries, commit) when is_binary(queries) or is_list(queries), do: Request.update(url, %Hui.U{delete_query: queries, commit: commit})
+  def delete_by_query!(url, queries, commit) when is_binary(queries) or is_list(queries), do: Request.update(url, %Query.Update{delete_query: queries, commit: commit})
 
   @doc """
   Commit any added or deleted Solr documents to the index.
@@ -488,13 +488,13 @@ defmodule Hui do
   """
   @spec commit(binary | Hui.URL.t, boolean) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
   def commit(url, wait_searcher \\ true)
-  def commit(url, wait_searcher), do: Request.update(url, %Hui.U{commit: true, waitSearcher: wait_searcher})
+  def commit(url, wait_searcher), do: Request.update(url, %Query.Update{commit: true, waitSearcher: wait_searcher})
 
   @doc """
   Commit any added or deleted Solr documents to the index, raise an exception in case of failure.
   """
   @spec commit!(binary | Hui.URL.t, boolean) :: HTTPoison.Response.t
   def commit!(url, wait_searcher \\ true)
-  def commit!(url, wait_searcher), do: Request.update(url, %Hui.U{commit: true, waitSearcher: wait_searcher})
+  def commit!(url, wait_searcher), do: Request.update(url, %Query.Update{commit: true, waitSearcher: wait_searcher})
 
 end

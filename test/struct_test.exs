@@ -370,8 +370,8 @@ defmodule HuiStructTest do
       doc_map = update_doc["add"]["doc"]
       expected_data = update_doc |> Poison.encode!
 
-      x = %Hui.U{doc: doc_map}
-      assert Hui.U.encode(x) == expected_data
+      x = %Query.Update{doc: doc_map}
+      assert Query.Update.encode(x) == expected_data
     end
 
     test "should encode multiple docs" do
@@ -395,8 +395,8 @@ defmodule HuiStructTest do
         "name" => "I Wish"
       }
 
-      x = %Hui.U{doc: [doc_map1, doc_map2]}
-      assert Hui.U.encode(x) == File.read!("./test/data/update_doc3.json")
+      x = %Query.Update{doc: [doc_map1, doc_map2]}
+      assert Query.Update.encode(x) == File.read!("./test/data/update_doc3.json")
     end
 
     test "should encode doc with commitWithin and overwrite parameters" do
@@ -404,14 +404,14 @@ defmodule HuiStructTest do
       update_doc = expected_data |> Poison.decode!
       doc_map = update_doc["add"]["doc"]
 
-      x = %Hui.U{doc: doc_map, commitWithin: 5000}
-      assert Hui.U.encode(x) == expected_data
+      x = %Query.Update{doc: doc_map, commitWithin: 5000}
+      assert Query.Update.encode(x) == expected_data
 
-      x = %Hui.U{doc: doc_map, commitWithin: 10, overwrite: true}
-      assert Hui.U.encode(x) == File.read!("./test/data/update_doc5.json")
+      x = %Query.Update{doc: doc_map, commitWithin: 10, overwrite: true}
+      assert Query.Update.encode(x) == File.read!("./test/data/update_doc5.json")
 
-      x = %Hui.U{doc: doc_map, overwrite: false}
-      assert Hui.U.encode(x) == File.read!("./test/data/update_doc6.json")
+      x = %Query.Update{doc: doc_map, overwrite: false}
+      assert Query.Update.encode(x) == File.read!("./test/data/update_doc6.json")
     end
 
     test "should encode multiple docs with commitWithin and overwrite parameters" do
@@ -435,58 +435,58 @@ defmodule HuiStructTest do
         "name" => "Persona"
       }
 
-      x = %Hui.U{doc: [doc_map1, doc_map2], commitWithin: 50, overwrite: true}
-      assert Hui.U.encode(x) == expected_data
+      x = %Query.Update{doc: [doc_map1, doc_map2], commitWithin: 50, overwrite: true}
+      assert Query.Update.encode(x) == expected_data
     end
 
     test "should encode commit command with waitSearcher and expungeDeletes parameters" do
-       x = %Hui.U{commit: true}
-       assert x |> Hui.U.encode == "{\"commit\":{}}"
+       x = %Query.Update{commit: true}
+       assert x |> Query.Update.encode == "{\"commit\":{}}"
 
-       x = %Hui.U{commit: true, waitSearcher: true}
-       assert x |> Hui.U.encode == "{\"commit\":{\"waitSearcher\":true}}"
+       x = %Query.Update{commit: true, waitSearcher: true}
+       assert x |> Query.Update.encode == "{\"commit\":{\"waitSearcher\":true}}"
 
-       x = %Hui.U{commit: true, waitSearcher: false}
-       assert x |> Hui.U.encode == "{\"commit\":{\"waitSearcher\":false}}"
+       x = %Query.Update{commit: true, waitSearcher: false}
+       assert x |> Query.Update.encode == "{\"commit\":{\"waitSearcher\":false}}"
 
-       x = %Hui.U{commit: true, expungeDeletes: true}
-       assert x |> Hui.U.encode == "{\"commit\":{\"expungeDeletes\":true}}"
+       x = %Query.Update{commit: true, expungeDeletes: true}
+       assert x |> Query.Update.encode == "{\"commit\":{\"expungeDeletes\":true}}"
 
-       x = %Hui.U{commit: true, waitSearcher: true, expungeDeletes: false}
-       assert x |> Hui.U.encode == "{\"commit\":{\"waitSearcher\":true,\"expungeDeletes\":false}}"
+       x = %Query.Update{commit: true, waitSearcher: true, expungeDeletes: false}
+       assert x |> Query.Update.encode == "{\"commit\":{\"waitSearcher\":true,\"expungeDeletes\":false}}"
     end
 
     test "should encode optimize command with waitSearcher and maxSegment parameters" do
-       x = %Hui.U{optimize: true}
-       assert x |> Hui.U.encode == "{\"optimize\":{}}"
+       x = %Query.Update{optimize: true}
+       assert x |> Query.Update.encode == "{\"optimize\":{}}"
 
-       x = %Hui.U{optimize: true, waitSearcher: true}
-       assert x |> Hui.U.encode == "{\"optimize\":{\"waitSearcher\":true}}"
+       x = %Query.Update{optimize: true, waitSearcher: true}
+       assert x |> Query.Update.encode == "{\"optimize\":{\"waitSearcher\":true}}"
 
-       x = %Hui.U{optimize: true, waitSearcher: false}
-       assert x |> Hui.U.encode == "{\"optimize\":{\"waitSearcher\":false}}"
+       x = %Query.Update{optimize: true, waitSearcher: false}
+       assert x |> Query.Update.encode == "{\"optimize\":{\"waitSearcher\":false}}"
 
-       x = %Hui.U{optimize: true, maxSegments: 20}
-       assert x |> Hui.U.encode == "{\"optimize\":{\"maxSegments\":20}}"
+       x = %Query.Update{optimize: true, maxSegments: 20}
+       assert x |> Query.Update.encode == "{\"optimize\":{\"maxSegments\":20}}"
 
-       x = %Hui.U{optimize: true, waitSearcher: true, maxSegments: 20}
-       assert x |> Hui.U.encode == "{\"optimize\":{\"waitSearcher\":true,\"maxSegments\":20}}"
+       x = %Query.Update{optimize: true, waitSearcher: true, maxSegments: 20}
+       assert x |> Query.Update.encode == "{\"optimize\":{\"waitSearcher\":true,\"maxSegments\":20}}"
     end
  
     test "should encode delete by ID command" do
-       x = %Hui.U{delete_id: "tt1316540"}
-       assert x |> Hui.U.encode == "{\"delete\":{\"id\":\"tt1316540\"}}"
+       x = %Query.Update{delete_id: "tt1316540"}
+       assert x |> Query.Update.encode == "{\"delete\":{\"id\":\"tt1316540\"}}"
        
-       x = %Hui.U{delete_id: ["tt1316540", "tt1650453"]}
-       assert x |> Hui.U.encode == "{\"delete\":{\"id\":\"tt1316540\"},\"delete\":{\"id\":\"tt1650453\"}}"
+       x = %Query.Update{delete_id: ["tt1316540", "tt1650453"]}
+       assert x |> Query.Update.encode == "{\"delete\":{\"id\":\"tt1316540\"},\"delete\":{\"id\":\"tt1650453\"}}"
     end
 
     test "should encode delete by query command" do
-       x = %Hui.U{delete_query: "name:Persona"}
-       assert x |> Hui.U.encode == "{\"delete\":{\"query\":\"name:Persona\"}}"
+       x = %Query.Update{delete_query: "name:Persona"}
+       assert x |> Query.Update.encode == "{\"delete\":{\"query\":\"name:Persona\"}}"
 
-       x = %Hui.U{delete_query: ["name:Persona", "genre:Drama"]}
-       assert x |> Hui.U.encode == "{\"delete\":{\"query\":\"name:Persona\"},\"delete\":{\"query\":\"genre:Drama\"}}"
+       x = %Query.Update{delete_query: ["name:Persona", "genre:Drama"]}
+       assert x |> Query.Update.encode == "{\"delete\":{\"query\":\"name:Persona\"},\"delete\":{\"query\":\"genre:Drama\"}}"
     end
 
     test "should encode multiple grouped update commands (docs, commit, optimize etc.)" do
@@ -509,18 +509,18 @@ defmodule HuiStructTest do
        "name" => "Persona"
      }
 
-     x = %Hui.U{doc: [doc_map1, doc_map2], commitWithin: 50, overwrite: true}
-     x = %Hui.U{x | commit: true, waitSearcher: true, expungeDeletes: false, optimize: true, maxSegments: 20}
-     x = %Hui.U{x | delete_id: ["tt1316540", "tt1650453"]}
-     assert x |> Hui.U.encode == File.read!("./test/data/update_doc10.json")
+     x = %Query.Update{doc: [doc_map1, doc_map2], commitWithin: 50, overwrite: true}
+     x = %Query.Update{x | commit: true, waitSearcher: true, expungeDeletes: false, optimize: true, maxSegments: 20}
+     x = %Query.Update{x | delete_id: ["tt1316540", "tt1650453"]}
+     assert x |> Query.Update.encode == File.read!("./test/data/update_doc10.json")
     end
 
     test "should encode rollback command" do
-       x = %Hui.U{rollback: true}
-       assert x |> Hui.U.encode == "{\"rollback\":{}}"
+       x = %Query.Update{rollback: true}
+       assert x |> Query.Update.encode == "{\"rollback\":{}}"
 
-       x = %Hui.U{rollback: true, delete_query: "name:Persona"}
-       assert x |> Hui.U.encode == "{\"delete\":{\"query\":\"name:Persona\"},\"rollback\":{}}"
+       x = %Query.Update{rollback: true, delete_query: "name:Persona"}
+       assert x |> Query.Update.encode == "{\"delete\":{\"query\":\"name:Persona\"},\"rollback\":{}}"
     end
 
   end

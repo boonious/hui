@@ -137,20 +137,22 @@ Hui provides functions to add, update and delete Solr documents, as well as opti
 ```
 
 More advanced update requests can be issued using `Request.update/3` with
-a struct - [`Hui.U`](https://hexdocs.pm/hui/Hui.U.html), as well as through
+a struct - [`Hui.Query.Update`](https://hexdocs.pm/hui/Hui.Query.Update.html), as well as through
 any valid binary data encapsulating Solr documents and commands.
 
 ```elixir
-  # Hui.U struct command for updating and committing the docs to Solr immediately
-  x = %Hui.U{doc: [doc1, doc2], commit: true, waitSearcher: true}
+  alias Hui.Query
+
+  # Hui.Query.Update struct command for updating and committing the docs to Solr immediately
+  x = %Query.Update{doc: [doc1, doc2], commit: true, waitSearcher: true}
   Hui.Request.update(url, x)
 
   # Commits docs within 5 seconds
-  x = %Hui.U{doc: [doc1, doc2], commitWithin: 5000, overwrite: true}
+  x = %Query.Update{doc: [doc1, doc2], commitWithin: 5000, overwrite: true}
   Hui.Request.update(url, x)
 
   # Commit and optimise index
-  Hui.Request.update(url, %Hui.U{commit: true, waitSearcher: true, optimize: true, maxSegments: 10})
+  Hui.Request.update(url, %Query.Update{commit: true, waitSearcher: true, optimize: true, maxSegments: 10})
 
   # Binary mode, e.g. delete a document via XML binary
   headers = [{"Content-type", "application/xml"}]
@@ -185,7 +187,7 @@ creating and encoding Solr parameters:
 - Faceting: `Hui.Query.Facet`, `Hui.Query.FacetRange`, `Hui.Query.FacetInterval`
 - Results Highlighting: `Hui.Query.Highlight`, `Hui.Query.HighlighterFastVector`, `Hui.Query.HighlighterOriginal`, `Hui.Query.HighlighterUnified`
 - Others: `Hui.Query.SpellCheck`, `Hui.Query.Suggest` `Hui.Query.MoreLikeThis`
-- Update (add/delete/commit/optimize data): `Hui.U`
+- Update (add/delete/commit/optimize data): `Hui.Query.Update`
 
 For example, multiple filters and facet fields can be specified using
 `fq: ["field1", "field2"]`, `field: ["field1", "field2"]`, `gap: 10` Elixir codes.
@@ -201,6 +203,7 @@ A custom query struct may be developed by implementing the Encoder protocol.
 
 ```elixir
   alias Hui.Query
+
   x = %Query.DisMax{q: "loch"}
   y = %Query.Common{fq: ["type:image/jpeg", "year:2001"], fl: "id,title", rows: 20}
   [x,y] |> Hui.Encoder.encode
@@ -221,18 +224,20 @@ A custom query struct may be developed by implementing the Encoder protocol.
   # -> "f.age.facet.range.end=100&f.age.facet.range.gap=10&facet.range=age&f.age.facet.range.start=0"
 ```
 
-The [`Hui.U`](https://hexdocs.pm/hui/Hui.U.html) struct module enables
+The [`Hui.Query.Update`](https://hexdocs.pm/hui/Hui.Query.Update.html) struct module enables
 various JSON-formatted update and grouped commands to be created.
 
 ```elixir
-   # doc1, doc2 are Maps of Solr documents
-   x = %Hui.U{doc: [doc1, doc2], commit: true, commitWithin: 1000}
-   x |> Hui.U.encode
-   # -> "{\"add\":{\"commitWithin\":1000,\"doc\":{...}},\"add\":{\"commitWithin\":1000,\"doc\":{...}},\"commit\":{}}"
+  alias Hui.Query
 
-   # Delete the documents by ID
-   %Hui.U{delete_id: ["tt1316540", "tt1650453"]} |> Hui.U.encode
-   # -> "{\"delete\":{\"id\":\"tt1316540\"},\"delete\":{\"id\":\"tt1650453\"}}"
+  # doc1, doc2 are Maps of Solr documents
+  x = %Query.Update{doc: [doc1, doc2], commit: true, commitWithin: 1000}
+  x |> Query.Update.encode
+  # -> "{\"add\":{\"commitWithin\":1000,\"doc\":{...}},\"add\":{\"commitWithin\":1000,\"doc\":{...}},\"commit\":{}}"
+
+  # Delete the documents by ID
+  %Query.Update{delete_id: ["tt1316540", "tt1650453"]} |> Query.Update.encode
+  # -> "{\"delete\":{\"id\":\"tt1316540\"},\"delete\":{\"id\":\"tt1650453\"}}"
 
 ```
 

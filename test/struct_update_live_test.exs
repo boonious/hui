@@ -2,17 +2,19 @@ defmodule HuiStructUpdateLiveTest do
   use ExUnit.Case, async: true
   import TestHelpers
 
-  describe "structured update via Hui.U (live)" do
+  alias Hui.Query
+
+  describe "structured update (live)" do
     @describetag live: false
 
     test "should post a single doc" do
       default_url = Hui.URL.default_url!
       url = %Hui.URL{default_url | handler: "update", headers: [{"Content-type", "application/json"}]}
-      delete_verify_doc_deletion(url, %Hui.U{delete_id: "tt0083658", commit: true}, "tt0083658")
+      delete_verify_doc_deletion(url, %Query.Update{delete_id: "tt0083658", commit: true}, "tt0083658")
 
       update_doc = File.read!("./test/data/update_doc2.json") |> Poison.decode!
       doc_map = update_doc["add"]["doc"]
-      x = %Hui.U{doc: doc_map}
+      x = %Query.Update{doc: doc_map}
 
       Hui.Request.update(url, x)
       Hui.Request.update(url, "{\"commit\":{}}")
@@ -23,13 +25,13 @@ defmodule HuiStructUpdateLiveTest do
     test "should post a single doc with commitWithin and overwrite parameters" do
       default_url = Hui.URL.default_url!
       url = %Hui.URL{default_url | handler: "update", headers: [{"Content-type", "application/json"}]}
-      delete_verify_doc_deletion(url, %Hui.U{delete_id: "tt0078748", commit: true}, "tt0078748")
+      delete_verify_doc_deletion(url, %Query.Update{delete_id: "tt0078748", commit: true}, "tt0078748")
 
       update_doc = File.read!("./test/data/update_doc5.json") |> Poison.decode!
       doc_map = update_doc["add"]["doc"]
       commitWithin = update_doc["add"]["commitWithin"]
       overwrite = update_doc["add"]["overwrite"]
-      x = %Hui.U{doc: doc_map, commitWithin: commitWithin, overwrite: overwrite}
+      x = %Query.Update{doc: doc_map, commitWithin: commitWithin, overwrite: overwrite}
 
       Hui.Request.update(url, x)
       :timer.sleep(300)
@@ -40,7 +42,7 @@ defmodule HuiStructUpdateLiveTest do
     test "should post multiple docs" do
       default_url = Hui.URL.default_url!
       url = %Hui.URL{default_url | handler: "update", headers: [{"Content-type", "application/json"}]}
-      delete_verify_doc_deletion(url, %Hui.U{delete_id: ["tt1316540", "tt1650453"], commit: true}, ["tt1316540", "tt1650453"])
+      delete_verify_doc_deletion(url, %Query.Update{delete_id: ["tt1316540", "tt1650453"], commit: true}, ["tt1316540", "tt1650453"])
 
       doc_map1 = %{
         "actor_ss" => ["János Derzsi", "Erika Bók", "Mihály Kormos", "Ricsi"],
@@ -61,7 +63,7 @@ defmodule HuiStructUpdateLiveTest do
         "initial_release_date" => "2011-06-11",
         "name" => "I Wish"
       }
-      x = %Hui.U{doc: [doc_map1, doc_map2]}
+      x = %Query.Update{doc: [doc_map1, doc_map2]}
 
       Hui.Request.update(url, x)
       Hui.Request.update(url, "{\"commit\":{}}")
@@ -72,7 +74,7 @@ defmodule HuiStructUpdateLiveTest do
     test "should post multiple docs with commitWithin and overwrite parameters" do
       default_url = Hui.URL.default_url!
       url = %Hui.URL{default_url | handler: "update", headers: [{"Content-type", "application/json"}]}
-      delete_verify_doc_deletion(url, %Hui.U{delete_id: ["tt0077711", "tt0060827"], commit: true}, ["tt0077711", "tt0060827"])
+      delete_verify_doc_deletion(url, %Query.Update{delete_id: ["tt0077711", "tt0060827"], commit: true}, ["tt0077711", "tt0060827"])
 
       doc_map1 = %{
         "actor_ss" => ["Ingrid Bergman", "Liv Ullmann", "Lena Nyman", "Halvar Björk"],
@@ -92,7 +94,7 @@ defmodule HuiStructUpdateLiveTest do
         "initial_release_date" => "1967-09-21",
         "name" => "Persona"
       }
-      x = %Hui.U{doc: [doc_map1, doc_map2], commitWithin: 50, overwrite: true}
+      x = %Query.Update{doc: [doc_map1, doc_map2], commitWithin: 50, overwrite: true}
 
       Hui.Request.update(url, x)
       :timer.sleep(300)

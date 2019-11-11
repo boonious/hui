@@ -2,6 +2,8 @@ defmodule HuiUpdateLiveTest do
   use ExUnit.Case, async: true
   import TestHelpers
 
+  alias Hui.Query
+
   describe "update (live)" do
     @describetag live: false
 
@@ -16,7 +18,7 @@ defmodule HuiUpdateLiveTest do
         "initial_release_date" => "1950-10-27",
         "name" => "All About Eve"
       }
-      delete_verify_doc_deletion(url, %Hui.U{delete_id: "tt0042192", commit: true}, "tt0042192")
+      delete_verify_doc_deletion(url, %Query.Update{delete_id: "tt0042192", commit: true}, "tt0042192")
 
       Hui.update(url, doc_map)
       verify_docs_exist(:default, ["tt0042192"])
@@ -42,7 +44,7 @@ defmodule HuiUpdateLiveTest do
         "initial_release_date" => "2010-06-10",
         "name" => "Shutter Island"
       }
-      delete_verify_doc_deletion(url, %Hui.U{delete_id: ["tt2278388", "tt1130884"], commit: true}, ["tt2278388", "tt1130884"])
+      delete_verify_doc_deletion(url, %Query.Update{delete_id: ["tt2278388", "tt1130884"], commit: true}, ["tt2278388", "tt1130884"])
 
       Hui.update(url, [doc_map1, doc_map2])
       verify_docs_exist(:default, ["tt2278388", "tt1130884"])
@@ -132,7 +134,7 @@ defmodule HuiUpdateLiveTest do
         "initial_release_date" => "1950-08-26",
         "name" => "Rashomon"
       }
-      delete_verify_doc_deletion(url, %Hui.U{delete_id: "tt0042876", commit: true}, "tt0042876")
+      delete_verify_doc_deletion(url, %Query.Update{delete_id: "tt0042876", commit: true}, "tt0042876")
 
       Hui.update!(url, doc_map)
       verify_docs_exist(:default, ["tt0042876"])
@@ -158,7 +160,7 @@ defmodule HuiUpdateLiveTest do
         "initial_release_date" => "2010-04-09",
         "name" => "I Am Love"
       }
-      delete_verify_doc_deletion(url, %Hui.U{delete_id: ["tt0046438", "tt1226236"], commit: true}, ["tt0046438", "tt1226236"])
+      delete_verify_doc_deletion(url, %Query.Update{delete_id: ["tt0046438", "tt1226236"], commit: true}, ["tt0046438", "tt1226236"])
 
       Hui.update!(url, [doc_map1, doc_map2])
       verify_docs_exist(:default, ["tt0046438", "tt1226236"])

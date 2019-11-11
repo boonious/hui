@@ -2,6 +2,8 @@ defmodule HuiStructUpdateTest do
   use ExUnit.Case, async: true
   import TestHelpers
 
+  alias Hui.Query
+
   # testing with Bypass
   setup do
     update_doc = File.read!("./test/data/update_doc2.json") 
@@ -39,7 +41,7 @@ defmodule HuiStructUpdateTest do
       doc_map = update_doc["add"]["doc"]
       check_post_data_bypass_setup(context.bypass, expected_data)
 
-      x = %Hui.U{doc: doc_map}
+      x = %Query.Update{doc: doc_map}
       Hui.Request.update(url, x)
     end
 
@@ -48,7 +50,7 @@ defmodule HuiStructUpdateTest do
       expected_data = File.read!("./test/data/update_doc3.json")
       check_post_data_bypass_setup(context.bypass, expected_data)
 
-      x = %Hui.U{doc: context.multi_docs}
+      x = %Query.Update{doc: context.multi_docs}
       Hui.Request.update(url, x)
     end
 
@@ -57,7 +59,7 @@ defmodule HuiStructUpdateTest do
       expected_data = File.read!("./test/data/update_doc3.json")
       check_post_data_bypass_setup(bypass, expected_data)
 
-      x = %Hui.U{doc: context.multi_docs}
+      x = %Query.Update{doc: context.multi_docs}
       Hui.Request.update(:update_struct_test, x)
     end
 
@@ -72,7 +74,7 @@ defmodule HuiStructUpdateTest do
 
       check_post_data_bypass_setup(context.bypass, expected_data)
 
-      x = %Hui.U{doc: doc_map, commitWithin: commitWithin, overwrite: overwrite}
+      x = %Query.Update{doc: doc_map, commitWithin: commitWithin, overwrite: overwrite}
       Hui.Request.update(url, x)
     end
 
@@ -81,7 +83,7 @@ defmodule HuiStructUpdateTest do
       expected_data =  File.read!("./test/data/delete_doc3.json")
       check_post_data_bypass_setup(context.bypass, expected_data)
 
-      x = %Hui.U{delete_id: ["tt1316540","tt1650453"]}
+      x = %Query.Update{delete_id: ["tt1316540","tt1650453"]}
       Hui.Request.update(url, x)
     end
     
@@ -90,7 +92,7 @@ defmodule HuiStructUpdateTest do
       expected_data =  "{\"delete\":{\"query\":\"name:Persona\"},\"delete\":{\"query\":\"genre:Drama\"}}"
       check_post_data_bypass_setup(context.bypass, expected_data)
 
-      x = %Hui.U{delete_query: ["name:Persona", "genre:Drama"]}
+      x = %Query.Update{delete_query: ["name:Persona", "genre:Drama"]}
       Hui.Request.update(url, x)
     end
 
@@ -99,7 +101,7 @@ defmodule HuiStructUpdateTest do
       expected_data =  "{\"delete\":{\"query\":\"name:Persona\"},\"rollback\":{}}"
       check_post_data_bypass_setup(context.bypass, expected_data)
 
-      x = %Hui.U{delete_query: "name:Persona", rollback: true}
+      x = %Query.Update{delete_query: "name:Persona", rollback: true}
       Hui.Request.update(url, x)
     end
 
@@ -127,8 +129,8 @@ defmodule HuiStructUpdateTest do
         "name" => "Persona"
       }
 
-      x = %Hui.U{doc: [doc_map1, doc_map2], commitWithin: 50, overwrite: true}
-      x = %Hui.U{x | commit: true, waitSearcher: true, expungeDeletes: false}
+      x = %Query.Update{doc: [doc_map1, doc_map2], commitWithin: 50, overwrite: true}
+      x = %Query.Update{x | commit: true, waitSearcher: true, expungeDeletes: false}
       Hui.Request.update(url, x)
     end
 
