@@ -120,6 +120,7 @@ defmodule Hui.URL do
   @doc false
   @spec encode_query(url_params) :: binary
   @deprecated "Please use Hui.Encoder instead"
+  # coveralls-ignore-start
   def encode_query(%Hui.H3{} = url_params), do: encode_query(url_params |> Map.to_list |> Enum.sort)
   def encode_query(%Hui.F.Range{} = url_params), do: encode_query(url_params |> Map.to_list, "facet.range", url_params.range, url_params.per_field)
   def encode_query(%Hui.F.Interval{} = url_params), do: encode_query(url_params |> Map.to_list, "facet.interval", url_params.interval, url_params.per_field)
@@ -139,11 +140,13 @@ defmodule Hui.URL do
   def encode_query(_), do: ""
 
   def encode_query([{:__struct__, _struct} | tail], prefix, field, per_field), do: Enum.map(tail, &prefix(&1, prefix, field, per_field)) |> encode_query
+  # coveralls-ignore-stop
 
   @doc "Returns the string representation (URL path) of the given `t:Hui.URL.t/0` struct."
   @spec to_string(t) :: binary
   defdelegate to_string(uri), to: String.Chars.Hui.URL
 
+  # coveralls-ignore-start
   defp encode({k,v}) when is_list(v), do: Enum.reject(v, &invalid_param?/1) |> Enum.map_join("&", &encode({k,&1}))
   defp encode({k,v}) when is_binary(v), do: "#{k}=#{URI.encode_www_form(v)}"
 
@@ -179,6 +182,7 @@ defmodule Hui.URL do
       {_, _} -> if per_field, do: {:"f.#{field}.#{prefix}.#{k}", v}, else: {:"#{prefix}.#{k}", v}
     end
   end
+  # coveralls-ignore-stop
 
 end
 

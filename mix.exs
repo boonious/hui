@@ -50,7 +50,7 @@ defmodule Hui.MixProject do
       {:ex_doc, "~> 0.19", only: :dev, runtime: false},
       {:bypass, "~> 1.0", only: :test},
       {:dialyxir, "~> 1.0.0-rc.3", only: [:dev], runtime: false},
-      {:excoveralls, "~> 0.10", only: :test},
+      {:excoveralls, "~> 0.12", only: :test},
       {:cowboy, "~> 2.6"}
     ]
   end

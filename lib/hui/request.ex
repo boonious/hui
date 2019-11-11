@@ -39,6 +39,7 @@ defmodule Hui.Request do
   @spec search(solr_url, boolean, solr_params) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t} | HTTPoison.Response.t
   @deprecated "Please Hui.Query.get/2."
   def search(url, bang \\ false, query)
+  # coveralls-ignore-start
   def search(%Hui.URL{} = url, bang, query), do: _search(url, bang, query)
 
   def search(url, true, _query) when is_nil_empty(url), do: raise @error_einval
@@ -54,6 +55,7 @@ defmodule Hui.Request do
     end
   end
   def search(_,_,_), do: {:error, @error_einval}
+  # coveralls-ignore-stop
 
   @doc """
   Issues an update request to a specific Solr endpoint, for data uploading and deletion.
@@ -153,6 +155,7 @@ defmodule Hui.Request do
   end
 
   # for keyword lists query 
+  # coveralls-ignore-start
   defp _search(%Hui.URL{} = url_struct, bang, [head|tail]) when is_tuple(head) do
     url = Hui.URL.to_string(url_struct)
     _search( url <> "?" <> Hui.URL.encode_query([head] ++ tail), url_struct.headers, url_struct.options, bang )
@@ -174,6 +177,7 @@ defmodule Hui.Request do
      :error -> {:error, %Hui.Error{reason: resp.reason}}
    end
   end
+  # coveralls-ignore-stop
 
   defp  _update(%Hui.URL{} = url_struct, true, data), do: Hui.URL.to_string(url_struct) |> post!(data, url_struct.headers, url_struct.options)
   defp  _update(%Hui.URL{} = url_struct, _bang, data) do

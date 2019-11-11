@@ -83,6 +83,7 @@ defmodule Hui.U do
   ```
   """
   @spec encode(Hui.U.t) :: binary
+  # coveralls-ignore-start
   def encode(%__MODULE__{} = s) do
    a = "#{_encode(doc: s.doc, within: s.commitWithin, overwrite: s.overwrite)}"
    b = "#{_encode(delete_id: s.delete_id)}"
@@ -129,5 +130,6 @@ defmodule Hui.U do
 
   defp _encode(rollback: true), do: "\"rollback\":{}"
   defp _encode(rollback: _), do: ""
+  # coveralls-ignore-stop
 
 end
