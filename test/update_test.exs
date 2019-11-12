@@ -3,6 +3,7 @@ defmodule HuiUpdateTest do
   import TestHelpers
 
   alias Hui.Query
+  alias Hui.Encoder
 
   # testing with Bypass
   setup do
@@ -36,7 +37,7 @@ defmodule HuiUpdateTest do
         "initial_release_date" => "2011-03-31",
         "name" => "The Turin Horse"
       }
-      expected_data = %Query.Update{doc: doc_map} |> Query.Update.encode
+      expected_data = %Query.Update{doc: doc_map} |> Encoder.encode
       check_post_data_bypass_setup(context.bypass, expected_data)
 
       Hui.update(url, doc_map, false)
@@ -90,7 +91,7 @@ defmodule HuiUpdateTest do
         "initial_release_date" => "2011-06-11",
         "name" => "I Wish"
       }
-      expected_data = %Query.Update{doc: [doc_map1, doc_map2]} |> Query.Update.encode
+      expected_data = %Query.Update{doc: [doc_map1, doc_map2]} |> Encoder.encode
       check_post_data_bypass_setup(context.bypass, expected_data)
 
       Hui.update(url, [doc_map1, doc_map2], false)
@@ -113,21 +114,21 @@ defmodule HuiUpdateTest do
 
     test "should delete docs by ID", context do
       url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
-      expected_data = %Query.Update{delete_id: ["tt1650453", "tt1650453"], commit: true} |> Query.Update.encode
+      expected_data = %Query.Update{delete_id: ["tt1650453", "tt1650453"], commit: true} |> Encoder.encode
       check_post_data_bypass_setup(context.bypass, expected_data)
       Hui.delete(url, ["tt1650453", "tt1650453"])
     end
 
     test "should delete docs by query", context do
       url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
-      expected_data = %Query.Update{delete_query: ["name:Persona", "genre:Drama"], commit: true} |> Query.Update.encode
+      expected_data = %Query.Update{delete_query: ["name:Persona", "genre:Drama"], commit: true} |> Encoder.encode
       check_post_data_bypass_setup(context.bypass, expected_data)
       Hui.delete_by_query(url, ["name:Persona", "genre:Drama"])
     end
 
     test "should commit docs", context do
       url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
-      expected_data = %Query.Update{commit: true, waitSearcher: true} |> Query.Update.encode
+      expected_data = %Query.Update{commit: true, waitSearcher: true} |> Encoder.encode
       check_post_data_bypass_setup(context.bypass, expected_data)
       Hui.commit(url)
     end
@@ -201,21 +202,21 @@ defmodule HuiUpdateTest do
 
     test "should delete docs by ID", context do
       url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
-      expected_data = %Query.Update{delete_id: ["tt1650453", "tt1650453"], commit: true} |> Query.Update.encode
+      expected_data = %Query.Update{delete_id: ["tt1650453", "tt1650453"], commit: true} |> Encoder.encode
       check_post_data_bypass_setup(context.bypass, expected_data)
       Hui.delete!(url, ["tt1650453", "tt1650453"])
     end
 
     test "should delete docs by query", context do
       url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
-      expected_data = %Query.Update{delete_query: ["name:Persona"], commit: true} |> Query.Update.encode
+      expected_data = %Query.Update{delete_query: ["name:Persona"], commit: true} |> Encoder.encode
       check_post_data_bypass_setup(context.bypass, expected_data)
       Hui.delete_by_query!(url, "name:Persona")
     end
 
     test "should commit docs", context do
       url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
-      expected_data = %Query.Update{commit: true, waitSearcher: true} |> Query.Update.encode
+      expected_data = %Query.Update{commit: true, waitSearcher: true} |> Encoder.encode
       check_post_data_bypass_setup(context.bypass, expected_data)
       Hui.commit!(url)
     end

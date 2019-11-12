@@ -1,45 +1,11 @@
 defmodule Hui.Query.Update do
   @moduledoc """
   Struct related to Solr updating.
-  """
-
-  defstruct [
-    :commit,
-    :commitWithin,
-    :delete_id,
-    :delete_query,
-    :doc,
-    :expungeDeletes,
-    :maxSegments,
-    :optimize,
-    :overwrite,
-    :rollback,
-    :waitSearcher
-  ]
-
-  @typedoc """
-  Struct related to Solr [updating](http://lucene.apache.org/solr/guide/uploading-data-with-index-handlers.html).
-  """
-  @type t :: %__MODULE__{
-          commit: boolean,
-          commitWithin: integer,
-          delete_id: binary | list(binary),
-          delete_query: binary | list(binary),
-          doc: map | list(map),
-          expungeDeletes: boolean,
-          maxSegments: integer,
-          optimize: boolean,
-          overwrite: boolean,
-          rollback: boolean,
-          waitSearcher: boolean
-        }
-
-  @doc """
-  Encodes the `Query.Update.t` module struct into Solr binary commands for JSON-formatted update.
 
   ## Example
   ```
       alias Hui.Query
+      alias Hui.Encoder
 
       # Update / index 2 documents, commit them within 1s
       iex> doc1 = %{"name" => "The Turin Horse", "directed_by" => ["Béla Tarr"], "genre" => ["Drama"], "id" => "tt1316540"}
@@ -83,27 +49,62 @@ defmodule Hui.Query.Update do
         rollback: nil,
         waitSearcher: nil
       }
-      iex> x |> Query.Update.encode
+      iex> x |> Encoder.encode
       "{\\\"add\\\":{\\\"commitWithin\\\":1000,\\\"doc\\\":{\\\"name\\\":\\\"The Turin Horse\\\",\\\"id\\\":\\\"tt1316540\\\",\\\"genre\\\":[\\\"Drama\\\"],\\\"directed_by\\\":[\\\"Béla Tarr\\\"]}},\\\"add\\\":{\\\"commitWithin\\\":1000,\\\"doc\\\":{\\\"name\\\":\\\"I Wish\\\",\\\"id\\\":\\\"tt1650453\\\",\\\"genre\\\":[\\\"Drama\\\"],\\\"directed_by\\\":[\\\"Hirokazu Koreeda\\\"]}},\\\"commit\\\":{}}"
 
       # Delete the documents by ID
-      iex> %Query.Update{delete_id: ["tt1316540", "tt1650453"]} |> Query.Update.encode
+      iex> %Query.Update{delete_id: ["tt1316540", "tt1650453"]} |> Encoder.encode
       "{\\\"delete\\\":{\\\"id\\\":\\\"tt1316540\\\"},\\\"delete\\\":{\\\"id\\\":\\\"tt1650453\\\"}}"
 
       # Delete the documents by filter query
-      iex> %Query.Update{delete_query: "id:tt*"} |> Query.Update.encode
+      iex> %Query.Update{delete_query: "id:tt*"} |> Encoder.encode
       "{\\\"delete\\\":{\\\"query\\\":\\\"id:tt*\\\"}}"
 
       # Commits the docs, make them visible and remove previously deleted docs from the index
-      iex> %Query.Update{commit: true, waitSearcher: true, expungeDeletes: true} |> Query.Update.encode
+      iex> %Query.Update{commit: true, waitSearcher: true, expungeDeletes: true} |> Encoder.encode
       "{\\\"commit\\\":{\\\"waitSearcher\\\":true,\\\"expungeDeletes\\\":true}}"
 
       # Optimise the index, and keep the number of index segments 10 max
-      iex> %Query.Update{optimize: true, maxSegments: 10} |> Query.Update.encode
+      iex> %Query.Update{optimize: true, maxSegments: 10} |> Encoder.encode
       "{\\\"optimize\\\":{\\\"maxSegments\\\":10}}"
   ```
   """
+
+  defstruct [
+    :commit,
+    :commitWithin,
+    :delete_id,
+    :delete_query,
+    :doc,
+    :expungeDeletes,
+    :maxSegments,
+    :optimize,
+    :overwrite,
+    :rollback,
+    :waitSearcher
+  ]
+
+  @typedoc """
+  Struct related to Solr [updating](http://lucene.apache.org/solr/guide/uploading-data-with-index-handlers.html).
+  """
+  @type t :: %__MODULE__{
+          commit: boolean,
+          commitWithin: integer,
+          delete_id: binary | list(binary),
+          delete_query: binary | list(binary),
+          doc: map | list(map),
+          expungeDeletes: boolean,
+          maxSegments: integer,
+          optimize: boolean,
+          overwrite: boolean,
+          rollback: boolean,
+          waitSearcher: boolean
+        }
+
+  @doc false
   @spec encode(Query.Update.t()) :: binary
+  @deprecated "testing"
+  # coveralls-ignore-start
   def encode(%__MODULE__{} = s) do
     a = "#{_encode(doc: s.doc, within: s.commitWithin, overwrite: s.overwrite)}"
     b = "#{_encode(delete_id: s.delete_id)}"
@@ -172,4 +173,5 @@ defmodule Hui.Query.Update do
 
   defp _encode(rollback: true), do: "\"rollback\":{}"
   defp _encode(rollback: _), do: ""
+  # coveralls-ignore-stop
 end

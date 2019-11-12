@@ -17,6 +17,7 @@ defmodule Hui.Request do
   import Hui.Guards
 
   alias Hui.Query
+  alias Hui.Encoder
 
   @type highlighter_struct :: Hui.H.t | Hui.H1.t | Hui.H2.t | Hui.H3.t
   @type misc_struct :: Hui.S.t | Hui.Sp.t | Hui.M.t
@@ -38,8 +39,8 @@ defmodule Hui.Request do
   @doc false
   @spec search(solr_url, boolean, solr_params) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t} | HTTPoison.Response.t
   @deprecated "Please Hui.Query.get/2."
-  def search(url, bang \\ false, query)
   # coveralls-ignore-start
+  def search(url, bang \\ false, query)
   def search(%Hui.URL{} = url, bang, query), do: _search(url, bang, query)
 
   def search(url, true, _query) when is_nil_empty(url), do: raise @error_einval
@@ -127,12 +128,12 @@ defmodule Hui.Request do
   @spec update(solr_url, boolean, binary | Hui.U.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t} | HTTPoison.Response.t
   def update(url, bang \\ false, data)
   def update(%Hui.URL{} = url, bang, data) when is_binary(data), do: _update(url, bang, data)
-  def update(%Hui.URL{} = url, bang, %Query.Update{} = data), do: _update(url, bang, data |> Query.Update.encode)
+  def update(%Hui.URL{} = url, bang, %Query.Update{} = data), do: _update(url, bang, data |> Encoder.encode)
 
   def update(url, true, _data) when is_nil_empty(url), do: raise @error_einval
   def update(url, _bang, _data) when is_nil_empty(url), do: {:error, @error_einval}
 
-  def update(url, bang, %Query.Update{} = data) when is_atom(url), do: update(url, bang, data |> Query.Update.encode)
+  def update(url, bang, %Query.Update{} = data) when is_atom(url), do: update(url, bang, data |> Encoder.encode)
   def update(url, bang, data) when is_atom(url) and is_binary(data) do
     {status, url_struct} = Hui.URL.configured_url(url)
     case {status, bang} do

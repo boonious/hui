@@ -229,14 +229,15 @@ various JSON-formatted update and grouped commands to be created.
 
 ```elixir
   alias Hui.Query
+  alias Hui.Encoder
 
   # doc1, doc2 are Maps of Solr documents
   x = %Query.Update{doc: [doc1, doc2], commit: true, commitWithin: 1000}
-  x |> Query.Update.encode
+  x |> Encoder.encode
   # -> "{\"add\":{\"commitWithin\":1000,\"doc\":{...}},\"add\":{\"commitWithin\":1000,\"doc\":{...}},\"commit\":{}}"
 
   # Delete the documents by ID
-  %Query.Update{delete_id: ["tt1316540", "tt1650453"]} |> Query.Update.encode
+  %Query.Update{delete_id: ["tt1316540", "tt1650453"]} |> Encoder.encode
   # -> "{\"delete\":{\"id\":\"tt1316540\"},\"delete\":{\"id\":\"tt1650453\"}}"
 
 ```
