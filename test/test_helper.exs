@@ -65,15 +65,24 @@ defmodule TestHelpers do
   end
 
   # for update tests
-  def check_post_data_bypass_setup(bypass, expected_data, content_type \\ "application/json", resp \\ "") do
+  def setup_bypass_for_post_req(bypass, expected_data, content_type \\ "application/json", resp \\ "") do
     Bypass.expect bypass, fn conn ->
       assert String.match?(conn.request_path, ~r/\/update/)
       assert "POST" == conn.method
       assert conn.req_headers |> Enum.member?({"content-type", content_type})
+
       {:ok, body, conn} = Plug.Conn.read_body(conn)
       assert body == expected_data
+
       Plug.Conn.resp(conn, 200, resp)
     end
+  end
+
+  def test_post_req(url, query) do
+    # invoke post requests
+    # assertions - see Bypass setup in 'setup_bypass_for_post_req'
+    Hui.Query.post(url, query)
+    Hui.Query.post!(url, query)
   end
 
   # for live update tests

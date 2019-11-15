@@ -202,6 +202,86 @@ defmodule HuiQueryTest do
     end
   end
 
+  describe "Query.post supports" do
+    test "Update struct", context do
+      url = %Hui.URL{
+        url: "http://localhost:#{context.bypass.port}",
+        handler: "update",
+        headers: [{"Content-type", "application/json"}]
+      }
+
+      update_doc = File.read!("./test/data/update_doc2.json") |> Poison.decode!()
+      expected_data = update_doc |> Poison.encode!()
+      doc_map = update_doc["add"]["doc"]
+
+      setup_bypass_for_post_req(context.bypass, expected_data)
+
+      x = %Query.Update{doc: doc_map}
+      test_post_req(url, x)
+    end
+
+    test "Update struct - multiple docs", context do
+      url = %Hui.URL{
+        url: "http://localhost:#{context.bypass.port}",
+        handler: "update",
+        headers: [{"Content-type", "application/json"}]
+      }
+
+      expected_data = File.read!("./test/data/update_doc3.json")
+      setup_bypass_for_post_req(context.bypass, expected_data)
+
+      doc_map1 = %{
+        "actor_ss" => ["János Derzsi", "Erika Bók", "Mihály Kormos", "Ricsi"],
+        "desc" => "A rural farmer is forced to confront the mortality of his faithful horse.",
+        "directed_by" => ["Béla Tarr", "Ágnes Hranitzky"],
+        "genre" => ["Drama"],
+        "id" => "tt1316540",
+        "initial_release_date" => "2011-03-31",
+        "name" => "The Turin Horse"
+      }
+
+      doc_map2 = %{
+        "actor_ss" => ["Masami Nagasawa", "Hiroshi Abe", "Kanna Hashimoto", "Yoshio Harada"],
+        "desc" =>
+          "Twelve-year-old Koichi, who has been separated from his brother Ryunosuke due to his parents' divorce, hears a rumor that the new bullet trains will precipitate a wish-granting miracle when they pass each other at top speed.",
+        "directed_by" => ["Hirokazu Koreeda"],
+        "genre" => ["Drame"],
+        "id" => "tt1650453",
+        "initial_release_date" => "2011-06-11",
+        "name" => "I Wish"
+      }
+
+      x = %Query.Update{doc: [doc_map1, doc_map2]}
+      test_post_req(url, x)
+    end
+
+    test "Update struct - JSON binary data", context do
+      url = %Hui.URL{
+        url: "http://localhost:#{context.bypass.port}",
+        handler: "update",
+        headers: [{"Content-type", "application/json"}]
+      }
+
+      update_doc = File.read!("./test/data/update_doc1.json")
+      setup_bypass_for_post_req(context.bypass, update_doc)
+
+      test_post_req(url, update_doc)
+    end
+
+    test "Update struct - XML binary data", context do
+      url = %Hui.URL{
+        url: "http://localhost:#{context.bypass.port}",
+        handler: "update",
+        headers: [{"Content-type", "application/xml"}]
+      }
+
+      update_doc = "<delete><id>9780141981727</id></delete>"
+      setup_bypass_for_post_req(context.bypass, update_doc, "application/xml")
+
+      test_post_req(url, update_doc)
+    end
+  end
+
   describe "response processing" do
     test "parse json response", context do
       Bypass.expect(context.bypass, fn conn ->

@@ -34,30 +34,10 @@ defmodule HuiStructUpdateTest do
 
   describe "structured update via Hui.U" do
 
-    test "should post a single doc to a URL (struct)", context do
-      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
-      update_doc =  context.update_doc |> Poison.decode!
-      expected_data = update_doc |> Poison.encode!
-      doc_map = update_doc["add"]["doc"]
-      check_post_data_bypass_setup(context.bypass, expected_data)
-
-      x = %Query.Update{doc: doc_map}
-      Hui.Request.update(url, x)
-    end
-
-    test "should post multiple docs to a URL (struct)", context do
-      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
-      expected_data = File.read!("./test/data/update_doc3.json")
-      check_post_data_bypass_setup(context.bypass, expected_data)
-
-      x = %Query.Update{doc: context.multi_docs}
-      Hui.Request.update(url, x)
-    end
-
     test "should post multiple docs to a URL key", context do
       bypass = Bypass.open(port: 9000)
       expected_data = File.read!("./test/data/update_doc3.json")
-      check_post_data_bypass_setup(bypass, expected_data)
+      setup_bypass_for_post_req(bypass, expected_data)
 
       x = %Query.Update{doc: context.multi_docs}
       Hui.Request.update(:update_struct_test, x)
@@ -72,7 +52,7 @@ defmodule HuiStructUpdateTest do
       commitWithin = update_doc["add"]["commitWithin"]
       overwrite = update_doc["add"]["overwrite"]
 
-      check_post_data_bypass_setup(context.bypass, expected_data)
+      setup_bypass_for_post_req(context.bypass, expected_data)
 
       x = %Query.Update{doc: doc_map, commitWithin: commitWithin, overwrite: overwrite}
       Hui.Request.update(url, x)
@@ -81,7 +61,7 @@ defmodule HuiStructUpdateTest do
     test "should post delete by ID command", context do
       url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
       expected_data =  File.read!("./test/data/delete_doc3.json")
-      check_post_data_bypass_setup(context.bypass, expected_data)
+      setup_bypass_for_post_req(context.bypass, expected_data)
 
       x = %Query.Update{delete_id: ["tt1316540","tt1650453"]}
       Hui.Request.update(url, x)
@@ -90,7 +70,7 @@ defmodule HuiStructUpdateTest do
     test "should post delete by query command", context do
       url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
       expected_data =  "{\"delete\":{\"query\":\"name:Persona\"},\"delete\":{\"query\":\"genre:Drama\"}}"
-      check_post_data_bypass_setup(context.bypass, expected_data)
+      setup_bypass_for_post_req(context.bypass, expected_data)
 
       x = %Query.Update{delete_query: ["name:Persona", "genre:Drama"]}
       Hui.Request.update(url, x)
@@ -99,7 +79,7 @@ defmodule HuiStructUpdateTest do
     test "should post rollback command", context do
       url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
       expected_data =  "{\"delete\":{\"query\":\"name:Persona\"},\"rollback\":{}}"
-      check_post_data_bypass_setup(context.bypass, expected_data)
+      setup_bypass_for_post_req(context.bypass, expected_data)
 
       x = %Query.Update{delete_query: "name:Persona", rollback: true}
       Hui.Request.update(url, x)
@@ -108,7 +88,7 @@ defmodule HuiStructUpdateTest do
     test "should post multiple grouped update commands", context do
       url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
       expected_data =  File.read!("./test/data/update_doc9.json")
-      check_post_data_bypass_setup(context.bypass, expected_data)
+      setup_bypass_for_post_req(context.bypass, expected_data)
 
       doc_map1 = %{
         "actor_ss" => ["Ingrid Bergman", "Liv Ullmann", "Lena Nyman", "Halvar Björk"],
