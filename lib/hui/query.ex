@@ -7,6 +7,8 @@ defmodule Hui.Query do
   """
 
   use HTTPoison.Base
+  import Hui.Guards
+
   alias Hui.URL
   alias Hui.Encoder
   alias Hui.Query

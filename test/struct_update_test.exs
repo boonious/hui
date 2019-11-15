@@ -6,102 +6,99 @@ defmodule HuiStructUpdateTest do
 
   # testing with Bypass
   setup do
-    update_doc = File.read!("./test/data/update_doc2.json") 
-    bypass = Bypass.open
+    bypass = Bypass.open()
     error_einval = %Hui.Error{reason: :einval}
     error_nxdomain = %Hui.Error{reason: :nxdomain}
-    doc_map1 = %{
-      "actor_ss" => ["János Derzsi", "Erika Bók", "Mihály Kormos", "Ricsi"],
-      "desc" => "A rural farmer is forced to confront the mortality of his faithful horse.",
-      "directed_by" => ["Béla Tarr", "Ágnes Hranitzky"],
-      "genre" => ["Drama"],
-      "id" => "tt1316540",
-      "initial_release_date" => "2011-03-31",
-      "name" => "The Turin Horse"
-    }
-    doc_map2 = %{
-      "actor_ss" => ["Masami Nagasawa", "Hiroshi Abe", "Kanna Hashimoto",
-       "Yoshio Harada"],
-      "desc" => "Twelve-year-old Koichi, who has been separated from his brother Ryunosuke due to his parents' divorce, hears a rumor that the new bullet trains will precipitate a wish-granting miracle when they pass each other at top speed.",
-      "directed_by" => ["Hirokazu Koreeda"],
-      "genre" => ["Drame"],
-      "id" => "tt1650453",
-      "initial_release_date" => "2011-06-11",
-      "name" => "I Wish"
-    }
-    {:ok, bypass: bypass, multi_docs: [doc_map1, doc_map2], update_doc: update_doc, error_einval: error_einval, error_nxdomain: error_nxdomain}
+
+    {:ok, bypass: bypass}
   end
 
-  describe "structured update via Hui.U" do
+  describe "update via Query.Update" do
+    test "docs with commitWithin, overwrite", context do
+      url = %Hui.URL{
+        url: "http://localhost:#{context.bypass.port}",
+        handler: "update",
+        headers: [{"Content-type", "application/json"}]
+      }
 
-    test "should post multiple docs to a URL key", context do
-      bypass = Bypass.open(port: 9000)
-      expected_data = File.read!("./test/data/update_doc3.json")
-      setup_bypass_for_post_req(bypass, expected_data)
-
-      x = %Query.Update{doc: context.multi_docs}
-      Hui.Request.update(:update_struct_test, x)
-    end
-
-    test "should post doc with commitWithin and overwrite parameters", context do
-      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
-      expected_data =  File.read!("./test/data/update_doc5.json")
-
-      update_doc = expected_data |> Poison.decode!
+      expected_data = File.read!("./test/data/update_doc5.json")
+      update_doc = expected_data |> Poison.decode!()
       doc_map = update_doc["add"]["doc"]
       commitWithin = update_doc["add"]["commitWithin"]
       overwrite = update_doc["add"]["overwrite"]
 
-      setup_bypass_for_post_req(context.bypass, expected_data)
-
       x = %Query.Update{doc: doc_map, commitWithin: commitWithin, overwrite: overwrite}
-      Hui.Request.update(url, x)
+      setup_bypass_for_post_req(context.bypass, expected_data)
+      test_update_req(url, x)
     end
 
-    test "should post delete by ID command", context do
-      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
-      expected_data =  File.read!("./test/data/delete_doc3.json")
+    test "delete by ID", context do
+      url = %Hui.URL{
+        url: "http://localhost:#{context.bypass.port}",
+        handler: "update",
+        headers: [{"Content-type", "application/json"}]
+      }
+
+      expected_data = File.read!("./test/data/delete_doc3.json")
       setup_bypass_for_post_req(context.bypass, expected_data)
 
-      x = %Query.Update{delete_id: ["tt1316540","tt1650453"]}
-      Hui.Request.update(url, x)
+      x = %Query.Update{delete_id: ["tt1316540", "tt1650453"]}
+      test_update_req(url, x)
     end
-    
-    test "should post delete by query command", context do
-      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
-      expected_data =  "{\"delete\":{\"query\":\"name:Persona\"},\"delete\":{\"query\":\"genre:Drama\"}}"
-      setup_bypass_for_post_req(context.bypass, expected_data)
+
+    test "delete by query", context do
+      url = %Hui.URL{
+        url: "http://localhost:#{context.bypass.port}",
+        handler: "update",
+        headers: [{"Content-type", "application/json"}]
+      }
+
+      expected_data =
+        "{\"delete\":{\"query\":\"name:Persona\"},\"delete\":{\"query\":\"genre:Drama\"}}"
 
       x = %Query.Update{delete_query: ["name:Persona", "genre:Drama"]}
-      Hui.Request.update(url, x)
+      setup_bypass_for_post_req(context.bypass, expected_data)
+      test_update_req(url, x)
     end
 
-    test "should post rollback command", context do
-      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
-      expected_data =  "{\"delete\":{\"query\":\"name:Persona\"},\"rollback\":{}}"
-      setup_bypass_for_post_req(context.bypass, expected_data)
+    test "rollback", context do
+      url = %Hui.URL{
+        url: "http://localhost:#{context.bypass.port}",
+        handler: "update",
+        headers: [{"Content-type", "application/json"}]
+      }
+
+      expected_data = "{\"delete\":{\"query\":\"name:Persona\"},\"rollback\":{}}"
 
       x = %Query.Update{delete_query: "name:Persona", rollback: true}
-      Hui.Request.update(url, x)
+      setup_bypass_for_post_req(context.bypass, expected_data)
+      test_update_req(url, x)
     end
 
-    test "should post multiple grouped update commands", context do
-      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
-      expected_data =  File.read!("./test/data/update_doc9.json")
-      setup_bypass_for_post_req(context.bypass, expected_data)
+    test "multiple grouped update commands", context do
+      url = %Hui.URL{
+        url: "http://localhost:#{context.bypass.port}",
+        handler: "update",
+        headers: [{"Content-type", "application/json"}]
+      }
+
+      expected_data = File.read!("./test/data/update_doc9.json")
 
       doc_map1 = %{
         "actor_ss" => ["Ingrid Bergman", "Liv Ullmann", "Lena Nyman", "Halvar Björk"],
-        "desc" => "A married daughter who longs for her mother's love is visited by the latter, a successful concert pianist.",
+        "desc" =>
+          "A married daughter who longs for her mother's love is visited by the latter, a successful concert pianist.",
         "directed_by" => ["Ingmar Bergman"],
         "genre" => ["Drama", "Music"],
         "id" => "tt0077711",
         "initial_release_date" => "1978-10-08",
         "name" => "Autumn Sonata"
       }
+
       doc_map2 = %{
         "actor_ss" => ["Bibi Andersson", "Liv Ullmann", "Margaretha Krook"],
-        "desc" => "A nurse is put in charge of a mute actress and finds that their personas are melding together.",
+        "desc" =>
+          "A nurse is put in charge of a mute actress and finds that their personas are melding together.",
         "directed_by" => ["Ingmar Bergman"],
         "genre" => ["Drama", "Thriller"],
         "id" => "tt0060827",
@@ -111,9 +108,9 @@ defmodule HuiStructUpdateTest do
 
       x = %Query.Update{doc: [doc_map1, doc_map2], commitWithin: 50, overwrite: true}
       x = %Query.Update{x | commit: true, waitSearcher: true, expungeDeletes: false}
-      Hui.Request.update(url, x)
+
+      setup_bypass_for_post_req(context.bypass, expected_data)
+      test_update_req(url, x)
     end
-
   end
-
 end

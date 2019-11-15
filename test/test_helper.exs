@@ -85,6 +85,13 @@ defmodule TestHelpers do
     Hui.Query.post!(url, query)
   end
 
+  def test_update_req(url, query, commit \\ true) do
+    # invoke update requests
+    # assertions - see Bypass setup in 'setup_bypass_for_post_req'
+    Hui.update(url, query, commit)
+    Hui.update!(url, query, commit)
+  end
+
   # for live update tests
   def delete_verify_doc_deletion(%Hui.URL{} = url, delete_msg, id) when is_binary(delete_msg) do
     Hui.Request.update(url, delete_msg)

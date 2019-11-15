@@ -4,7 +4,7 @@ defmodule Hui do
   [Solr enterprise search platform](http://lucene.apache.org/solr/).
 
   ### Usage
-  
+
   - Searching Solr: `q/1`, `q/6`, `search/2`, `search/7`
   - Updating: `update/3`, `delete/3`, `delete_by_query/3`, `commit/2`
   - Other: `suggest/2`, `suggest/5`
@@ -12,14 +12,16 @@ defmodule Hui do
   """
 
   import Hui.Guards
-  alias Hui.Request # deprecated
+  # deprecated
+  alias Hui.Request
 
   alias Hui.Query
 
-  @type url :: binary | atom | Hui.URL.t
-  @type query :: Hui.Query.solr_query()
+  @type url :: binary | atom | Hui.URL.t()
+  @type query :: Query.solr_query()
 
-  @error_nxdomain %Hui.Error{reason: :nxdomain} # invalid / non existing host or domain
+  # invalid / non existing host or domain
+  @error_nxdomain %Hui.Error{reason: :nxdomain}
 
   @doc """
   Issue a keyword list or structured query to the default Solr endpoint.
@@ -45,7 +47,7 @@ defmodule Hui do
     Hui.q([x, y, z])
   ```
   """
-  @spec q(query) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
+  @spec q(query) :: {:ok, HTTPoison.Response.t()} | {:error, Hui.Error.t()}
   # deprecated - to be removed in a future version
   # coveralls-ignore-start
   def q(%Hui.Q{} = query), do: Request.search(:default, [query])
@@ -58,7 +60,7 @@ defmodule Hui do
 
   See `q/1`.
   """
-  @spec q!(Hui.Q.t | Request.query_struct_list | Keyword.t) :: HTTPoison.Response.t
+  @spec q!(Hui.Q.t() | Request.query_struct_list() | Keyword.t()) :: HTTPoison.Response.t()
   # deprecated - to be removed in a future version
   # coveralls-ignore-start
   def q!(%Hui.Q{} = query), do: Request.search(:default, true, [query])
@@ -80,10 +82,18 @@ defmodule Hui do
     # .. plus filter(s) and facet fields
   ```
   """
-  @spec q(binary, nil|integer, nil|integer, nil|binary|list(binary), nil|binary|list(binary), nil|binary)
-        :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
+  @spec q(
+          binary,
+          nil | integer,
+          nil | integer,
+          nil | binary | list(binary),
+          nil | binary | list(binary),
+          nil | binary
+        ) :: {:ok, HTTPoison.Response.t()} | {:error, Hui.Error.t()}
   def q(keywords, rows \\ nil, start \\ nil, filters \\ nil, facet_fields \\ nil, sort \\ nil)
-  def q(keywords, _, _, _, _, _) when is_nil_empty(keywords), do: {:error, %Hui.Error{reason: :einval}}
+
+  def q(keywords, _, _, _, _, _) when is_nil_empty(keywords),
+    do: {:error, %Hui.Error{reason: :einval}}
 
   def q(keywords, rows, start, filters, facet_fields, sort) do
     search(:default, keywords, rows, start, filters, facet_fields, sort)
@@ -93,19 +103,28 @@ defmodule Hui do
   Convenience function for issuing various typical queries to the default Solr endpoint,
   raise an exception in case of failure.
   """
-  @spec q!(binary, nil|integer, nil|integer, nil|binary|list(binary), nil|binary|list(binary), nil|binary)
-        :: HTTPoison.Response.t
+  @spec q!(
+          binary,
+          nil | integer,
+          nil | integer,
+          nil | binary | list(binary),
+          nil | binary | list(binary),
+          nil | binary
+        ) :: HTTPoison.Response.t()
   def q!(keywords, rows \\ nil, start \\ nil, filters \\ nil, facet_fields \\ nil, sort \\ nil)
-  def q!(keywords, _, _, _, _, _) when is_nil_empty(keywords), do: raise %Hui.Error{reason: :einval}
+
+  def q!(keywords, _, _, _, _, _) when is_nil_empty(keywords),
+    do: raise(%Hui.Error{reason: :einval})
+
   def q!(keywords, rows, start, filters, facet_fields, sort) do
     search!(:default, keywords, rows, start, filters, facet_fields, sort)
   end
 
   @doc """
   Issue a keyword list or structured query to a specified Solr endpoint.
-  
+
   ### Example - parameters 
-  
+
   ```
     url = "http://localhost:8983/solr/collection"
 
@@ -169,7 +188,7 @@ defmodule Hui do
   }
   ```
   """
-  @spec search(url, query) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
+  @spec search(url, query) :: {:ok, HTTPoison.Response.t()} | {:error, Hui.Error.t()}
   # deprecated - will be removed in a future version
   # coveralls-ignore-start
   def search(url, %Hui.Q{} = query), do: Request.search(url, [query])
@@ -179,31 +198,19 @@ defmodule Hui do
 
   defp _search(url, query) do
     {status, url_struct} = parse_url(url)
-    if status == :ok, do: _parse_resp(Query.get(url_struct, query)), else: {:error, @error_nxdomain}
-  end
 
-  defp parse_url(%Hui.URL{} = url), do: {:ok, url}
-  defp parse_url(url) when is_atom(url), do: Hui.URL.configured_url(url)
-  defp parse_url(url) when is_binary(url) do
-    uri = URI.parse(url)
-
-    if uri.scheme != nil && uri.host =~ ~r/./ do
-      {:ok, %Hui.URL{url: url}}
-    else
-      {:error, @error_nxdomain}
-    end
+    if status == :ok,
+      do: _parse_resp(Query.get(url_struct, query)),
+      else: {:error, @error_nxdomain}
   end
-  defp parse_url(_), do: {:error, @error_nxdomain}
-  
-  defp _parse_resp({:error, %HTTPoison.Error{id: _, reason: reason}}), do: {:error, %Hui.Error{reason: reason}}
-  defp _parse_resp(resp), do: resp
 
   @doc """
   Issue a keyword list or structured query to a specified Solr endpoint, raise an exception in case of failure.
 
   See `search/2`.
   """
-  @spec search!(url, Hui.Q.t | Request.query_struct_list | Keyword.t) :: HTTPoison.Response.t
+  @spec search!(url, Hui.Q.t() | Request.query_struct_list() | Keyword.t()) ::
+          HTTPoison.Response.t()
   # deprecated - will be removed in a future version
   # coveralls-ignore-start
   def search!(url, %Hui.Q{} = query), do: Request.search(url, true, [query])
@@ -213,7 +220,7 @@ defmodule Hui do
 
   defp _search!(url, query) do
     {status, url_struct} = parse_url(url)
-    if status == :ok, do: Query.get!(url_struct, query), else: raise @error_nxdomain
+    if status == :ok, do: Query.get!(url_struct, query), else: raise(@error_nxdomain)
   end
 
   @doc """
@@ -221,16 +228,34 @@ defmodule Hui do
 
   See `q/6`.
   """
-  @spec search(url, binary, nil|integer, nil|integer, nil|binary|list(binary), nil|binary|list(binary), nil|binary)
-        :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
-  def search(url, keywords, rows \\ nil, start \\ nil, filters \\ nil, facet_fields \\ nil, sort \\ nil)
-  def search(url, keywords, _, _, _, _, _) when is_nil_empty(keywords) or is_nil_empty(url), do: {:error, %Hui.Error{reason: :einval}}
+  @spec search(
+          url,
+          binary,
+          nil | integer,
+          nil | integer,
+          nil | binary | list(binary),
+          nil | binary | list(binary),
+          nil | binary
+        ) :: {:ok, HTTPoison.Response.t()} | {:error, Hui.Error.t()}
+  def search(
+        url,
+        keywords,
+        rows \\ nil,
+        start \\ nil,
+        filters \\ nil,
+        facet_fields \\ nil,
+        sort \\ nil
+      )
+
+  def search(url, keywords, _, _, _, _, _) when is_nil_empty(keywords) or is_nil_empty(url),
+    do: {:error, %Hui.Error{reason: :einval}}
+
   def search(url, keywords, rows, start, filters, facet_fields, sort) do
-    x = %Query.Standard{q: keywords} 
-    y = %Query.Common{rows: rows, start: start, fq: filters, sort: sort} 
+    x = %Query.Standard{q: keywords}
+    y = %Query.Common{rows: rows, start: start, fq: filters, sort: sort}
     z = %Query.Facet{field: facet_fields}
 
-    _search(url, [x,y,z])
+    _search(url, [x, y, z])
   end
 
   @doc """
@@ -239,38 +264,61 @@ defmodule Hui do
 
   See `q/6`.
   """
-  @spec search!(url, binary, nil|integer, nil|integer, nil|binary|list(binary), nil|binary|list(binary), nil|binary)
-        :: HTTPoison.Response.t
-  def search!(url, keywords, rows \\ nil, start \\ nil, filters \\ nil, facet_fields \\ nil, sort \\ nil)
-  def search!(url, keywords, _, _, _, _, _) when is_nil_empty(keywords) or is_nil_empty(url), do: raise %Hui.Error{reason: :einval}
+  @spec search!(
+          url,
+          binary,
+          nil | integer,
+          nil | integer,
+          nil | binary | list(binary),
+          nil | binary | list(binary),
+          nil | binary
+        ) :: HTTPoison.Response.t()
+  def search!(
+        url,
+        keywords,
+        rows \\ nil,
+        start \\ nil,
+        filters \\ nil,
+        facet_fields \\ nil,
+        sort \\ nil
+      )
+
+  def search!(url, keywords, _, _, _, _, _) when is_nil_empty(keywords) or is_nil_empty(url),
+    do: raise(%Hui.Error{reason: :einval})
+
   def search!(url, keywords, rows, start, filters, facet_fields, sort) do
-    x = %Query.Standard{q: keywords} 
-    y = %Query.Common{rows: rows, start: start, fq: filters, sort: sort} 
+    x = %Query.Standard{q: keywords}
+    y = %Query.Common{rows: rows, start: start, fq: filters, sort: sort}
     z = %Query.Facet{field: facet_fields}
 
-    _search!(url, [x,y,z])
+    _search!(url, [x, y, z])
   end
 
   # coveralls-ignore-start
   @doc false
-  @spec spellcheck(url, Query.SpellCheck.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
+  @spec spellcheck(url, Query.SpellCheck.t()) ::
+          {:ok, HTTPoison.Response.t()} | {:error, Hui.Error.t()}
   @deprecated "Please use search/2 with Hui.Query.SpellCheck query struct."
   def spellcheck(url, %Hui.Sp{} = query), do: Request.search(url, [query])
 
   @doc false
-  @spec spellcheck!(url, Hui.Sp.t) :: HTTPoison.Response.t
+  @spec spellcheck!(url, Hui.Sp.t()) :: HTTPoison.Response.t()
   @deprecated "Please use search!/2 with Hui.Query.SpellCheck struct."
   def spellcheck!(url, %Hui.Sp{} = query), do: Request.search(url, true, [query])
 
   @doc false
-  @spec spellcheck(url, Hui.Sp.t, Hui.Q.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
+  @spec spellcheck(url, Hui.Sp.t(), Hui.Q.t()) ::
+          {:ok, HTTPoison.Response.t()} | {:error, Hui.Error.t()}
   @deprecated "Please use search/2 with Hui.Query.SpellCheck struct."
-  def spellcheck(url, %Hui.Sp{} = query_sp, %Hui.Q{} = query), do: Request.search(url, [query, query_sp])
+  def spellcheck(url, %Hui.Sp{} = query_sp, %Hui.Q{} = query),
+    do: Request.search(url, [query, query_sp])
 
   @doc false
-  @spec spellcheck!(url, Hui.Sp.t, Hui.Q.t) :: HTTPoison.Response.t
+  @spec spellcheck!(url, Hui.Sp.t(), Hui.Q.t()) :: HTTPoison.Response.t()
   @deprecated "Please use search/2 with Hui.Query.SpellCheck struct."
-  def spellcheck!(url, %Hui.Sp{} = query_sp, %Hui.Q{} = query), do: Request.search(url, true, [query, query_sp])
+  def spellcheck!(url, %Hui.Sp{} = query_sp, %Hui.Q{} = query),
+    do: Request.search(url, true, [query, query_sp])
+
   # coveralls-ignore-stop
 
   @doc """
@@ -283,13 +331,13 @@ defmodule Hui do
     Hui.suggest(:library, suggest_query)
   ```
   """
-  @spec suggest(url, Query.Suggest.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
+  @spec suggest(url, Query.Suggest.t()) :: {:ok, HTTPoison.Response.t()} | {:error, Hui.Error.t()}
   def suggest(url, %Query.Suggest{} = query), do: search(url, query)
 
   @doc """
   Issue a structured suggester query to a specified Solr endpoint, raise an exception in case of failure.
   """
-  @spec suggest!(url, Query.Suggest.t) :: HTTPoison.Response.t
+  @spec suggest!(url, Query.Suggest.t()) :: HTTPoison.Response.t()
   def suggest!(url, %Query.Suggest{} = query), do: search!(url, query)
 
   @doc """
@@ -302,10 +350,13 @@ defmodule Hui do
     Hui.suggest(:autocomplete, "bo", 5, ["name_infix", "ln_prefix", "fn_prefix"], "1939")
   ```
   """
-  @spec suggest(url, binary, nil|integer, nil|binary|list(binary), nil|binary)
-        :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
+  @spec suggest(url, binary, nil | integer, nil | binary | list(binary), nil | binary) ::
+          {:ok, HTTPoison.Response.t()} | {:error, Hui.Error.t()}
   def suggest(url, q, count \\ nil, dictionaries \\ nil, context \\ nil)
-  def suggest(url, q, _, _, _) when is_nil_empty(q) or is_nil_empty(url), do: {:error, %Hui.Error{reason: :einval}}
+
+  def suggest(url, q, _, _, _) when is_nil_empty(q) or is_nil_empty(url),
+    do: {:error, %Hui.Error{reason: :einval}}
+
   def suggest(url, q, count, dictionaries, context) do
     query = %Query.Suggest{q: q, count: count, dictionary: dictionaries, cfq: context}
     search(url, query)
@@ -315,10 +366,13 @@ defmodule Hui do
   Convenience function for issuing a suggester query to a specified Solr endpoint,
   raise an exception in case of failure.
   """
-  @spec suggest!(url, binary, nil|integer, nil|binary|list(binary), nil|binary)
-        :: HTTPoison.Response.t
+  @spec suggest!(url, binary, nil | integer, nil | binary | list(binary), nil | binary) ::
+          HTTPoison.Response.t()
   def suggest!(url, q, count \\ nil, dictionaries \\ nil, context \\ nil)
-  def suggest!(url, q, _, _, _) when is_nil_empty(q) or is_nil_empty(url), do: raise %Hui.Error{reason: :einval}
+
+  def suggest!(url, q, _, _, _) when is_nil_empty(q) or is_nil_empty(url),
+    do: raise(%Hui.Error{reason: :einval})
+
   def suggest!(url, q, count, dictionaries, context) do
     query = %Query.Suggest{q: q, count: count, dictionary: dictionaries, cfq: context}
     search!(url, query)
@@ -326,14 +380,17 @@ defmodule Hui do
 
   # coveralls-ignore-start
   @doc false
-  @spec mlt(url, Hui.Q.t, Hui.M.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
+  @spec mlt(url, Hui.Q.t(), Hui.M.t()) :: {:ok, HTTPoison.Response.t()} | {:error, Hui.Error.t()}
   @deprecated "Please use search/2 with Hui.Query.MoreLikeThis struct."
-  def mlt(url, %Hui.Q{} = query_struct, %Hui.M{} = mlt_query_struct), do: Request.search(url, [query_struct, mlt_query_struct])
+  def mlt(url, %Hui.Q{} = query_struct, %Hui.M{} = mlt_query_struct),
+    do: Request.search(url, [query_struct, mlt_query_struct])
 
   @doc false
   @deprecated "Please use search/2 with Hui.Query.MoreLikeThis struct."
-  @spec mlt!(url, Hui.Q.t, Hui.M.t) :: HTTPoison.Response.t
-  def mlt!(url, %Hui.Q{} = query_struct, %Hui.M{} = mlt_query_struct), do: Request.search(url, true, [query_struct, mlt_query_struct])
+  @spec mlt!(url, Hui.Q.t(), Hui.M.t()) :: HTTPoison.Response.t()
+  def mlt!(url, %Hui.Q{} = query_struct, %Hui.M{} = mlt_query_struct),
+    do: Request.search(url, true, [query_struct, mlt_query_struct])
+
   # coveralls-ignore-stop
 
   @doc """
@@ -341,14 +398,17 @@ defmodule Hui do
 
   This function accepts documents as map (single or a list) and commits the docs
   to the index immediately by default - set `commit` to `false` for manual or
-  auto commits later. It can also operate in binary mode, accepting
-  text containing any valid Solr update data or commands.
+  auto commits later. 
+
+  It can also operate in update struct and binary modes,
+  the former uses the `t:Hui.Query.Update.t/0` struct
+  while the latter acepts text containing any valid Solr update data or commands.
 
   An index/update handler endpoint should be specified through a `t:Hui.URL.t/0` struct
   or a URL config key. A content type header is required so that Solr knows the
   incoming data format (JSON, XML etc.) and can process data accordingly.
 
-  ### Example
+  ### Example - map, list and binary data
 
   ```
     # Index handler for JSON-formatted update
@@ -365,6 +425,7 @@ defmodule Hui do
       "initial_release_date" => "1978-10-08",
       "name" => "Autumn Sonata"
     }
+
     doc2 = %{
       "actors" => ["Bibi Andersson", "Liv Ullmann", "Margaretha Krook"],
       "desc" => "A nurse is put in charge of a mute actress and finds that their personas are melding together.",
@@ -394,20 +455,81 @@ defmodule Hui do
 
   ```
 
-  See `Hui.Request.update/3` for more advanced update options.
+  ### Example - `t:Hui.Query.Update.t/0` and other update options
+  ```
+
+    # url, doc1, doc2 from the above example
+    ...
+
+    # Hui.Query.Update struct command for updating and committing the docs to Solr within 5 seconds
+
+    alias Hui.Query
+
+    x = %Query.Update{doc: [doc1, doc2], commitWithin: 5000, overwrite: true}
+    {status, resp} = Hui.update(url, x)
+
+    # Delete the docs by IDs, with a URL key from configuration
+    {status, resp} = Hui.update(:library_update, %Query.Update{delete_id: ["tt1316540", "tt1650453"]})
+
+    # Commit and optimise index, keep max index segments at 10
+    {status, resp} = Hui.update(url, %Query.Update{commit: true, waitSearcher: true, optimize: true, maxSegments: 10})
+
+    # Commit index, expunge deleted docs
+    {status, resp} = Hui.update(url, %Query.Update{commit: true, expungeDeletes: true})
+  ```
   """
-  @spec update(binary | Hui.URL.t, binary | map | list(map), boolean) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
+  @spec update(url, binary | map | list(map) | Query.Update.t(), boolean) ::
+          {:ok, HTTPoison.Response.t()} | {:error, Hui.Error.t()}
   def update(url, docs, commit \\ true)
-  def update(url, docs, _commit) when is_binary(docs), do: Request.update(url, docs)
-  def update(url, docs, commit) when is_map(docs) or is_list(docs), do: Request.update(url, %Query.Update{doc: docs, commit: commit})
+
+  def update(url, docs, commit) do
+    {status, url_struct} = parse_url(url)
+
+    resp =
+      cond do
+        status != :ok ->
+          {:error, @error_nxdomain}
+
+        is_binary(docs) ->
+          Query.post(url_struct, docs)
+
+        is_map(docs) and Map.has_key?(docs, :__struct__) ->
+          Query.post(url_struct, docs)
+
+        is_map(docs) or is_list(docs) ->
+          Query.post(url_struct, %Query.Update{doc: docs, commit: commit})
+      end
+
+    _parse_resp(resp)
+  end
 
   @doc """
   Updates or adds Solr documents to an index or collection, raise an exception in case of failure.
   """
-  @spec update!(binary | Hui.URL.t, binary | map | list(map), boolean) :: HTTPoison.Response.t
+  @spec update!(binary | Hui.URL.t(), binary | map | list(map) | Query.Update.t(), boolean) ::
+          HTTPoison.Response.t()
   def update!(url, docs, commit \\ true)
-  def update!(url, docs, _commit) when is_binary(docs), do: Request.update(url, true, docs)
-  def update!(url, docs, commit) when is_map(docs) or is_list(docs), do: Request.update(url, true, %Query.Update{doc: docs, commit: commit})
+
+  def update!(url, docs, commit) do
+    {status, url_struct} = parse_url(url)
+
+    resp =
+      cond do
+        status != :ok ->
+          raise @error_nxdomain
+
+        is_binary(docs) ->
+          Query.post!(url_struct, docs)
+
+        is_map(docs) and Map.has_key?(docs, :__struct__) ->
+          Query.post!(url_struct, docs)
+
+        is_map(docs) or is_list(docs) ->
+          Query.post!(url_struct, %Query.Update{doc: docs, commit: commit})
+      end
+
+    _parse_resp(resp)
+  end
 
   @doc """
   Deletes Solr documents.
@@ -431,16 +553,21 @@ defmodule Hui do
     Hui.delete(url, ["tt2358891", "tt1602620"], false) # delete without immediate commit
   ```
   """
-  @spec delete(binary | Hui.URL.t, binary | list(binary), boolean) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
+  @spec delete(binary | Hui.URL.t(), binary | list(binary), boolean) ::
+          {:ok, HTTPoison.Response.t()} | {:error, Hui.Error.t()}
   def delete(url, ids, commit \\ true)
-  def delete(url, ids, commit) when is_binary(ids) or is_list(ids), do: Request.update(url, %Query.Update{delete_id: ids, commit: commit})
+
+  def delete(url, ids, commit) when is_binary(ids) or is_list(ids),
+    do: Request.update(url, %Query.Update{delete_id: ids, commit: commit})
 
   @doc """
   Deletes Solr documents, raise an exception in case of failure.
   """
-  @spec delete!(binary | Hui.URL.t, binary | list(binary), boolean) :: HTTPoison.Response.t
+  @spec delete!(binary | Hui.URL.t(), binary | list(binary), boolean) :: HTTPoison.Response.t()
   def delete!(url, ids, commit \\ true)
-  def delete!(url, ids, commit) when is_binary(ids) or is_list(ids), do: Request.update(url, true, %Query.Update{delete_id: ids, commit: commit})
+
+  def delete!(url, ids, commit) when is_binary(ids) or is_list(ids),
+    do: Request.update(url, true, %Query.Update{delete_id: ids, commit: commit})
 
   @doc """
   Deletes Solr documents by filter queries.
@@ -462,16 +589,22 @@ defmodule Hui do
     Hui.delete_by_query(url, ["genre:Drama", "name:Persona"]) # delete with a list of filters
   ```
   """
-  @spec delete_by_query(binary | Hui.URL.t, binary | list(binary), boolean) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
+  @spec delete_by_query(binary | Hui.URL.t(), binary | list(binary), boolean) ::
+          {:ok, HTTPoison.Response.t()} | {:error, Hui.Error.t()}
   def delete_by_query(url, queries, commit \\ true)
-  def delete_by_query(url, queries, commit) when is_binary(queries) or is_list(queries), do: Request.update(url, %Query.Update{delete_query: queries, commit: commit})
+
+  def delete_by_query(url, queries, commit) when is_binary(queries) or is_list(queries),
+    do: Request.update(url, %Query.Update{delete_query: queries, commit: commit})
 
   @doc """
   Deletes Solr documents by filter queries, raise an exception in case of failure.
   """
-  @spec delete_by_query!(binary | Hui.URL.t, binary | list(binary), boolean) :: HTTPoison.Response.t
+  @spec delete_by_query!(binary | Hui.URL.t(), binary | list(binary), boolean) ::
+          HTTPoison.Response.t()
   def delete_by_query!(url, queries, commit \\ true)
-  def delete_by_query!(url, queries, commit) when is_binary(queries) or is_list(queries), do: Request.update(url, %Query.Update{delete_query: queries, commit: commit})
+
+  def delete_by_query!(url, queries, commit) when is_binary(queries) or is_list(queries),
+    do: Request.update(url, %Query.Update{delete_query: queries, commit: commit})
 
   @doc """
   Commit any added or deleted Solr documents to the index.
@@ -498,15 +631,39 @@ defmodule Hui do
   Use `Hui.Request.update/3` for other types of commit and index optimisation, e.g. expunge deleted docs to
   physically remove docs from the index, which could be a system-intensive operation.
   """
-  @spec commit(binary | Hui.URL.t, boolean) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t}
+  @spec commit(binary | Hui.URL.t(), boolean) ::
+          {:ok, HTTPoison.Response.t()} | {:error, Hui.Error.t()}
   def commit(url, wait_searcher \\ true)
-  def commit(url, wait_searcher), do: Request.update(url, %Query.Update{commit: true, waitSearcher: wait_searcher})
+
+  def commit(url, wait_searcher),
+    do: Request.update(url, %Query.Update{commit: true, waitSearcher: wait_searcher})
 
   @doc """
   Commit any added or deleted Solr documents to the index, raise an exception in case of failure.
   """
-  @spec commit!(binary | Hui.URL.t, boolean) :: HTTPoison.Response.t
+  @spec commit!(binary | Hui.URL.t(), boolean) :: HTTPoison.Response.t()
   def commit!(url, wait_searcher \\ true)
-  def commit!(url, wait_searcher), do: Request.update(url, %Query.Update{commit: true, waitSearcher: wait_searcher})
 
+  def commit!(url, wait_searcher),
+    do: Request.update(url, %Query.Update{commit: true, waitSearcher: wait_searcher})
+
+  defp parse_url(%Hui.URL{} = url), do: {:ok, url}
+  defp parse_url(url) when is_atom(url), do: Hui.URL.configured_url(url)
+
+  defp parse_url(url) when is_binary(url) do
+    uri = URI.parse(url)
+
+    if uri.scheme != nil && uri.host =~ ~r/./ do
+      {:ok, %Hui.URL{url: url}}
+    else
+      {:error, @error_nxdomain}
+    end
+  end
+
+  defp parse_url(_), do: {:error, @error_nxdomain}
+
+  defp _parse_resp({:error, %HTTPoison.Error{id: _, reason: reason}}),
+    do: {:error, %Hui.Error{reason: reason}}
+
+  defp _parse_resp(resp), do: resp
 end

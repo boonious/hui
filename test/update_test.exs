@@ -8,26 +8,40 @@ defmodule HuiUpdateTest do
   # testing with Bypass
   setup do
     update_doc = File.read!("./test/data/update_doc1.json")
-    bypass = Bypass.open
+    bypass = Bypass.open()
     error_einval = %Hui.Error{reason: :einval}
     error_nxdomain = %Hui.Error{reason: :nxdomain}
-    {:ok, bypass: bypass, update_doc: update_doc, error_einval: error_einval, error_nxdomain: error_nxdomain}
+
+    {:ok,
+     bypass: bypass,
+     update_doc: update_doc,
+     error_einval: error_einval,
+     error_nxdomain: error_nxdomain}
   end
 
   describe "update" do
+    test "a single doc (Map)", context do
+      url = %Hui.URL{
+        url: "http://localhost:#{context.bypass.port}",
+        handler: "update",
+        headers: [{"Content-type", "application/json"}]
+      }
 
-    test "should post a single doc (Map)", context do
-      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
-      expected_data =  File.read!("./test/data/update_doc2c.json") 
-      update_doc = expected_data |> Poison.decode!
+      expected_data = File.read!("./test/data/update_doc2c.json")
+      update_doc = expected_data |> Poison.decode!()
       doc_map = update_doc["add"]["doc"]
-      setup_bypass_for_post_req(context.bypass, expected_data)
 
-      Hui.update(url, doc_map)
+      setup_bypass_for_post_req(context.bypass, expected_data)
+      test_update_req(url, doc_map)
     end
 
-    test "should post a single doc without commit (Map)", context do
-      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
+    test "a single doc without commit (Map)", context do
+      url = %Hui.URL{
+        url: "http://localhost:#{context.bypass.port}",
+        handler: "update",
+        headers: [{"Content-type", "application/json"}]
+      }
+
       doc_map = %{
         "actor_ss" => ["János Derzsi", "Erika Bók", "Mihály Kormos", "Ricsi"],
         "desc" => "A rural farmer is forced to confront the mortality of his faithful horse.",
@@ -37,14 +51,19 @@ defmodule HuiUpdateTest do
         "initial_release_date" => "2011-03-31",
         "name" => "The Turin Horse"
       }
-      expected_data = %Query.Update{doc: doc_map} |> Encoder.encode
-      setup_bypass_for_post_req(context.bypass, expected_data)
 
-      Hui.update(url, doc_map, false)
+      expected_data = %Query.Update{doc: doc_map} |> Encoder.encode()
+      setup_bypass_for_post_req(context.bypass, expected_data)
+      test_update_req(url, doc_map, false)
     end
 
-    test "should post multiple docs (Map)", context do
-      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
+    test "post multiple docs (Map)", context do
+      url = %Hui.URL{
+        url: "http://localhost:#{context.bypass.port}",
+        handler: "update",
+        headers: [{"Content-type", "application/json"}]
+      }
+
       setup_bypass_for_post_req(context.bypass, File.read!("./test/data/update_doc3c.json"))
 
       doc_map1 = %{
@@ -56,10 +75,11 @@ defmodule HuiUpdateTest do
         "initial_release_date" => "2011-03-31",
         "name" => "The Turin Horse"
       }
+
       doc_map2 = %{
-        "actor_ss" => ["Masami Nagasawa", "Hiroshi Abe", "Kanna Hashimoto",
-         "Yoshio Harada"],
-        "desc" => "Twelve-year-old Koichi, who has been separated from his brother Ryunosuke due to his parents' divorce, hears a rumor that the new bullet trains will precipitate a wish-granting miracle when they pass each other at top speed.",
+        "actor_ss" => ["Masami Nagasawa", "Hiroshi Abe", "Kanna Hashimoto", "Yoshio Harada"],
+        "desc" =>
+          "Twelve-year-old Koichi, who has been separated from his brother Ryunosuke due to his parents' divorce, hears a rumor that the new bullet trains will precipitate a wish-granting miracle when they pass each other at top speed.",
         "directed_by" => ["Hirokazu Koreeda"],
         "genre" => ["Drame"],
         "id" => "tt1650453",
@@ -67,11 +87,16 @@ defmodule HuiUpdateTest do
         "name" => "I Wish"
       }
 
-      Hui.update(url, [doc_map1, doc_map2])
+      test_update_req(url, [doc_map1, doc_map2])
     end
 
-    test "should post multiple docs without commit (Map)", context do
-      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
+    test "post multiple docs without commit (Map)", context do
+      url = %Hui.URL{
+        url: "http://localhost:#{context.bypass.port}",
+        handler: "update",
+        headers: [{"Content-type", "application/json"}]
+      }
+
       doc_map1 = %{
         "actor_ss" => ["János Derzsi", "Erika Bók", "Mihály Kormos", "Ricsi"],
         "desc" => "A rural farmer is forced to confront the mortality of his faithful horse.",
@@ -81,159 +106,100 @@ defmodule HuiUpdateTest do
         "initial_release_date" => "2011-03-31",
         "name" => "The Turin Horse"
       }
+
       doc_map2 = %{
-        "actor_ss" => ["Masami Nagasawa", "Hiroshi Abe", "Kanna Hashimoto",
-         "Yoshio Harada"],
-        "desc" => "Twelve-year-old Koichi, who has been separated from his brother Ryunosuke due to his parents' divorce, hears a rumor that the new bullet trains will precipitate a wish-granting miracle when they pass each other at top speed.",
+        "actor_ss" => ["Masami Nagasawa", "Hiroshi Abe", "Kanna Hashimoto", "Yoshio Harada"],
+        "desc" =>
+          "Twelve-year-old Koichi, who has been separated from his brother Ryunosuke due to his parents' divorce, hears a rumor that the new bullet trains will precipitate a wish-granting miracle when they pass each other at top speed.",
         "directed_by" => ["Hirokazu Koreeda"],
         "genre" => ["Drame"],
         "id" => "tt1650453",
         "initial_release_date" => "2011-06-11",
         "name" => "I Wish"
       }
-      expected_data = %Query.Update{doc: [doc_map1, doc_map2]} |> Encoder.encode
+
+      expected_data = %Query.Update{doc: [doc_map1, doc_map2]} |> Encoder.encode()
       setup_bypass_for_post_req(context.bypass, expected_data)
-
-      Hui.update(url, [doc_map1, doc_map2], false)
+      test_update_req(url, [doc_map1, doc_map2], false)
     end
 
-    test "should post binary data", context do
+    test "post binary data", context do
       setup_bypass_for_post_req(context.bypass, context.update_doc)
-      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
-      Hui.Request.update(url, context.update_doc)
-      Hui.update(url, context.update_doc)
+
+      url = %Hui.URL{
+        url: "http://localhost:#{context.bypass.port}",
+        handler: "update",
+        headers: [{"Content-type", "application/json"}]
+      }
+
+      test_update_req(url, context.update_doc)
     end
 
-    test "should work with a configured URL key" do
+    test "work with a configured URL key" do
       update_doc = File.read!("./test/data/update_doc2.xml")
       bypass = Bypass.open(port: 8989)
-      setup_bypass_for_post_req(bypass, update_doc, "application/xml")
-      Hui.Request.update(:update_test, update_doc)
-      Hui.update(:update_test, update_doc)
-    end
 
+      setup_bypass_for_post_req(bypass, update_doc, "application/xml")
+      test_update_req(:update_test, update_doc)
+    end
+  end
+
+  describe "update - other" do
     test "should delete docs by ID", context do
-      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
-      expected_data = %Query.Update{delete_id: ["tt1650453", "tt1650453"], commit: true} |> Encoder.encode
+      url = %Hui.URL{
+        url: "http://localhost:#{context.bypass.port}",
+        handler: "update",
+        headers: [{"Content-type", "application/json"}]
+      }
+
+      expected_data =
+        %Query.Update{delete_id: ["tt1650453", "tt1650453"], commit: true} |> Encoder.encode()
+
       setup_bypass_for_post_req(context.bypass, expected_data)
       Hui.delete(url, ["tt1650453", "tt1650453"])
     end
 
     test "should delete docs by query", context do
-      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
-      expected_data = %Query.Update{delete_query: ["name:Persona", "genre:Drama"], commit: true} |> Encoder.encode
+      url = %Hui.URL{
+        url: "http://localhost:#{context.bypass.port}",
+        handler: "update",
+        headers: [{"Content-type", "application/json"}]
+      }
+
+      expected_data =
+        %Query.Update{delete_query: ["name:Persona", "genre:Drama"], commit: true}
+        |> Encoder.encode()
+
       setup_bypass_for_post_req(context.bypass, expected_data)
       Hui.delete_by_query(url, ["name:Persona", "genre:Drama"])
     end
 
     test "should commit docs", context do
-      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
-      expected_data = %Query.Update{commit: true, waitSearcher: true} |> Encoder.encode
+      url = %Hui.URL{
+        url: "http://localhost:#{context.bypass.port}",
+        handler: "update",
+        headers: [{"Content-type", "application/json"}]
+      }
+
+      expected_data = %Query.Update{commit: true, waitSearcher: true} |> Encoder.encode()
       setup_bypass_for_post_req(context.bypass, expected_data)
       Hui.commit(url)
     end
 
-    test "should handle missing or malformed URL", context do
-      assert {:error, context.error_einval} == Hui.update(nil, context.update_doc)
-      assert {:error, context.error_einval} == Hui.update("", context.update_doc)
-      assert {:error, context.error_einval} == Hui.update([], context.update_doc)
-      assert {:error, context.error_nxdomain} == Hui.update(:not_in_config_url, context.update_doc)
-      assert {:error, context.error_nxdomain} == Hui.update(%Hui.URL{url: "boo"}, context.update_doc)
-
-      assert {:error, context.error_einval} == Hui.Request.update(nil, context.update_doc)
-      assert {:error, context.error_einval} == Hui.Request.update("", context.update_doc)
-      assert {:error, context.error_einval} == Hui.Request.update([], context.update_doc)
-      assert {:error, context.error_nxdomain} == Hui.Request.update(:not_in_config_url, context.update_doc)
-      assert {:error, context.error_nxdomain} == Hui.Request.update(%Hui.URL{url: "boo"}, context.update_doc)
+    test "handle missing or malformed URL", context do
+      assert {:error, context.error_nxdomain} == Hui.update(nil, context.update_doc)
+      assert {:error, context.error_nxdomain} == Hui.update("", context.update_doc)
+      assert {:error, context.error_nxdomain} == Hui.update([], context.update_doc)
+      assert {:error, context.error_nxdomain} == Hui.update(:blahblah, context.update_doc)
+      assert {:error, context.error_nxdomain} == Hui.update(%Hui.URL{url: "boo"}, "")
     end
 
+    test "(bang) handle missing or malformed URL", context do
+      assert_raise Hui.Error, ":nxdomain", fn -> Hui.update!(nil, "") end
+      assert_raise Hui.Error, ":nxdomain", fn -> Hui.update!([], "") end
+      assert_raise Hui.Error, ":nxdomain", fn -> Hui.update!(:blahblah, "") end
+      assert_raise Hui.Error, ":nxdomain", fn -> Hui.update!("", "") end
+      assert_raise HTTPoison.Error, ":nxdomain", fn -> Hui.update!(%Hui.URL{url: "boo"}, "") end
+    end
   end
-
-  describe "update (bang)" do
-
-    test "should post a single doc (Map)", context do
-      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
-      expected_data =  File.read!("./test/data/update_doc2c.json")
-      update_doc = expected_data |> Poison.decode!
-      doc_map = update_doc["add"]["doc"]
-      setup_bypass_for_post_req(context.bypass, expected_data)
-
-      Hui.update!(url, doc_map)
-    end
-
-    test "should post multiple docs (Map)", context do
-      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
-      setup_bypass_for_post_req(context.bypass, File.read!("./test/data/update_doc3c.json"))
-
-      doc_map1 = %{
-        "actor_ss" => ["János Derzsi", "Erika Bók", "Mihály Kormos", "Ricsi"],
-        "desc" => "A rural farmer is forced to confront the mortality of his faithful horse.",
-        "directed_by" => ["Béla Tarr", "Ágnes Hranitzky"],
-        "genre" => ["Drama"],
-        "id" => "tt1316540",
-        "initial_release_date" => "2011-03-31",
-        "name" => "The Turin Horse"
-      }
-      doc_map2 = %{
-        "actor_ss" => ["Masami Nagasawa", "Hiroshi Abe", "Kanna Hashimoto",
-         "Yoshio Harada"],
-        "desc" => "Twelve-year-old Koichi, who has been separated from his brother Ryunosuke due to his parents' divorce, hears a rumor that the new bullet trains will precipitate a wish-granting miracle when they pass each other at top speed.",
-        "directed_by" => ["Hirokazu Koreeda"],
-        "genre" => ["Drame"],
-        "id" => "tt1650453",
-        "initial_release_date" => "2011-06-11",
-        "name" => "I Wish"
-      }
-
-      Hui.update!(url, [doc_map1, doc_map2])
-    end
-
-    test "should post binary data", context do
-      update_resp = File.read!("./test/data/update_resp1.json")
-      setup_bypass_for_post_req(context.bypass, context.update_doc, "application/json", update_resp)
-      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
-
-      Hui.update!(url, context.update_doc)
-
-      bang = true
-      resp  = Hui.Request.update(url, bang, context.update_doc)
-      assert resp.body == update_resp |> Poison.decode!
-    end
-
-    test "should delete docs by ID", context do
-      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
-      expected_data = %Query.Update{delete_id: ["tt1650453", "tt1650453"], commit: true} |> Encoder.encode
-      setup_bypass_for_post_req(context.bypass, expected_data)
-      Hui.delete!(url, ["tt1650453", "tt1650453"])
-    end
-
-    test "should delete docs by query", context do
-      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
-      expected_data = %Query.Update{delete_query: ["name:Persona"], commit: true} |> Encoder.encode
-      setup_bypass_for_post_req(context.bypass, expected_data)
-      Hui.delete_by_query!(url, "name:Persona")
-    end
-
-    test "should commit docs", context do
-      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}", handler: "update", headers: [{"Content-type", "application/json"}]}
-      expected_data = %Query.Update{commit: true, waitSearcher: true} |> Encoder.encode
-      setup_bypass_for_post_req(context.bypass, expected_data)
-      Hui.commit!(url)
-    end
-
-    test "should handle missing or malformed URL", context do
-      assert_raise Hui.Error, ":einval", fn -> Hui.update!(nil, context.update_doc) end
-      assert_raise Hui.Error, ":einval", fn -> Hui.update!("", context.update_doc) end
-      assert_raise Hui.Error, ":einval", fn -> Hui.update!([], context.update_doc) end
-      assert_raise Hui.Error, ":nxdomain", fn -> Hui.update!(:url_in_config, context.update_doc) end
-
-      bang = true
-      assert_raise Hui.Error, ":einval", fn -> Hui.Request.update(nil, bang, context.update_doc) end
-      assert_raise Hui.Error, ":einval", fn -> Hui.Request.update("", bang, context.update_doc) end
-      assert_raise Hui.Error, ":einval", fn -> Hui.Request.update([], bang, context.update_doc) end
-      assert_raise Hui.Error, ":nxdomain", fn -> Hui.Request.update(:url_in_config, bang, context.update_doc) end
-    end
- 
-  end
-
 end
