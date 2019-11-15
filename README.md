@@ -136,28 +136,32 @@ Hui provides functions to add, update and delete Solr documents, as well as opti
 
 ```
 
-More advanced update requests can be issued using `Request.update/3` with
-a struct - [`Hui.Query.Update`](https://hexdocs.pm/hui/Hui.Query.Update.html), as well as through
+More advanced update requests can be issued using the
+[`Hui.Query.Update`](https://hexdocs.pm/hui/Hui.Query.Update.html) struct, as well as through
 any valid binary data encapsulating Solr documents and commands.
 
 ```elixir
-  alias Hui.Query
+  # url, doc1, doc2 from the above example
+  ...
 
   # Hui.Query.Update struct command for updating and committing the docs to Solr immediately
+
+  alias Hui.Query
+
   x = %Query.Update{doc: [doc1, doc2], commit: true, waitSearcher: true}
-  Hui.Request.update(url, x)
+  Hui.update(url, x)
 
   # Commits docs within 5 seconds
   x = %Query.Update{doc: [doc1, doc2], commitWithin: 5000, overwrite: true}
-  Hui.Request.update(url, x)
+  Hui.update(url, x)
 
   # Commit and optimise index
-  Hui.Request.update(url, %Query.Update{commit: true, waitSearcher: true, optimize: true, maxSegments: 10})
+  Hui.update(url, %Query.Update{commit: true, waitSearcher: true, optimize: true, maxSegments: 10})
 
   # Binary mode, e.g. delete a document via XML binary
   headers = [{"Content-type", "application/xml"}]
   url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "update", headers: headers}
-  Hui.Request.update(url, "<delete><id>9780141981727</id></delete>")
+  Hui.update(url, "<delete><id>9780141981727</id></delete>")
 
 ```
 

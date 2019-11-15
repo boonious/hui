@@ -145,18 +145,19 @@ defmodule HuiUpdateTest do
   end
 
   describe "update - other" do
-    test "should delete docs by ID", context do
+    test "delete docs by ID", context do
       url = %Hui.URL{
         url: "http://localhost:#{context.bypass.port}",
         handler: "update",
         headers: [{"Content-type", "application/json"}]
       }
 
-      expected_data =
-        %Query.Update{delete_id: ["tt1650453", "tt1650453"], commit: true} |> Encoder.encode()
-
+      query = %Query.Update{delete_id: ["tt1650453", "tt1650453"], commit: true}
+      expected_data = query |> Encoder.encode()
       setup_bypass_for_post_req(context.bypass, expected_data)
+
       Hui.delete(url, ["tt1650453", "tt1650453"])
+      Hui.delete!(url, ["tt1650453", "tt1650453"])
     end
 
     test "should delete docs by query", context do
@@ -166,12 +167,12 @@ defmodule HuiUpdateTest do
         headers: [{"Content-type", "application/json"}]
       }
 
-      expected_data =
-        %Query.Update{delete_query: ["name:Persona", "genre:Drama"], commit: true}
-        |> Encoder.encode()
-
+      query = %Query.Update{delete_query: ["name:Persona", "genre:Drama"], commit: true}
+      expected_data = query |> Encoder.encode()
       setup_bypass_for_post_req(context.bypass, expected_data)
+
       Hui.delete_by_query(url, ["name:Persona", "genre:Drama"])
+      Hui.delete_by_query!(url, ["name:Persona", "genre:Drama"])
     end
 
     test "should commit docs", context do
@@ -183,7 +184,9 @@ defmodule HuiUpdateTest do
 
       expected_data = %Query.Update{commit: true, waitSearcher: true} |> Encoder.encode()
       setup_bypass_for_post_req(context.bypass, expected_data)
+
       Hui.commit(url)
+      Hui.commit!(url)
     end
 
     test "handle missing or malformed URL", context do
@@ -194,7 +197,7 @@ defmodule HuiUpdateTest do
       assert {:error, context.error_nxdomain} == Hui.update(%Hui.URL{url: "boo"}, "")
     end
 
-    test "(bang) handle missing or malformed URL", context do
+    test "(bang) handle missing or malformed URL" do
       assert_raise Hui.Error, ":nxdomain", fn -> Hui.update!(nil, "") end
       assert_raise Hui.Error, ":nxdomain", fn -> Hui.update!([], "") end
       assert_raise Hui.Error, ":nxdomain", fn -> Hui.update!(:blahblah, "") end

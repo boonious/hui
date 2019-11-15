@@ -34,7 +34,7 @@ defmodule Hui.Query.FacetRange do
         offset: nil,
         "overrequest.count": nil,
         "overrequest.ratio": nil,
-        pivot: [],
+        pivot: nil,
         "pivot.mincount": nil,
         prefix: nil,
         query: "year:[2000 TO NOW]",
@@ -102,10 +102,10 @@ defmodule Hui.Query.FacetRange do
         offset: nil,
         "overrequest.count": nil,
         "overrequest.ratio": nil,
-        pivot: [],
+        pivot: nil,
         "pivot.mincount": nil,
         prefix: nil,
-        query: [],
+        query: nil,
         range: [
           %Hui.Query.FacetRange{
             end: 1799,

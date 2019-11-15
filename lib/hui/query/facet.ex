@@ -21,7 +21,7 @@ defmodule Hui.Query.Facet do
         offset: nil,
         "overrequest.count": nil,
         "overrequest.ratio": nil,
-        pivot: [],
+        pivot: nil,
         "pivot.mincount": nil,
         prefix: nil,
         query: "year:[2000 TO NOW]",

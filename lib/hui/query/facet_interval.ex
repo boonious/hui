@@ -32,10 +32,10 @@ defmodule Hui.Query.FacetInterval do
         offset: nil,
         "overrequest.count": nil,
         "overrequest.ratio": nil,
-        pivot: [],
+        pivot: nil,
         "pivot.mincount": nil,
         prefix: nil,
-        query: [],
+        query: nil,
         range: nil,
         sort: nil,
         threads: nil
@@ -45,8 +45,8 @@ defmodule Hui.Query.FacetInterval do
 
   ### Example - per field intervals, f.[fieldname].facet.interval
 
-      iex> x = %Hui.Query.Interval{interval: "price", set: ["[0,10]", "(10,100]"], per_field: true}
-      %Hui.Query.Interval{
+      iex> x = %Hui.Query.FacetInterval{interval: "price", set: ["[0,10]", "(10,100]"], per_field: true}
+      %Hui.Query.FacetInterval{
         interval: "price",
         set: ["[0,10]", "(10,100]"],
         per_field: true
@@ -60,7 +60,7 @@ defmodule Hui.Query.FacetInterval do
         exists: nil,
         facet: true,
         field: "type",
-        interval: %Hui.Query.Interval{
+        interval: %Hui.Query.FacetInterval{
           interval: "price",
           set: ["[0,10]", "(10,100]"],
           per_field: true
@@ -73,10 +73,10 @@ defmodule Hui.Query.FacetInterval do
         offset: nil,
         "overrequest.count": nil,
         "overrequest.ratio": nil,
-        pivot: [],
+        pivot: nil,
         "pivot.mincount": nil,
         prefix: nil,
-        query: [],
+        query: nil,
         range: nil,
         sort: nil,
         threads: nil

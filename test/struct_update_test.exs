@@ -6,11 +6,7 @@ defmodule HuiStructUpdateTest do
 
   # testing with Bypass
   setup do
-    bypass = Bypass.open()
-    error_einval = %Hui.Error{reason: :einval}
-    error_nxdomain = %Hui.Error{reason: :nxdomain}
-
-    {:ok, bypass: bypass}
+    {:ok, bypass: Bypass.open()}
   end
 
   describe "update via Query.Update" do

@@ -1,16 +1,6 @@
 defmodule Hui.Request do
-  @moduledoc """
-
-  Hui.Request module provides underpinning HTTP-based request functions for Solr, including:
-  
-  - `search/2`, `search/3`
-  - `update/2`, `update/3`
-
-  ### Other low-level HTTP client features
-
-  Under the hood, Hui uses `HTTPoison` client to interact with Solr.
-  The existing low-level functions of HTTPoison, e.g. `get/1`, `get/3` 
-  remain available as part of this module.
+  @moduledoc deprecated: """
+  Please use Hui.Query instead.
   """
 
   use HTTPoison.Base 
@@ -58,74 +48,10 @@ defmodule Hui.Request do
   def search(_,_,_), do: {:error, @error_einval}
   # coveralls-ignore-stop
 
-  @doc """
-  Issues an update request to a specific Solr endpoint, for data uploading and deletion.
-
-  The request sends update data in `Hui.U` struct or binary format to an endpoint
-  specified in a `t:Hui.URL.t/0` struct or a URL config key. A content type header is required so that Solr knows the
-  incoming data format (JSON, XML etc.) and can process data accordingly.
-
-  ## Example
-
-  ```
-    # Specify an endpoint for JSON-formatted update
-    headers = [{"Content-type", "application/json"}]
-    url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "update", headers: headers}
-  
-    # Solr data / docs - field mapping
-    doc1 = %{
-      "actor_ss" => ["Ingrid Bergman", "Liv Ullmann", "Lena Nyman", "Halvar Björk"],
-      "desc" => "A married daughter who longs for her mother's love is visited by the latter, a successful concert pianist.",
-      "directed_by" => ["Ingmar Bergman"],
-      "genre" => ["Drama", "Music"],
-      "id" => "tt0077711",
-      "initial_release_date" => "1978-10-08",
-      "name" => "Autumn Sonata"
-    }
-    doc2 = %{
-      "actor_ss" => ["Bibi Andersson", "Liv Ullmann", "Margaretha Krook"],
-      "desc" => "A nurse is put in charge of a mute actress and finds that their personas are melding together.",
-      "directed_by" => ["Ingmar Bergman"],
-      "genre" => ["Drama", "Thriller"],
-      "id" => "tt0060827",
-      "initial_release_date" => "1967-09-21",
-      "name" => "Persona"
-    }
-
-    # Hui.Query.Update struct command for updating and committing the docs to Solr within 5 seconds
-    alias Hui.Query
-    x = %Query.Update{doc: [doc1, doc2], commitWithin: 5000, overwrite: true}
-    {status, resp} = Hui.Request.update(url, x)
-
-    # Delete the docs by IDs, with a URL key from configuration
-    {status, resp} = Hui.Request.update(:library_update, %Query.Update{delete_id: ["tt1316540", "tt1650453"]})
-
-    # Commit and optimise index, keep max index segments at 10
-    {status, resp} = Hui.Request.update(url, %Query.Update{commit: true, waitSearcher: true, optimize: true, maxSegments: 10})
-
-    # Commit index, expunge deleted docs
-    {status, resp} = Hui.Request.update(url, %Query.Update{commit: true, expungeDeletes: true})
-
-    # Direct response or exception in case of failture
-    # for implementing bang! style function
-    bang = true
-    resp = Hui.Request.update(url, bang, json_doc)
-
-    # Binary mode,
-    json_binary = # any encoded binary data, e.g. raw JSON from a file
-    {status, resp} = Hui.Request.update(url, json_binary)
-
-    # Binary mode, e.g. delete a document via XML binary
-    headers = [{"Content-type", "application/xml"}]
-    url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "update", headers: headers}
-    {status, resp} = Hui.Request.update(url, "<delete><id>9780141981727</id></delete>")
-
-  ```
-
-  See [Solr reference](http://lucene.apache.org/solr/guide/uploading-data-with-index-handlers.html)
-  for more details on various data commands, types and formats.
-  """
+  @doc false
   @spec update(solr_url, boolean, binary | Hui.U.t) :: {:ok, HTTPoison.Response.t} | {:error, Hui.Error.t} | HTTPoison.Response.t
+  @deprecated  "Please Hui.Query.post/2."
+  # coveralls-ignore-start
   def update(url, bang \\ false, data)
   def update(%Hui.URL{} = url, bang, data) when is_binary(data), do: _update(url, bang, data)
   def update(%Hui.URL{} = url, bang, %Query.Update{} = data), do: _update(url, bang, data |> Encoder.encode)
@@ -143,6 +69,7 @@ defmodule Hui.Request do
     end
   end
   def update(_,_,_), do: {:error, @error_einval}
+  # coveralls-ignore-stop
 
   # decode JSON data and return other response formats as
   # raw text
@@ -178,7 +105,6 @@ defmodule Hui.Request do
      :error -> {:error, %Hui.Error{reason: resp.reason}}
    end
   end
-  # coveralls-ignore-stop
 
   defp  _update(%Hui.URL{} = url_struct, true, data), do: Hui.URL.to_string(url_struct) |> post!(data, url_struct.headers, url_struct.options)
   defp  _update(%Hui.URL{} = url_struct, _bang, data) do
@@ -189,5 +115,6 @@ defmodule Hui.Request do
       :error -> {:error, %Hui.Error{reason: resp.reason}}
     end
   end
+  # coveralls-ignore-stop
 
 end

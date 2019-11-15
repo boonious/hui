@@ -1,14 +1,11 @@
 defmodule HuiStructTest do
   use ExUnit.Case, async: true
-  doctest Hui.Q
-  doctest Hui.F
-  doctest Hui.F.Range
-  doctest Hui.F.Interval
-  doctest Hui.H
-  doctest Hui.U
 
   alias Hui.Query
-  alias Hui.Encoder
+
+  doctest Query.Facet
+  doctest Query.FacetRange
+  doctest Query.FacetInterval
 
   describe "Standard, Common structs" do
     test "basic parameters setting" do
