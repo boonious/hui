@@ -257,4 +257,185 @@ defmodule HuiEncoderTest do
            }) ==
              "spellcheck.collateParam.q.op=AND&spellcheck.count=10&spellcheck.dictionary=default&spellcheck.q=delll+ultra+sharp&spellcheck=true"
   end
+
+  test "encode Update struct - single doc" do
+    update_doc = File.read!("./test/data/update_doc2.json") |> Poison.decode!()
+    expected_data = update_doc |> Poison.encode!()
+    doc_map = update_doc["add"]["doc"]
+
+    x = %Query.Update{doc: doc_map}
+    assert Encoder.encode(x) == expected_data
+  end
+
+  test "encode Update struct - multiple docs" do
+    doc_map1 = %{
+      "actor_ss" => ["János Derzsi", "Erika Bók", "Mihály Kormos", "Ricsi"],
+      "desc" => "A rural farmer is forced to confront the mortality of his faithful horse.",
+      "directed_by" => ["Béla Tarr", "Ágnes Hranitzky"],
+      "genre" => ["Drama"],
+      "id" => "tt1316540",
+      "initial_release_date" => "2011-03-31",
+      "name" => "The Turin Horse"
+    }
+
+    doc_map2 = %{
+      "actor_ss" => ["Masami Nagasawa", "Hiroshi Abe", "Kanna Hashimoto", "Yoshio Harada"],
+      "desc" =>
+        "Twelve-year-old Koichi, who has been separated from his brother Ryunosuke due to his parents' divorce, hears a rumor that the new bullet trains will precipitate a wish-granting miracle when they pass each other at top speed.",
+      "directed_by" => ["Hirokazu Koreeda"],
+      "genre" => ["Drame"],
+      "id" => "tt1650453",
+      "initial_release_date" => "2011-06-11",
+      "name" => "I Wish"
+    }
+
+    x = %Query.Update{doc: [doc_map1, doc_map2]}
+    assert Encoder.encode(x) == File.read!("./test/data/update_doc3.json")
+  end
+
+  test "encode Update struct - commitWithin, overwrite" do
+    expected_data = File.read!("./test/data/update_doc4.json")
+    update_doc = expected_data |> Poison.decode!()
+    doc_map = update_doc["add"]["doc"]
+
+    x = %Query.Update{doc: doc_map, commitWithin: 5000}
+    assert Encoder.encode(x) == expected_data
+
+    x = %Query.Update{doc: doc_map, commitWithin: 10, overwrite: true}
+    assert Encoder.encode(x) == File.read!("./test/data/update_doc5.json")
+
+    x = %Query.Update{doc: doc_map, overwrite: false}
+    assert Encoder.encode(x) == File.read!("./test/data/update_doc6.json")
+  end
+
+  test "encode Update struct - commitWithin, overwrite (multiple docs)" do
+    expected_data = File.read!("./test/data/update_doc8.json")
+
+    doc_map1 = %{
+      "actor_ss" => ["Ingrid Bergman", "Liv Ullmann", "Lena Nyman", "Halvar Björk"],
+      "desc" =>
+        "A married daughter who longs for her mother's love is visited by the latter, a successful concert pianist.",
+      "directed_by" => ["Ingmar Bergman"],
+      "genre" => ["Drama", "Music"],
+      "id" => "tt0077711",
+      "initial_release_date" => "1978-10-08",
+      "name" => "Autumn Sonata"
+    }
+
+    doc_map2 = %{
+      "actor_ss" => ["Bibi Andersson", "Liv Ullmann", "Margaretha Krook"],
+      "desc" =>
+        "A nurse is put in charge of a mute actress and finds that their personas are melding together.",
+      "directed_by" => ["Ingmar Bergman"],
+      "genre" => ["Drama", "Thriller"],
+      "id" => "tt0060827",
+      "initial_release_date" => "1967-09-21",
+      "name" => "Persona"
+    }
+
+    x = %Query.Update{doc: [doc_map1, doc_map2], commitWithin: 50, overwrite: true}
+    assert Encoder.encode(x) == expected_data
+  end
+
+  test "encode Update struct - commit, waitSearcher, expungeDeletes" do
+    x = %Query.Update{commit: true}
+    assert x |> Encoder.encode() == "{\"commit\":{}}"
+
+    x = %Query.Update{commit: true, waitSearcher: true}
+    assert x |> Encoder.encode() == "{\"commit\":{\"waitSearcher\":true}}"
+
+    x = %Query.Update{commit: true, waitSearcher: false}
+    assert x |> Encoder.encode() == "{\"commit\":{\"waitSearcher\":false}}"
+
+    x = %Query.Update{commit: true, expungeDeletes: true}
+    assert x |> Encoder.encode() == "{\"commit\":{\"expungeDeletes\":true}}"
+
+    x = %Query.Update{commit: true, waitSearcher: true, expungeDeletes: false}
+
+    assert x |> Encoder.encode() ==
+             "{\"commit\":{\"waitSearcher\":true,\"expungeDeletes\":false}}"
+  end
+
+  test "encode Update struct - optimize, waitSearcher, maxSegment" do
+    x = %Query.Update{optimize: true}
+    assert x |> Encoder.encode() == "{\"optimize\":{}}"
+
+    x = %Query.Update{optimize: true, waitSearcher: true}
+    assert x |> Encoder.encode() == "{\"optimize\":{\"waitSearcher\":true}}"
+
+    x = %Query.Update{optimize: true, waitSearcher: false}
+    assert x |> Encoder.encode() == "{\"optimize\":{\"waitSearcher\":false}}"
+
+    x = %Query.Update{optimize: true, maxSegments: 20}
+    assert x |> Encoder.encode() == "{\"optimize\":{\"maxSegments\":20}}"
+
+    x = %Query.Update{optimize: true, waitSearcher: true, maxSegments: 20}
+    assert x |> Encoder.encode() == "{\"optimize\":{\"waitSearcher\":true,\"maxSegments\":20}}"
+  end
+
+  test "encode Update struct - delete by ID" do
+    x = %Query.Update{delete_id: "tt1316540"}
+    assert x |> Encoder.encode() == "{\"delete\":{\"id\":\"tt1316540\"}}"
+
+    x = %Query.Update{delete_id: ["tt1316540", "tt1650453"]}
+
+    assert x |> Encoder.encode() ==
+             "{\"delete\":{\"id\":\"tt1316540\"},\"delete\":{\"id\":\"tt1650453\"}}"
+  end
+
+  test "encode Update struct - delete by query" do
+    x = %Query.Update{delete_query: "name:Persona"}
+    assert x |> Encoder.encode() == "{\"delete\":{\"query\":\"name:Persona\"}}"
+
+    x = %Query.Update{delete_query: ["name:Persona", "genre:Drama"]}
+
+    assert x |> Encoder.encode() ==
+             "{\"delete\":{\"query\":\"name:Persona\"},\"delete\":{\"query\":\"genre:Drama\"}}"
+  end
+
+  test "encode Update struct - grouped update commands" do
+    doc_map1 = %{
+      "actor_ss" => ["Ingrid Bergman", "Liv Ullmann", "Lena Nyman", "Halvar Björk"],
+      "desc" =>
+        "A married daughter who longs for her mother's love is visited by the latter, a successful concert pianist.",
+      "directed_by" => ["Ingmar Bergman"],
+      "genre" => ["Drama", "Music"],
+      "id" => "tt0077711",
+      "initial_release_date" => "1978-10-08",
+      "name" => "Autumn Sonata"
+    }
+
+    doc_map2 = %{
+      "actor_ss" => ["Bibi Andersson", "Liv Ullmann", "Margaretha Krook"],
+      "desc" =>
+        "A nurse is put in charge of a mute actress and finds that their personas are melding together.",
+      "directed_by" => ["Ingmar Bergman"],
+      "genre" => ["Drama", "Thriller"],
+      "id" => "tt0060827",
+      "initial_release_date" => "1967-09-21",
+      "name" => "Persona"
+    }
+
+    x = %Query.Update{doc: [doc_map1, doc_map2], commitWithin: 50, overwrite: true}
+
+    x = %Query.Update{
+      x
+      | commit: true,
+        waitSearcher: true,
+        expungeDeletes: false,
+        optimize: true,
+        maxSegments: 20
+    }
+
+    x = %Query.Update{x | delete_id: ["tt1316540", "tt1650453"]}
+    assert x |> Encoder.encode() == File.read!("./test/data/update_doc10.json")
+  end
+
+  test "encode Update struct - rollback" do
+    x = %Query.Update{rollback: true}
+    assert x |> Encoder.encode() == "{\"rollback\":{}}"
+
+    x = %Query.Update{rollback: true, delete_query: "name:Persona"}
+    assert x |> Encoder.encode() == "{\"delete\":{\"query\":\"name:Persona\"},\"rollback\":{}}"
+  end
 end
