@@ -554,12 +554,8 @@ defmodule Hui do
           {:ok, Reponse.t()} | {:error, Hui.Error.t()}
 
   def delete(url, ids, commit \\ true) when is_binary(ids) or is_list(ids) do
-    {status, url_struct} = parse_url(url)
-    delete_query = %Query.Update{delete_id: ids, commit: commit}
-
-    if status == :ok,
-      do: _parse_resp(Query.post(url_struct, delete_query)),
-      else: {:error, @error_nxdomain}
+    %Query.Update{delete_id: ids, commit: commit}
+    |> query(url, :post)
   end
 
   @doc """
@@ -567,12 +563,8 @@ defmodule Hui do
   """
   @spec delete!(binary | Hui.URL.t(), binary | list(binary), boolean) :: Reponse.t()
   def delete!(url, ids, commit \\ true) when is_binary(ids) or is_list(ids) do
-    {status, url_struct} = parse_url(url)
-    delete_query = %Query.Update{delete_id: ids, commit: commit}
-
-    if status == :ok,
-      do: _parse_resp(Query.post!(url_struct, delete_query)),
-      else: raise(@error_nxdomain)
+    %Query.Update{delete_id: ids, commit: commit}
+    |> query!(url, :post)
   end
 
   @doc """
@@ -598,27 +590,18 @@ defmodule Hui do
   @spec delete_by_query(binary | Hui.URL.t(), binary | list(binary), boolean) ::
           {:ok, Reponse.t()} | {:error, Hui.Error.t()}
 
-  def delete_by_query(url, queries, commit \\ true) when is_binary(queries) or is_list(queries) do
-    {status, url_struct} = parse_url(url)
-    delete_query = %Query.Update{delete_query: queries, commit: commit}
-
-    if status == :ok,
-      do: _parse_resp(Query.post(url_struct, delete_query)),
-      else: {:error, @error_nxdomain}
+  def delete_by_query(url, q, commit \\ true) when is_binary(q) or is_list(q) do
+    %Query.Update{delete_query: q, commit: commit}
+    |> query(url, :post)
   end
 
   @doc """
   Deletes Solr documents by filter queries, raise an exception in case of failure.
   """
   @spec delete_by_query!(binary | Hui.URL.t(), binary | list(binary), boolean) :: Reponse.t()
-  def delete_by_query!(url, queries, commit \\ true)
-      when is_binary(queries) or is_list(queries) do
-    {status, url_struct} = parse_url(url)
-    delete_query = %Query.Update{delete_query: queries, commit: commit}
-
-    if status == :ok,
-      do: _parse_resp(Query.post!(url_struct, delete_query)),
-      else: raise(@error_nxdomain)
+  def delete_by_query!(url, q, commit \\ true) when is_binary(q) or is_list(q) do
+    %Query.Update{delete_query: q, commit: commit}
+    |> query!(url, :post)
   end
 
   @doc """
@@ -648,12 +631,8 @@ defmodule Hui do
   """
   @spec commit(binary | Hui.URL.t(), boolean) :: {:ok, Reponse.t()} | {:error, Hui.Error.t()}
   def commit(url, wait_searcher \\ true) do
-    {status, url_struct} = parse_url(url)
-    query = %Query.Update{commit: true, waitSearcher: wait_searcher}
-
-    if status == :ok,
-      do: _parse_resp(Query.post!(url_struct, query)),
-      else: raise(@error_nxdomain)
+    %Query.Update{commit: true, waitSearcher: wait_searcher}
+    |> query(url, :post)
   end
 
   @doc """
@@ -661,12 +640,28 @@ defmodule Hui do
   """
   @spec commit!(binary | Hui.URL.t(), boolean) :: Reponse.t()
   def commit!(url, wait_searcher \\ true) do
-    {status, url_struct} = parse_url(url)
-    query = %Query.Update{commit: true, waitSearcher: wait_searcher}
+    %Query.Update{commit: true, waitSearcher: wait_searcher}
+    |> query!(url, :post)
+  end
 
-    if status == :ok,
-      do: _parse_resp(Query.post!(url_struct, query)),
-      else: raise(@error_nxdomain)
+  defp query(q, url, method \\ :get) do
+    {status, url} = parse_url(url)
+
+    case {status, method} do
+      {:ok, :get} -> _parse_resp(Query.get(url, q))
+      {:ok, :post} -> _parse_resp(Query.post(url, q))
+      {:error, _} -> {:error, @error_nxdomain}
+    end
+  end
+
+  defp query!(q, url, method \\ :get) do
+    {status, url} = parse_url(url)
+
+    case {status, method} do
+      {:ok, :get} -> _parse_resp(Query.get!(url, q))
+      {:ok, :post} -> _parse_resp(Query.post!(url, q))
+      {:error, _} -> raise(@error_nxdomain)
+    end
   end
 
   defp parse_url(%Hui.URL{} = url), do: {:ok, url}
