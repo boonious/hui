@@ -203,7 +203,7 @@ defmodule HuiSearchTest do
 
       query = [q: "edinburgh", rows: 10]
       {_, url} = Hui.URL.configured_url(:library)
-      experted_request_url = Hui.URL.to_string(url) <> "?" <> Hui.URL.encode_query(query)
+      experted_request_url = Hui.URL.to_string(url) <> "?" <> Hui.Encoder.encode(query)
 
       {_, resp} = Hui.search(:library, query)
       assert experted_request_url == resp.request_url

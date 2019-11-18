@@ -43,6 +43,16 @@ defmodule HuiEncodeTest do
            ]
   end
 
+  test "encode should handle empty, nil values / lists" do
+    assert Encode.encode(q: nil, fq: ["", "date", nil, "", "year"]) == [["fq=date&fq=year", ""]]
+    assert Encode.encode(fq: ["", "date", nil, "", "year"], q: "") == [["fq=date&fq=year", ""]]
+
+    assert Encode.encode(q: "loch", fq: ["", "date", nil, "", "year"]) == [
+             ["q", "=", "loch", "&"],
+             ["fq=date&fq=year", ""]
+           ]
+  end
+
   test "encode map" do
     query_map = %{
       q: "harry",

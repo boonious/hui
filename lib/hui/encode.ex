@@ -54,8 +54,14 @@ defmodule Hui.Encode do
   end
 
   # encodes fq: [x, y] type keyword to "fq=x&fq=y"
-  defp _encode({k, v}, opts) when is_list(v),
-    do: [v |> Enum.map_join("&", &_encode({k, &1}, %{opts | separator: ""})), opts.separator]
+  defp _encode({k, v}, opts) when is_list(v) do
+    [
+      v
+      |> Enum.reject(&(&1 == nil or &1 == ""))
+      |> Enum.map_join("&", &_encode({k, &1}, %{opts | separator: ""})),
+      opts.separator
+    ]
+  end
 
   defp _encode({k, v}, opts),
     do: [to_string(k), "=", URI.encode_www_form(to_string(v)), opts.separator]

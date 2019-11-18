@@ -78,13 +78,13 @@ end
 # - refactoring and move codes to Encode.encode utility module
 # - use IO data (binary list) instead of string interoperation during encoding
 defimpl Hui.Encoder, for: Query.Update do
-  def encode(query, _opts) do
-    a = "#{_encode(doc: query.doc, within: query.commitWithin, overwrite: query.overwrite)}"
-    b = "#{_encode(delete_id: query.delete_id)}"
-    c = "#{_encode(delete_query: query.delete_query)}"
-    d = "#{_encode(commit: query.commit, wait: query.waitSearcher, expunge: query.expungeDeletes)}"
-    e = "#{_encode(optimize: query.optimize, wait: query.waitSearcher, max: query.maxSegments)}"
-    f = "#{_encode(rollback: query.rollback)}"
+  def encode(q, _opts) do
+    a = "#{_encode(doc: q.doc, within: q.commitWithin, overwrite: q.overwrite)}"
+    b = "#{_encode(delete_id: q.delete_id)}"
+    c = "#{_encode(delete_query: q.delete_query)}"
+    d = "#{_encode(commit: q.commit, wait: q.waitSearcher, expunge: q.expungeDeletes)}"
+    e = "#{_encode(optimize: q.optimize, wait: q.waitSearcher, max: q.maxSegments)}"
+    f = "#{_encode(rollback: q.rollback)}"
 
     x = [a, b, c, d, e, f] |> Enum.filter(fn x -> x != "" end)
     "{#{Enum.join(x, ",")}}"

@@ -28,6 +28,18 @@ defmodule HuiEncoderTest do
              "q=harry&wt=json&fq=cat%3Abook&fq=inStock%3Atrue&fq=price%3A%5B1.99+TO+9.99%5D&fl=id%2Cname%2Cauthor%2Cprice"
   end
 
+  test "encode should handle empty, nil values / lists" do
+    assert_raise Protocol.UndefinedError, fn -> Hui.Encoder.encode(nil) end
+    assert_raise Protocol.UndefinedError, fn -> Hui.Encoder.encode("") end
+
+    assert "" == Hui.Encoder.encode(q: "")
+    assert "" == Hui.Encoder.encode(fq: [])
+    assert "" == Hui.Encoder.encode(fl: nil)
+    assert "" == Hui.Encoder.encode(q: nil, fq: "")
+    assert "" == Hui.Encoder.encode(q: nil, fq: [])
+    assert "fq=date&fq=year" == Hui.Encoder.encode(q: nil, fq: ["", "date", nil, "", "year"])
+  end
+
   test "encode Standard struct" do
     query = %Query.Standard{df: "words_txt", q: "loch torridon", "q.op": "AND", sow: true}
     assert Encoder.encode(query) == "df=words_txt&q=loch+torridon&q.op=AND&sow=true"

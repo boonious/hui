@@ -38,18 +38,5 @@ defmodule HuiUrlTest do
       assert to_string(x) == "http://localhost:8983/solr/newspapers/suggest"
       assert to_string(y) == "http://localhost:8983/solr/newspapers/select"
     end
-
-    test "encode_query should handle empty, nil values / lists" do
-      assert "" = Hui.URL.encode_query(nil)
-      assert "" = Hui.URL.encode_query("")
-      assert "" = Hui.URL.encode_query(q: "")
-      assert "" = Hui.URL.encode_query(fq: [])
-      assert "" = Hui.URL.encode_query(fl: nil)
-      assert "" = Hui.URL.encode_query(nil)
-      assert "" = Hui.URL.encode_query("")
-      assert "" = Hui.URL.encode_query(q: nil, fq: "")
-      assert "" = Hui.URL.encode_query(q: nil, fq: [])
-      assert "fq=date&fq=year" = Hui.URL.encode_query(q: nil, fq: ["", "date", nil, "", "year"])
-    end
   end
 end
