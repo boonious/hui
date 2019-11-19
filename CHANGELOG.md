@@ -1,8 +1,14 @@
 # Changelog
 
-# 0.9.0 (2019-11-06)
+## 0.9.1 (2019-11-19)
 
-* new query structs: `Hui.Query.Standard`, `Hui.Query.DisMax`, `Hui.Query.Common`, Faceting: `Hui.Query.Facet`, `Hui.Query.FacetRange`, `Hui.Query.FacetInterval`, `Hui.Query.Highlight`, `Hui.Query.HighlighterFastVector`, `Hui.Query.HighlighterOriginal`, `Hui.Query.HighlighterUnified`, `Hui.Query.SpellCheck`, `Hui.Query.Suggest` `Hui.Query.MoreLikeThis`
+* New `Hui.Query.Update` struct for indexing documents
+* `Hui.Encoder` encodes update query in JSON format
+* `Query.get/2` and `Query.post/2` functions (accept built-in data structs) for HTTP requests
+
+## 0.9.0 (2019-11-06)
+
+* New query structs: `Hui.Query.Standard`, `Hui.Query.DisMax`, `Hui.Query.Common`, Faceting: `Hui.Query.Facet`, `Hui.Query.FacetRange`, `Hui.Query.FacetInterval`, `Hui.Query.Highlight`, `Hui.Query.HighlighterFastVector`, `Hui.Query.HighlighterOriginal`, `Hui.Query.HighlighterUnified`, `Hui.Query.SpellCheck`, `Hui.Query.Suggest` `Hui.Query.MoreLikeThis`
 * `Hui.Encoder` protocol and implementation for encoding the new query structs
 
 ## 0.8.3, 0.8.4 (2019-10-03)

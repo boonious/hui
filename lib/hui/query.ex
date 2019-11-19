@@ -4,6 +4,7 @@ defmodule Hui.Query do
   Hui.Query module provides underpinning HTTP-based request functions for Solr, including:
 
   - `get/2`, `get!/2`
+  - `post/2`, `post!/2`
   """
 
   use HTTPoison.Base

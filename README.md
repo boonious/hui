@@ -17,38 +17,38 @@ a data collection in distributed server architecture (cloud).
   Hui.q(q: "loch", rows: 5) # arbitrary keyword list
   
   # with query structs
-  alias Hui.Query
+  alias Hui.Query.{Standard,DisMax,Common,Facet,FacetRange,Suggest,MoreLikeThis,Highlight}
 
-  Hui.q([%Query.Standard{q: "author:I*"}, %Query.Facet{field: ["cat", "author_str"], mincount: 1}])
+  Hui.q([%Standard{q: "author:I*"}, %Facet{field: ["cat", "author_str"], mincount: 1}])
 
   # `:library` is a URL reference key - see below
-  Hui.search(:library, [%Qeury.Standard{q: "loch"}, %Query.Common{fq: ["type:illustration", "format:image/jpeg"]}])
+  Hui.search(:library, [%Standard{q: "loch"}, %Common{fq: ["type:illustration", "format:image/jpeg"]}])
 
   # Suggester query
-  suggest_query = %Query.Suggest{q: "ha", count: 10, dictionary: ["name_infix", "ln_prefix", "fn_prefix"]}
+  suggest_query = %Suggest{q: "ha", count: 10, dictionary: ["name_infix", "ln_prefix", "fn_prefix"]}
   Hui.suggest(:library, suggest_query)
 
   # DisMax and SolrCloud query
-  x = %Query.DisMax{q: "market", qf: "description^2.3 title", mm: "2<-25% 9<-3", pf: "title", ps: 1, qs: 3}
-  y = %Query.Common{collection: "library,commons", rows: 10, distrib: true, "shards.tolerant": true, "shards.info": true}
+  x = %DisMax{q: "market", qf: "description^2.3 title", mm: "2<-25% 9<-3", pf: "title", ps: 1, qs: 3}
+  y = %Common{collection: "library,commons", rows: 10, distrib: true, "shards.tolerant": true, "shards.info": true}
   Hui.search(:library, [x, y])
 
   # with MoreLikeThis
-  z = %Query.MoreLikeThis{fl: "manu,cat", mindf: 10, mintf: 200, "match.include": true, count: 10}
+  z = %MoreLikeThis{fl: "manu,cat", mindf: 10, mintf: 200, "match.include": true, count: 10}
   Hui.search(:library, [x, y, z])
 
   # with faceting
-  z = %Query.Facet{field: ["cat", "author_str"], mincount: 1}
+  z = %Facet{field: ["cat", "author_str"], mincount: 1}
   Hui.search(:library, [x, y, z])
 
   # with results highlighting
-  z = %Query.Highlight{fl: "features", usePhraseHighlighter: true, fragsize: 250, snippets: 3 } 
+  z = %Highlight{fl: "features", usePhraseHighlighter: true, fragsize: 250, snippets: 3 } 
   Hui.search(:library, [x, y, z])
 
   # more elaborated faceting query
-  range1 = %Query.FacetRange{range: "price", start: 0, end: 100, gap: 10, per_field: true}
-  range2 = %Query.FacetRange{range: "popularity", start: 0, end: 5, gap: 1, per_field: true}
-  z = %Query.Facet{field: ["cat", "author_str"], mincount: 1, range: [range1, range2]}
+  range1 = %FacetRange{range: "price", start: 0, end: 100, gap: 10, per_field: true}
+  range2 = %FacetRange{range: "popularity", start: 0, end: 5, gap: 1, per_field: true}
+  z = %Facet{field: ["cat", "author_str"], mincount: 1, range: [range1, range2]}
   Hui.search(:library, [x, y, z])
 
   # the above spawns a request with the following query string
@@ -146,17 +146,17 @@ any valid binary data encapsulating Solr documents and commands.
 
   # Hui.Query.Update struct command for updating and committing the docs to Solr immediately
 
-  alias Hui.Query
+  alias Hui.Query.Update
 
-  x = %Query.Update{doc: [doc1, doc2], commit: true, waitSearcher: true}
+  x = %Update{doc: [doc1, doc2], commit: true, waitSearcher: true}
   Hui.update(url, x)
 
   # Commits docs within 5 seconds
-  x = %Query.Update{doc: [doc1, doc2], commitWithin: 5000, overwrite: true}
+  x = %Update{doc: [doc1, doc2], commitWithin: 5000, overwrite: true}
   Hui.update(url, x)
 
   # Commit and optimise index
-  Hui.update(url, %Query.Update{commit: true, waitSearcher: true, optimize: true, maxSegments: 10})
+  Hui.update(url, %Update{commit: true, waitSearcher: true, optimize: true, maxSegments: 10})
 
   # Binary mode, e.g. delete a document via XML binary
   headers = [{"Content-type", "application/xml"}]
@@ -206,20 +206,20 @@ Hui includes a [protocol](https://elixir-lang.org/getting-started/protocols.html
 A custom query struct may be developed by implementing the Encoder protocol.
 
 ```elixir
-  alias Hui.Query
+  alias Hui.Query.{DisMax,Common,Facet,FacetRange}
 
-  x = %Query.DisMax{q: "loch"}
-  y = %Query.Common{fq: ["type:image/jpeg", "year:2001"], fl: "id,title", rows: 20}
+  x = %DisMax{q: "loch"}
+  y = %Common{fq: ["type:image/jpeg", "year:2001"], fl: "id,title", rows: 20}
   [x,y] |> Hui.Encoder.encode
   # -> "q=loch&fl=id%2Ctitle&fq=type%3Aimage%2Fjpeg&fq=year%3A2001&rows=20"
 
-  x = %Query.Facet{field: ["type", "year", "subject"], query: "edited:true"}
+  x = %Facet{field: ["type", "year", "subject"], query: "edited:true"}
   x |> Hui.Encoder.encode
   # -> "facet=true&facet.field=type&facet.field=year&facet.field=subject&facet.query=edited%3Atrue"
   # there's no need to set "facet: true" as it is implied and a default setting in the struct
 
   # a unified way to specify per-field or singe-field range
-  x = %Query.FacetRange{range: "age", gap: 10, start: 0, end: 100}
+  x = %FacetRange{range: "age", gap: 10, start: 0, end: 100}
   x |> Hui.Encoder.encode
   # -> "facet.range.end=100&facet.range.gap=10&facet.range=age&facet.range.start=0"
 
@@ -232,16 +232,16 @@ The [`Hui.Query.Update`](https://hexdocs.pm/hui/Hui.Query.Update.html) struct mo
 various JSON-formatted update and grouped commands to be created.
 
 ```elixir
-  alias Hui.Query
+  alias Hui.Query.Update
   alias Hui.Encoder
 
   # doc1, doc2 are Maps of Solr documents
-  x = %Query.Update{doc: [doc1, doc2], commit: true, commitWithin: 1000}
+  x = %Update{doc: [doc1, doc2], commit: true, commitWithin: 1000}
   x |> Encoder.encode
   # -> "{\"add\":{\"commitWithin\":1000,\"doc\":{...}},\"add\":{\"commitWithin\":1000,\"doc\":{...}},\"commit\":{}}"
 
   # Delete the documents by ID
-  %Query.Update{delete_id: ["tt1316540", "tt1650453"]} |> Encoder.encode
+  %Update{delete_id: ["tt1316540", "tt1650453"]} |> Encoder.encode
   # -> "{\"delete\":{\"id\":\"tt1316540\"},\"delete\":{\"id\":\"tt1650453\"}}"
 
 ```
@@ -317,7 +317,7 @@ by adding `hui` to your list of dependencies in `mix.exs`:
 ```elixir
   def deps do
     [
-      {:hui, "~> 0.9.0"}
+      {:hui, "~> 0.9.1"}
     ]
   end
 ```
