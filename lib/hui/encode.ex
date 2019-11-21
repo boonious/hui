@@ -7,9 +7,10 @@ defmodule Hui.Encode do
   @type options :: Hui.Encode.Options.t()
 
   defmodule Options do
-    defstruct [:per_field, :prefix, format: :url, separator: "&"]
+    defstruct [:per_field, :prefix, equal: "=", format: :url, separator: "&"]
 
     @type t :: %__MODULE__{
+            equal: binary,
             format: :url,
             per_field: binary,
             prefix: binary,
@@ -64,7 +65,7 @@ defmodule Hui.Encode do
   end
 
   defp _encode({k, v}, opts),
-    do: [to_string(k), "=", URI.encode_www_form(to_string(v)), opts.separator]
+    do: [to_string(k), opts.equal, URI.encode_www_form(to_string(v)), opts.separator]
 
   # render keywords according to Solr prefix / per field syntax
   # e.g. transform `field: "year"` into `"facet.field": "year"`, `f.[field].facet.gap` etc.
