@@ -2,6 +2,7 @@ defmodule HuiEncodeTest do
   use ExUnit.Case, async: true
 
   alias Hui.Encode
+  alias Hui.Query
 
   test "encode IO data" do
     query_list = [df: "words_txt", q: "loch", "q.op": "AND", sow: true]
@@ -67,5 +68,28 @@ defmodule HuiEncodeTest do
              ["q", "=", "harry", "&"],
              ["wt", "=", "json", ""]
            ]
+  end
+
+  test "transform query struct" do
+    x = %Query.Facet{field: ["cat", "author_str"], mincount: 1}
+    opts = %Encode.Options{prefix: "facet"}
+
+    expected = [facet: true, field: ["cat", "author_str"], mincount: 1]
+    assert Encode.transform(x) == expected
+
+    expected = [facet: true, "facet.field": ["cat", "author_str"], "facet.mincount": 1]
+    assert Encode.transform(x, opts) == expected
+
+    x = %Query.FacetRange{range: "price", start: 0, end: 100, gap: 10, per_field: true}
+    opts = %Encode.Options{prefix: "facet", per_field: "price"}
+
+    expected = [
+      "f.price.facet.end": 100,
+      "f.price.facet.gap": 10,
+      "f.price.facet.range": "price",
+      "f.price.facet.start": 0
+    ]
+
+    assert Encode.transform(x, opts) == expected
   end
 end
