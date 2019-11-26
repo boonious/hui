@@ -98,4 +98,49 @@ defmodule HuiEncodeTest do
 
     assert Encode.transform(x, opts) == expected
   end
+
+  # test transformation of update structs into ordered keyword lists
+  test "transform update struct for JSON encoding - doc, commitWithin, overwrite" do
+    expected = File.read!("./test/data/update_doc5.json")
+    update_doc = expected |> Poison.decode!()
+
+    d = update_doc["add"]["doc"]
+    c = update_doc["add"]["commitWithin"]
+    o = update_doc["add"]["overwrite"]
+
+    x = %Query.Update{doc: d, commitWithin: c, overwrite: o}
+    opts = %Encode.Options{format: :json}
+
+    expected = [
+      [
+        commitWithin: 10,
+        overwrite: true,
+        doc: %{
+          "actor_ss" => [
+            "Tom Skerritt",
+            "Sigourney Weaver",
+            "Veronica Cartwright",
+            "Harry Dean Stanton"
+          ],
+          "desc" =>
+            "After a space merchant vessel perceives an unknown transmission as a distress call, its landing on the source moon finds one of the crew attacked by a mysterious lifeform, and they soon realize that its life cycle has merely begun.",
+          "directed_by" => ["Ridley Scott"],
+          "genre" => ["Sci-Fi", "Horror"],
+          "id" => "tt0078748",
+          "initial_release_date" => "1979-06-22",
+          "name" => "Alien"
+        }
+      ]
+    ]
+
+    assert Encode.transform(x, opts) == expected
+  end
+
+  test "transform raise exception for unsupported encoding format" do
+    x = %Query.Update{doc: %{id: "123"}, commitWithin: 10, overwrite: true}
+    opts = %Encode.Options{format: "blah"}
+
+    error = "blah format is not supported. Hui currently only encode update message in JSON."
+    assert_raise RuntimeError, error, fn -> Encode.transform(x, opts) end
+  end
 end

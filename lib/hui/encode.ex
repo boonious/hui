@@ -3,12 +3,18 @@ defmodule Hui.Encode do
   Utilities for encoding Solr query and update data structures.
   """
 
+  alias Hui.Query.Update
+
   @type query :: Hui.Query.solr_query()
   @type options :: Hui.Encode.Options.t()
 
   @url_delimiters {"=", "&"}
   @json_delimters {":", ""}
+  @update_encoding_sequence ["doc"]
 
+  @update_field_sequence %{
+    "doc" => [:commitWithin, :overwrite, :doc]
+  }
 
   defmodule Options do
     defstruct [:per_field, :prefix, format: :url]
@@ -72,6 +78,16 @@ defmodule Hui.Encode do
   @spec transform(query, options) :: iodata
   def transform(query, opts \\ %Options{})
 
+  def transform(%{__struct__: Update} = query, %{format: :json}) do
+    for set <- @update_encoding_sequence do
+      query |> extract_update_fields(set)
+    end
+  end
+
+  def transform(%{__struct__: Update} = _, %{format: f}) when f != :json do
+    raise "#{f} format is not supported. Hui currently only encode update message in JSON."
+  end
+
   def transform(%{__struct__: _} = query, opts) do
     query
     |> Map.to_list()
@@ -98,5 +114,13 @@ defmodule Hui.Encode do
     |> Enum.reject(fn {k, v} ->
       is_nil(v) or v == "" or v == [] or k == :__struct__ or k == :per_field
     end)
+  end
+
+  defp extract_update_fields(query, group) do
+    sequence = @update_field_sequence[group]
+
+    for field <- sequence do
+      {field, query |> Map.get(field)}
+    end
   end
 end
