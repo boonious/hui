@@ -2,6 +2,7 @@ defmodule HuiEncodeTest do
   use ExUnit.Case, async: true
 
   alias Hui.Encode
+  alias Hui.Encode.Options
   alias Hui.Query
 
   test "encode IO data" do
@@ -15,6 +16,23 @@ defmodule HuiEncodeTest do
     ]
 
     assert Encode.encode(x) == expected
+  end
+
+  test "encode IO data for JSON format" do
+    x = [df: "words_txt", q: "loch", "q.op": "AND", sow: true]
+    opts = %Options{format: :json}
+
+    expected = [
+      ["\"", "df", "\"", ":", "\"words_txt\""],
+      ["\"", "q", "\"", ":", "\"loch\""],
+      ["\"", "q.op", "\"", ":", "\"AND\""],
+      ["\"", "sow", "\"", ":", "true"]
+    ]
+
+    assert Encode.encode(x, opts) == expected
+
+    expected_json = "{" <> Enum.join(expected, ",") <> "}"
+    assert is_map(Poison.decode!(expected_json)) == true
   end
 
   test "encode omit nil or empty keywords" do

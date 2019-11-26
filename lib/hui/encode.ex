@@ -7,12 +7,14 @@ defmodule Hui.Encode do
   @type options :: Hui.Encode.Options.t()
 
   @url_delimiters {"=", "&"}
+  @json_delimters {":", ""}
+
 
   defmodule Options do
     defstruct [:per_field, :prefix, format: :url]
 
     @type t :: %__MODULE__{
-            format: :url,
+            format: :url | :json,
             per_field: binary,
             prefix: binary
           }
@@ -25,23 +27,24 @@ defmodule Hui.Encode do
   def encode(query, opts \\ %Options{})
 
   def encode(query, opts) when is_list(query) do
+    delimiters = if opts.format == :json, do: @json_delimters, else: @url_delimiters
+
     query
-    |> remove_unused_fields()
-    |> _encode(opts)
+    |> remove_fields()
+    |> _encode(opts, delimiters)
   end
 
-  defp _encode(query, opts, delimiters \\ @url_delimiters)
-  defp _encode([h | []], opts, _), do: [_encode(h, opts, {"=", ""})]
-  defp _encode([h | t], opts, _), do: [_encode(h, opts) | _encode(t, opts)]
+  defp _encode([h | []], %{format: :url} = opts, _), do: [_encode(h, opts, {"=", ""})]
+  defp _encode([h | []], %{format: :json} = opts, _), do: [_encode(h, opts, {":", ""})]
+
+  defp _encode([h | t], opts, del), do: [_encode(h, opts, del) | _encode(t, opts, del)]
 
   # do not render nil valued or empty keyword
   defp _encode({_, nil}, _, _), do: ""
   defp _encode([], _, _), do: ""
 
   # when value is a also struct, e.g. %Hui.Query.FacetRange/Interval{}
-  defp _encode({_, v}, _opts, sep) when is_map(v) do
-    if Map.has_key?(v, :__struct__), do: [Hui.Encoder.encode(v)], else: [encode(v), sep]
-  end
+  defp _encode({_, %{__struct__: _} = v}, _, _) when is_map(v), do: [Hui.Encoder.encode(v)]
 
   # encodes fq: [x, y] type keyword to "fq=x&fq=y"
   defp _encode({k, v}, opts, {eql, sep}) when is_list(v) do
@@ -53,8 +56,11 @@ defmodule Hui.Encode do
     ]
   end
 
-  defp _encode({k, v}, _opts, {eql, sep}),
+  defp _encode({k, v}, %{format: :url} = _opts, {eql, sep}),
     do: [to_string(k), eql, URI.encode_www_form(to_string(v)), sep]
+
+  defp _encode({k, v}, %{format: :json} = _opts, {eql, _sep}),
+    do: ["\"", to_string(k), "\"", eql, Poison.encode!(v)]
 
   @doc """
   Transforms built-in query structs to keyword list.
@@ -69,7 +75,7 @@ defmodule Hui.Encode do
   def transform(%{__struct__: _} = query, opts) do
     query
     |> Map.to_list()
-    |> remove_unused_fields()
+    |> remove_fields()
     |> _transform(opts)
   end
 
@@ -87,7 +93,7 @@ defmodule Hui.Encode do
     end
   end
 
-  defp remove_unused_fields(query) do
+  defp remove_fields(query) do
     query
     |> Enum.reject(fn {k, v} ->
       is_nil(v) or v == "" or v == [] or k == :__struct__ or k == :per_field
