@@ -38,7 +38,12 @@ defprotocol Hui.Encoder do
 end
 
 defimpl Hui.Encoder, for: [Query.Standard, Query.Common, Query.DisMax] do
-  def encode(query, _opts), do: Encode.encode(query |> Map.to_list()) |> IO.iodata_to_binary()
+  def encode(query, _opts) do
+    query
+    |> Map.to_list()
+    |> Encode.encode()
+    |> IO.iodata_to_binary()
+  end
 end
 
 # for structs without per-field encoding requirement
@@ -47,7 +52,10 @@ defimpl Hui.Encoder, for: [Query.Facet, Query.MoreLikeThis, Query.SpellCheck, Qu
     {prefix, _} = Hui.URLPrefixField.prefix_field()[query.__struct__]
     options = %Encode.Options{prefix: prefix}
 
-    Encode.encode(query, options) |> IO.iodata_to_binary()
+    query
+    |> Encode.transform(options)
+    |> Encode.encode(options)
+    |> IO.iodata_to_binary()
   end
 end
 
@@ -70,7 +78,10 @@ defimpl Hui.Encoder,
       per_field: if(query.per_field, do: per_field_field, else: nil)
     }
 
-    Encode.encode(query, options) |> IO.iodata_to_binary()
+    query
+    |> Encode.transform(options)
+    |> Encode.encode(options)
+    |> IO.iodata_to_binary()
   end
 end
 
@@ -150,7 +161,12 @@ end
 
 # general map data struct encoding
 defimpl Hui.Encoder, for: Map do
-  def encode(query, _opts), do: Encode.encode(query) |> IO.iodata_to_binary()
+  def encode(query, _opts) do
+    query
+    |> Map.to_list()
+    |> Encode.encode()
+    |> IO.iodata_to_binary()
+  end
 end
 
 defimpl Hui.Encoder, for: List do

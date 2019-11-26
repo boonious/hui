@@ -19,23 +19,14 @@ defmodule Hui.Encode do
   end
 
   @doc """
-  Utility function that encodes various Solr query types  - `t:Hui.Query.solr_query/0` to IO data.
+  Encodes keywords list to IO data.
   """
-  @spec encode(query, options) :: iodata
+  @spec encode(list(keyword), options) :: iodata
   def encode(query, opts \\ %Options{})
-
-  # encode built-in query structs
-  def encode(%{__struct__: _} = query, opts), do: transform(query, opts) |> _encode(opts)
-
-  def encode(query, opts) when is_map(query) do
-    query
-    |> Map.to_list()
-    |> encode(opts)
-  end
 
   def encode(query, opts) when is_list(query) do
     query
-    |> remove_fields()
+    |> remove_unused_fields()
     |> _encode(opts)
   end
 
@@ -65,13 +56,20 @@ defmodule Hui.Encode do
   defp _encode({k, v}, _opts, {eql, sep}),
     do: [to_string(k), eql, URI.encode_www_form(to_string(v)), sep]
 
-  @doc false
+  @doc """
+  Transforms built-in query structs to keyword list.
+
+  This function maps data struct according to Solr syntax,
+  addressing prefix, per-field requirement, as well as
+  adding implicit query fields such as `facet=true`, `hl=true`
+  """
+  @spec transform(query, options) :: iodata
   def transform(query, opts \\ %Options{})
 
   def transform(%{__struct__: _} = query, opts) do
     query
     |> Map.to_list()
-    |> remove_fields()
+    |> remove_unused_fields()
     |> _transform(opts)
   end
 
@@ -89,7 +87,7 @@ defmodule Hui.Encode do
     end
   end
 
-  defp remove_fields(query) do
+  defp remove_unused_fields(query) do
     query
     |> Enum.reject(fn {k, v} ->
       is_nil(v) or v == "" or v == [] or k == :__struct__ or k == :per_field
