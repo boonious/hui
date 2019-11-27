@@ -23,16 +23,43 @@ defmodule HuiEncodeTest do
     opts = %Options{format: :json}
 
     expected = [
-      ["\"", "df", "\"", ":", "\"words_txt\""],
-      ["\"", "q", "\"", ":", "\"loch\""],
-      ["\"", "q.op", "\"", ":", "\"AND\""],
-      ["\"", "sow", "\"", ":", "true"]
+      ["\"", "df", "\"", ":", "\"words_txt\"", ","],
+      ["\"", "q", "\"", ":", "\"loch\"", ","],
+      ["\"", "q.op", "\"", ":", "\"AND\"", ","],
+      ["\"", "sow", "\"", ":", "true", ""]
     ]
 
     assert Encode.encode(x, opts) == expected
 
-    expected_json = "{" <> Enum.join(expected, ",") <> "}"
+    expected_json = "{" <> (expected |> IO.iodata_to_binary) <> "}"
     assert is_map(Poison.decode!(expected_json)) == true
+  end
+
+  test "encode update message: doc, commitWithin, overwrite (JSON)" do
+    x = [
+      commitWithin: 10,
+      overwrite: true,
+      doc: %{
+        "actor_ss" => ["Harrison Ford", "Rutger Hauer", "Sean Young", "Edward James Olmos"],
+        "desc" =>
+          "A blade runner must pursue and terminate four replicants who stole a ship in space, and have returned to Earth to find their creator.",
+        "directed_by" => ["Ridley Scott"],
+        "genre" => ["Sci-Fi", "Thriller"],
+        "id" => "tt0083658",
+        "initial_release_date" => "1982-06-25",
+        "name" => "Blade Runner"
+      }
+    ]
+
+    expected =
+      "\"add\":{\"commitWithin\":10,\"overwrite\":true,\"doc\":{\"name\":\"Blade Runner\"," <>
+        "\"initial_release_date\":\"1982-06-25\",\"id\":\"tt0083658\",\"genre\":[\"Sci-Fi\",\"Thriller\"]," <>
+        "\"directed_by\":[\"Ridley Scott\"],\"desc\":\"A blade runner must pursue and terminate four replicants" <>
+        " who stole a ship in space, and have returned to Earth to find their creator.\",\"actor_ss\"" <>
+        ":[\"Harrison Ford\",\"Rutger Hauer\",\"Sean Young\",\"Edward James Olmos\"]}}"
+
+    opts = %Encode.Options{format: :json}
+    assert Encode.encode(x, opts) |> IO.iodata_to_binary() == expected
   end
 
   test "encode omit nil or empty keywords" do
@@ -140,7 +167,7 @@ defmodule HuiEncodeTest do
     x = %Query.Update{doc: %{id: "123"}, commitWithin: 10, overwrite: true}
     opts = %Encode.Options{format: "blah"}
 
-    error = "blah format is not supported. Hui currently only encode update message in JSON."
+    error = "blah format is not supported. Hui currently only encodes update message in JSON."
     assert_raise RuntimeError, error, fn -> Encode.transform(x, opts) end
   end
 end

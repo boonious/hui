@@ -9,7 +9,7 @@ defmodule Hui.Encode do
   @type options :: Hui.Encode.Options.t()
 
   @url_delimiters {"=", "&"}
-  @json_delimters {":", ""}
+  @json_delimters {":", ","}
   @update_encoding_sequence ["doc"]
 
   @update_field_sequence %{
@@ -31,6 +31,18 @@ defmodule Hui.Encode do
   """
   @spec encode(list(keyword), options) :: iodata
   def encode(query, opts \\ %Options{})
+
+  def encode([commitWithin: c, overwrite: o, doc: d], %{format: :json} = opts) do
+    [
+      "\"add\"",
+      ":",
+      "{",
+      _encode({:commitWithin, c}, opts, {":", ","}),
+      _encode({:overwrite, o}, opts, {":", ","}),
+      _encode({:doc, d}, opts, {":", ""}),
+      "}"
+    ]
+  end
 
   def encode(query, opts) when is_list(query) do
     delimiters = if opts.format == :json, do: @json_delimters, else: @url_delimiters
@@ -65,8 +77,8 @@ defmodule Hui.Encode do
   defp _encode({k, v}, %{format: :url} = _opts, {eql, sep}),
     do: [to_string(k), eql, URI.encode_www_form(to_string(v)), sep]
 
-  defp _encode({k, v}, %{format: :json} = _opts, {eql, _sep}),
-    do: ["\"", to_string(k), "\"", eql, Poison.encode!(v)]
+  defp _encode({k, v}, %{format: :json} = _opts, {eql, sep}),
+    do: ["\"", to_string(k), "\"", eql, Poison.encode!(v), sep]
 
   @doc """
   Transforms built-in query structs to keyword list.
@@ -75,17 +87,18 @@ defmodule Hui.Encode do
   addressing prefix, per-field requirement, as well as
   adding implicit query fields such as `facet=true`, `hl=true`
   """
-  @spec transform(query, options) :: iodata
+  @spec transform(query, options) :: list(keyword)
   def transform(query, opts \\ %Options{})
 
   def transform(%{__struct__: Update} = query, %{format: :json}) do
     for set <- @update_encoding_sequence do
       query |> extract_update_fields(set)
     end
+    |> Enum.reject(&(&1 == []))
   end
 
   def transform(%{__struct__: Update} = _, %{format: f}) when f != :json do
-    raise "#{f} format is not supported. Hui currently only encode update message in JSON."
+    raise "#{f} format is not supported. Hui currently only encodes update message in JSON."
   end
 
   def transform(%{__struct__: _} = query, opts) do
