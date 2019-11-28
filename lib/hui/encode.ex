@@ -10,10 +10,11 @@ defmodule Hui.Encode do
 
   @url_delimiters {"=", "&"}
   @json_delimters {":", ","}
-  @update_encoding_sequence ["doc"]
+  @update_encoding_sequence [:doc, :commit]
 
   @update_field_sequence %{
-    "doc" => [:commitWithin, :overwrite, :doc]
+    :doc => [:commitWithin, :overwrite, :doc],
+    :commit => [:commit, :expungeDeletes, :waitSearcher]
   }
 
   defmodule Options do
@@ -40,6 +41,19 @@ defmodule Hui.Encode do
       _encode({:commitWithin, c}, opts, {":", ","}),
       _encode({:overwrite, o}, opts, {":", ","}),
       _encode({:doc, d}, opts, {":", ""}),
+      "}"
+    ]
+  end
+
+  def encode([commit: true, expungeDeletes: e, waitSearcher: w], %{format: :json} = opts) do
+    sep = unless is_nil(w), do: ",", else: ""
+
+    [
+      "\"commit\"",
+      ":",
+      "{",
+      _encode({:expungeDeletes, e}, opts, {":", sep}),
+      _encode({:waitSearcher, w}, opts, {":", ""}),
       "}"
     ]
   end
@@ -129,11 +143,16 @@ defmodule Hui.Encode do
     end)
   end
 
-  defp extract_update_fields(query, group) do
+  defp extract_update_fields(q, group) do
     sequence = @update_field_sequence[group]
+    main_fl = Map.get(q, group)
 
-    for field <- sequence do
-      {field, query |> Map.get(field)}
+    if main_fl != false and main_fl != nil do
+      for fl <- sequence do
+        {fl, q |> Map.get(fl)}
+      end
+    else
+      []
     end
   end
 end

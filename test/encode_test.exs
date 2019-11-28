@@ -77,7 +77,7 @@ defmodule HuiEncodeTest do
       assert is_map(Poison.decode!(expected_json)) == true
     end
 
-    test "update message: doc, commitWithin, overwrite (JSON)" do
+    test "update: doc, commitWithin, overwrite (JSON)" do
       x = [
         commitWithin: 10,
         overwrite: true,
@@ -103,10 +103,33 @@ defmodule HuiEncodeTest do
       opts = %Encode.Options{format: :json}
       assert Encode.encode(x, opts) |> IO.iodata_to_binary() == expected
     end
+
+    test "update: commit, expungeDeletes, waitSearcher" do
+      opts = %Encode.Options{format: :json}
+
+      x = [commit: true, expungeDeletes: nil, waitSearcher: nil]
+      assert Encode.encode(x, opts) |> IO.iodata_to_binary() == "\"commit\":{}"
+
+      x = [commit: true, expungeDeletes: nil, waitSearcher: true]
+      expected = "\"commit\":{\"waitSearcher\":true}"
+      assert Encode.encode(x, opts) |> IO.iodata_to_binary() == expected
+
+      x = [commit: true, expungeDeletes: false, waitSearcher: nil]
+      expected = "\"commit\":{\"expungeDeletes\":false}"
+      assert Encode.encode(x, opts) |> IO.iodata_to_binary() == expected
+
+      x = [commit: true, expungeDeletes: false, waitSearcher: false]
+      expected = "\"commit\":{\"expungeDeletes\":false,\"waitSearcher\":false}"
+      assert Encode.encode(x, opts) |> IO.iodata_to_binary() == expected
+
+      x = [commit: true, expungeDeletes: true, waitSearcher: true]
+      expected = "\"commit\":{\"expungeDeletes\":true,\"waitSearcher\":true}"
+      assert Encode.encode(x, opts) |> IO.iodata_to_binary() == expected
+    end
   end
 
   describe "transform" do
-    test "transform query struct" do
+    test "query struct" do
       x = %Query.Facet{field: ["cat", "author_str"], mincount: 1}
       opts = %Encode.Options{prefix: "facet"}
 
@@ -130,7 +153,7 @@ defmodule HuiEncodeTest do
     end
 
     # test transformation of update structs into ordered keyword lists
-    test "transform update struct for JSON encoding - doc, commitWithin, overwrite" do
+    test "update struct: doc, commitWithin, overwrite" do
       expected = File.read!("./test/data/update_doc5.json")
       update_doc = expected |> Poison.decode!()
 
@@ -166,7 +189,15 @@ defmodule HuiEncodeTest do
       assert Encode.transform(x, opts) == expected
     end
 
-    test "transform raise exception for unsupported encoding format" do
+    test "update struct: commit, expungeDeletes, waitSearcher" do
+      x = %Query.Update{doc: nil, commit: true, waitSearcher: true, expungeDeletes: false}
+      opts = %Encode.Options{format: :json}
+
+      expected = [[commit: true, expungeDeletes: false, waitSearcher: true]]
+      assert Encode.transform(x, opts) == expected
+    end
+
+    test "raise exception for unsupported encoding format" do
       x = %Query.Update{doc: %{id: "123"}, commitWithin: 10, overwrite: true}
       opts = %Encode.Options{format: "blah"}
 
