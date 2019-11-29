@@ -272,11 +272,11 @@ defmodule HuiEncoderTest do
 
   test "encode Update struct - single doc" do
     update_doc = File.read!("./test/data/update_doc2.json") |> Poison.decode!()
-    expected_data = update_doc |> Poison.encode!()
+    expected = update_doc |> Poison.encode!()
     doc_map = update_doc["add"]["doc"]
 
     x = %Query.Update{doc: doc_map}
-    assert Encoder.encode(x) == expected_data
+    assert Encoder.encode(x) == expected
   end
 
   test "encode Update struct - multiple docs" do
@@ -306,12 +306,12 @@ defmodule HuiEncoderTest do
   end
 
   test "encode Update struct - commitWithin, overwrite" do
-    expected_data = File.read!("./test/data/update_doc4.json")
-    update_doc = expected_data |> Poison.decode!()
+    expected = File.read!("./test/data/update_doc4.json")
+    update_doc = expected |> Poison.decode!()
     doc_map = update_doc["add"]["doc"]
 
     x = %Query.Update{doc: doc_map, commitWithin: 5000}
-    assert Encoder.encode(x) == expected_data
+    assert Encoder.encode(x) == expected
 
     x = %Query.Update{doc: doc_map, commitWithin: 10, overwrite: true}
     assert Encoder.encode(x) == File.read!("./test/data/update_doc5.json")
@@ -321,7 +321,7 @@ defmodule HuiEncoderTest do
   end
 
   test "encode Update struct - commitWithin, overwrite (multiple docs)" do
-    expected_data = File.read!("./test/data/update_doc8.json")
+    expected = File.read!("./test/data/update_doc8.json")
 
     doc_map1 = %{
       "actor_ss" => ["Ingrid Bergman", "Liv Ullmann", "Lena Nyman", "Halvar Björk"],
@@ -346,7 +346,7 @@ defmodule HuiEncoderTest do
     }
 
     x = %Query.Update{doc: [doc_map1, doc_map2], commitWithin: 50, overwrite: true}
-    assert Encoder.encode(x) == expected_data
+    assert Encoder.encode(x) == expected
   end
 
   test "encode Update struct - commit, waitSearcher, expungeDeletes" do
@@ -365,7 +365,7 @@ defmodule HuiEncoderTest do
     x = %Query.Update{commit: true, waitSearcher: true, expungeDeletes: false}
 
     assert x |> Encoder.encode() ==
-             "{\"commit\":{\"waitSearcher\":true,\"expungeDeletes\":false}}"
+             "{\"commit\":{\"expungeDeletes\":false,\"waitSearcher\":true}}"
   end
 
   test "encode Update struct - optimize, waitSearcher, maxSegment" do
@@ -382,7 +382,7 @@ defmodule HuiEncoderTest do
     assert x |> Encoder.encode() == "{\"optimize\":{\"maxSegments\":20}}"
 
     x = %Query.Update{optimize: true, waitSearcher: true, maxSegments: 20}
-    assert x |> Encoder.encode() == "{\"optimize\":{\"waitSearcher\":true,\"maxSegments\":20}}"
+    assert x |> Encoder.encode() == "{\"optimize\":{\"maxSegments\":20,\"waitSearcher\":true}}"
   end
 
   test "encode Update struct - delete by ID" do

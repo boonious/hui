@@ -27,11 +27,11 @@ defmodule HuiUpdateTest do
         headers: [{"Content-type", "application/json"}]
       }
 
-      expected_data = File.read!("./test/data/update_doc2c.json")
-      update_doc = expected_data |> Poison.decode!()
+      expected = File.read!("./test/data/update_doc2c.json")
+      update_doc = expected |> Poison.decode!()
       doc_map = update_doc["add"]["doc"]
 
-      setup_bypass_for_post_req(context.bypass, expected_data)
+      setup_bypass_for_post_req(context.bypass, expected)
       test_update_req(url, doc_map)
     end
 
@@ -52,8 +52,8 @@ defmodule HuiUpdateTest do
         "name" => "The Turin Horse"
       }
 
-      expected_data = %Query.Update{doc: doc_map} |> Encoder.encode()
-      setup_bypass_for_post_req(context.bypass, expected_data)
+      expected = %Query.Update{doc: doc_map} |> Encoder.encode()
+      setup_bypass_for_post_req(context.bypass, expected)
       test_update_req(url, doc_map, false)
     end
 
@@ -118,8 +118,8 @@ defmodule HuiUpdateTest do
         "name" => "I Wish"
       }
 
-      expected_data = %Query.Update{doc: [doc_map1, doc_map2]} |> Encoder.encode()
-      setup_bypass_for_post_req(context.bypass, expected_data)
+      expected = %Query.Update{doc: [doc_map1, doc_map2]} |> Encoder.encode()
+      setup_bypass_for_post_req(context.bypass, expected)
       test_update_req(url, [doc_map1, doc_map2], false)
     end
 
@@ -153,8 +153,8 @@ defmodule HuiUpdateTest do
       }
 
       query = %Query.Update{delete_id: ["tt1650453", "tt1650453"], commit: true}
-      expected_data = query |> Encoder.encode()
-      setup_bypass_for_post_req(context.bypass, expected_data)
+      expected = query |> Encoder.encode()
+      setup_bypass_for_post_req(context.bypass, expected)
 
       Hui.delete(url, ["tt1650453", "tt1650453"])
       Hui.delete!(url, ["tt1650453", "tt1650453"])
@@ -182,8 +182,8 @@ defmodule HuiUpdateTest do
         headers: [{"Content-type", "application/json"}]
       }
 
-      expected_data = %Query.Update{commit: true, waitSearcher: true} |> Encoder.encode()
-      setup_bypass_for_post_req(context.bypass, expected_data)
+      expected = %Query.Update{commit: true, waitSearcher: true} |> Encoder.encode()
+      setup_bypass_for_post_req(context.bypass, expected)
 
       Hui.commit(url)
       Hui.commit!(url)

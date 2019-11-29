@@ -36,8 +36,8 @@ defmodule HuiStructUpdateTest do
         headers: [{"Content-type", "application/json"}]
       }
 
-      expected_data = File.read!("./test/data/delete_doc3.json")
-      setup_bypass_for_post_req(context.bypass, expected_data)
+      expected = File.read!("./test/data/delete_doc3.json")
+      setup_bypass_for_post_req(context.bypass, expected)
 
       x = %Query.Update{delete_id: ["tt1316540", "tt1650453"]}
       test_update_req(url, x)
@@ -50,11 +50,11 @@ defmodule HuiStructUpdateTest do
         headers: [{"Content-type", "application/json"}]
       }
 
-      expected_data =
+      expected =
         "{\"delete\":{\"query\":\"name:Persona\"},\"delete\":{\"query\":\"genre:Drama\"}}"
 
       x = %Query.Update{delete_query: ["name:Persona", "genre:Drama"]}
-      setup_bypass_for_post_req(context.bypass, expected_data)
+      setup_bypass_for_post_req(context.bypass, expected)
       test_update_req(url, x)
     end
 
@@ -66,8 +66,7 @@ defmodule HuiStructUpdateTest do
       }
 
       x = %Query.Update{optimize: true, maxSegments: 10, waitSearcher: false}
-      #expected = "{\"optimize\":{\"maxSegments\":10,\"waitSearcher\":false}}"
-      expected = "{\"optimize\":{\"waitSearcher\":false,\"maxSegments\":10}}" # to be replaced by the above
+      expected = "{\"optimize\":{\"maxSegments\":10,\"waitSearcher\":false}}"
 
       setup_bypass_for_post_req(context.bypass, expected)
       test_update_req(url, x)
@@ -80,10 +79,10 @@ defmodule HuiStructUpdateTest do
         headers: [{"Content-type", "application/json"}]
       }
 
-      expected_data = "{\"delete\":{\"query\":\"name:Persona\"},\"rollback\":{}}"
+      expected = "{\"delete\":{\"query\":\"name:Persona\"},\"rollback\":{}}"
 
       x = %Query.Update{delete_query: "name:Persona", rollback: true}
-      setup_bypass_for_post_req(context.bypass, expected_data)
+      setup_bypass_for_post_req(context.bypass, expected)
       test_update_req(url, x)
     end
 
@@ -94,7 +93,7 @@ defmodule HuiStructUpdateTest do
         headers: [{"Content-type", "application/json"}]
       }
 
-      expected_data = File.read!("./test/data/update_doc9.json")
+      expected = File.read!("./test/data/update_doc9.json")
 
       doc_map1 = %{
         "actor_ss" => ["Ingrid Bergman", "Liv Ullmann", "Lena Nyman", "Halvar Björk"],
@@ -121,7 +120,7 @@ defmodule HuiStructUpdateTest do
       x = %Query.Update{doc: [doc_map1, doc_map2], commitWithin: 50, overwrite: true}
       x = %Query.Update{x | commit: true, waitSearcher: true, expungeDeletes: false}
 
-      setup_bypass_for_post_req(context.bypass, expected_data)
+      setup_bypass_for_post_req(context.bypass, expected)
       test_update_req(url, x)
     end
   end
