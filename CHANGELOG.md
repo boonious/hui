@@ -1,10 +1,15 @@
 # Changelog
 
+## 0.9.2 (2019-11-29)
+
+* New JSON Encoder protocol implementation for `Hui.Query.Update` struct
+* Refactor encoding utiliy functions: prep for forthcoming support of JSON request/facet APIs
+
 ## 0.9.1 (2019-11-19)
 
 * New `Hui.Query.Update` struct for indexing documents
 * `Hui.Encoder` encodes update query in JSON format
-* `Query.get/2` and `Query.post/2` functions (accept built-in data structs) for HTTP requests
+* `Hui.Query.get/2` and `Hui.Query.post/2` functions (accept built-in data structs) for HTTP requests
 
 ## 0.9.0 (2019-11-06)
 
