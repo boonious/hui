@@ -10,11 +10,12 @@ defmodule Hui.Encode do
 
   @url_delimiters {"=", "&"}
   @json_delimters {":", ","}
-  @update_encoding_sequence [:doc, :commit]
+  @update_encoding_sequence [:doc, :commit, :delete_id]
 
   @update_field_sequence %{
     :doc => [:commitWithin, :overwrite, :doc],
-    :commit => [:commit, :expungeDeletes, :waitSearcher]
+    :commit => [:commit, :expungeDeletes, :waitSearcher],
+    :delete_id => [:delete_id]
   }
 
   defmodule Options do
@@ -46,7 +47,7 @@ defmodule Hui.Encode do
   end
 
   def encode([commit: true, expungeDeletes: e, waitSearcher: w], %{format: :json} = opts) do
-    sep = unless is_nil(w), do: ",", else: ""
+    sep = unless is_nil(w), do: elem(@json_delimters, 1), else: ""
 
     [
       "\"commit\"",
@@ -80,18 +81,31 @@ defmodule Hui.Encode do
 
   # encodes fq: [x, y] type keyword to "fq=x&fq=y"
   defp _encode({k, v}, opts, {eql, sep}) when is_list(v) do
-    [
-      v
-      |> Enum.reject(&(&1 == nil or &1 == ""))
-      |> Enum.map_join("&", &_encode({k, &1}, opts, {eql, ""})),
-      sep
-    ]
+    sep0 = if opts.format == :json, do: elem(@json_delimters, 1), else: elem(@url_delimiters, 1)
+
+    cond do
+      k == :delete and is_binary_list?(v) ->
+        ["\"", to_string(k), "\"", eql, Poison.encode!(v), sep]
+
+      true ->
+        [
+          v
+          |> Enum.reject(&(&1 == nil or &1 == ""))
+          |> Enum.map_join(sep0, &_encode({k, &1}, opts, {eql, ""})),
+          sep
+        ]
+    end
   end
 
-  defp _encode({k, v}, %{format: :url} = _opts, {eql, sep}),
+  defp _encode({k, v}, %{format: :url}, {eql, sep}),
     do: [to_string(k), eql, URI.encode_www_form(to_string(v)), sep]
 
-  defp _encode({k, v}, %{format: :json} = _opts, {eql, sep}),
+  defp _encode({k, v}, %{format: :json}, {eql, sep}) when k == :delete and is_tuple(v) do
+    value = _encode(v, %{format: :json}, {eql, sep})
+    ["\"", to_string(k), "\"", eql, "{", value, "}", sep]
+  end
+
+  defp _encode({k, v}, %{format: :json}, {eql, sep}),
     do: ["\"", to_string(k), "\"", eql, Poison.encode!(v), sep]
 
   @doc """
@@ -104,9 +118,11 @@ defmodule Hui.Encode do
   @spec transform(query, options) :: list(keyword)
   def transform(query, opts \\ %Options{})
 
-  def transform(%{__struct__: Update} = query, %{format: :json}) do
+  def transform(%{__struct__: Update} = query, %{format: :json} = opts) do
     for set <- @update_encoding_sequence do
-      query |> extract_update_fields(set)
+      query
+      |> extract_update_fields(set)
+      |> _transform(opts)
     end
     |> Enum.reject(&(&1 == []))
   end
@@ -124,6 +140,7 @@ defmodule Hui.Encode do
 
   # render keywords according to Solr prefix / per field syntax
   # e.g. transform `field: "year"` into `"facet.field": "year"`, `f.[field].facet.gap` etc.
+  defp _transform([], _), do: []
   defp _transform([h | []], opts), do: [_transform(h, opts)]
   defp _transform([h | t], opts), do: [_transform(h, opts) | _transform(t, opts)]
 
@@ -132,6 +149,8 @@ defmodule Hui.Encode do
       k_prefix && String.ends_with?(k_prefix, to_string(k)) -> {:"#{k_prefix}", v}
       k_prefix && per_field_field == nil -> {:"#{k_prefix}.#{k}", v}
       k_prefix && per_field_field != nil -> {:"f.#{per_field_field}.#{k_prefix}.#{k}", v}
+      k == :delete_id and is_list(v) -> {:delete, v |> Enum.map(&{:id, &1})}
+      k == :delete_id and is_binary(v) -> {:delete, {:id, v}}
       true -> {k, v}
     end
   end
@@ -143,7 +162,7 @@ defmodule Hui.Encode do
     end)
   end
 
-  defp extract_update_fields(q, group) do
+  defp extract_update_fields(%{__struct__: _} = q, group) do
     sequence = @update_field_sequence[group]
     main_fl = Map.get(q, group)
 
@@ -154,5 +173,9 @@ defmodule Hui.Encode do
     else
       []
     end
+  end
+
+  defp is_binary_list?(v) do
+    is_list(v) && is_binary(List.first(v))
   end
 end

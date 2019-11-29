@@ -126,6 +126,26 @@ defmodule HuiEncodeTest do
       expected = "\"commit\":{\"expungeDeletes\":true,\"waitSearcher\":true}"
       assert Encode.encode(x, opts) |> IO.iodata_to_binary() == expected
     end
+
+    test "update: delete by ID" do
+      opts = %Encode.Options{format: :json}
+
+      x = [delete: {:id, "tt1650453"}]
+      expected = "\"delete\":{\"id\":\"tt1650453\"}"
+      assert Encode.encode(x, opts) |> IO.iodata_to_binary() == expected
+
+      x = [delete: [id: "tt1650453", id: "tt165045"]]
+      expected = "\"delete\":{\"id\":\"tt1650453\"},\"delete\":{\"id\":\"tt165045\"}"
+      assert Encode.encode(x, opts) |> IO.iodata_to_binary() == expected
+
+      x = [delete: "tt1650453"]
+      expected = "\"delete\":\"tt1650453\""
+      assert Encode.encode(x, opts) |> IO.iodata_to_binary() == expected
+
+      x = [delete: ["123", "456"]]
+      expected = "\"delete\":[\"123\",\"456\"]"
+      assert Encode.encode(x, opts) |> IO.iodata_to_binary() == expected
+    end
   end
 
   describe "transform" do
@@ -195,6 +215,23 @@ defmodule HuiEncodeTest do
 
       expected = [[commit: true, expungeDeletes: false, waitSearcher: true]]
       assert Encode.transform(x, opts) == expected
+    end
+
+    test "update struct: delete by ID" do
+      opts = %Encode.Options{format: :json}
+
+      x = %Query.Update{delete_id: "tt1650453"}
+      expected = [[delete: {:id, "tt1650453"}]]
+      assert Encode.transform(x, opts) == expected
+
+      x = %Query.Update{delete_id: ["tt1650453", "tt1650453"]}
+      expected = [[delete: [id: "tt1650453", id: "tt1650453"]]]
+      assert Encode.transform(x, opts) == expected
+
+      x = %Query.Update{commit: true, delete_id: ["tt1650453", "tt1650453"]}
+      expected1 = [commit: true, expungeDeletes: nil, waitSearcher: nil]
+      expected2 = [delete: [id: "tt1650453", id: "tt1650453"]]
+      assert Encode.transform(x, opts) == [expected1, expected2]
     end
 
     test "raise exception for unsupported encoding format" do
