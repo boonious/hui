@@ -38,15 +38,21 @@ defmodule Hui.Encode do
   def encode(query, opts \\ %Options{})
 
   def encode([commitWithin: c, overwrite: o, doc: d], %{format: :json} = opts) do
-    [
-      "\"add\"",
-      ":",
-      "{",
-      _encode({:commitWithin, c}, opts, {":", ","}),
-      _encode({:overwrite, o}, opts, {":", ","}),
-      _encode({:doc, d}, opts, {":", ""}),
-      "}"
-    ]
+    docs = if is_list(d), do: d, else: [d]
+
+    for doc <- docs do
+      [
+        "\"add\"",
+        ":",
+        "{",
+        _encode({:commitWithin, c}, opts, {":", ","}),
+        _encode({:overwrite, o}, opts, {":", ","}),
+        _encode({:doc, doc}, opts, {":", ""}),
+        "}",
+        ","
+      ]
+    end
+    |> List.flatten |> Enum.reverse() |> tl() |> Enum.reverse() # remove last `.`
   end
 
   def encode([commit: true, expungeDeletes: e, waitSearcher: w], %{format: :json} = opts) do
