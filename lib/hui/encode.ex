@@ -10,14 +10,15 @@ defmodule Hui.Encode do
 
   @url_delimiters {"=", "&"}
   @json_delimters {":", ","}
-  @update_encoding_sequence [:doc, :delete_id, :delete_query, :commit, :optimize]
+  @update_encoding_sequence [:doc, :delete_id, :delete_query, :commit, :optimize, :rollback]
 
   @update_field_sequence %{
     :commit => [:commit, :expungeDeletes, :waitSearcher],
     :doc => [:commitWithin, :overwrite, :doc],
     :delete_id => [:delete_id],
     :delete_query => [:delete_query],
-    :optimize => [:optimize, :maxSegments, :waitSearcher]
+    :optimize => [:optimize, :maxSegments, :waitSearcher],
+    :rollback => [:rollback]
   }
 
   defmodule Options do
@@ -114,6 +115,9 @@ defmodule Hui.Encode do
 
   defp _encode({k, v}, %{format: :url}, {eql, sep}),
     do: [to_string(k), eql, URI.encode_www_form(to_string(v)), sep]
+
+  defp _encode({:rollback, true}, %{format: :json}, {eql, sep}),
+    do: ["\"", "rollback", "\"", eql, "{", "}", sep]
 
   defp _encode({k, v}, %{format: :json}, {eql, sep}) when k == :delete and is_tuple(v) do
     value = _encode(v, %{format: :json}, {eql, sep})

@@ -175,7 +175,7 @@ defmodule HuiUpdateTest do
       Hui.delete_by_query!(url, ["name:Persona", "genre:Drama"])
     end
 
-    test "should commit docs", context do
+    test "commit docs", context do
       url = %Hui.URL{
         url: "http://localhost:#{context.bypass.port}",
         handler: "update",

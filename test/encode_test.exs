@@ -170,6 +170,14 @@ defmodule HuiEncodeTest do
       expected = "\"optimize\":{\"maxSegments\":10,\"waitSearcher\":false}"
       assert Encode.encode(x, opts) |> IO.iodata_to_binary() == expected
     end
+
+    test "update: rollback" do
+      opts = %Encode.Options{format: :json}
+
+      x = [rollback: true]
+      expected = "\"rollback\":{}"
+      assert Encode.encode(x, opts) |> IO.iodata_to_binary() == expected
+    end
   end
 
   describe "transform" do
@@ -283,6 +291,22 @@ defmodule HuiEncodeTest do
 
       x = %Query.Update{optimize: true, maxSegments: 10, waitSearcher: false}
       expected = [[optimize: true, maxSegments: 10, waitSearcher: false]]
+      assert Encode.transform(x, opts) == expected
+    end
+
+    test "update struct: rollback" do
+      opts = %Encode.Options{format: :json}
+
+      x = %Query.Update{rollback: true}
+      expected = [[rollback: true]]
+      assert Encode.transform(x, opts) == expected
+
+      x = %Query.Update{rollback: false}
+      expected = []
+      assert Encode.transform(x, opts) == expected
+
+      x = %Query.Update{delete_query: "name:Persona", rollback: true}
+      expected = [[delete: {:query, "name:Persona"}], [rollback: true]]
       assert Encode.transform(x, opts) == expected
     end
 
