@@ -146,6 +146,18 @@ defmodule HuiEncodeTest do
       expected = "\"delete\":[\"123\",\"456\"]"
       assert Encode.encode(x, opts) |> IO.iodata_to_binary() == expected
     end
+
+    test "update: delete by query" do
+      opts = %Encode.Options{format: :json}
+
+      x = [delete: [query: "name:Persona", query: "genre:Drama"]]
+      expected = "\"delete\":{\"query\":\"name:Persona\"},\"delete\":{\"query\":\"genre:Drama\"}"
+      assert Encode.encode(x, opts) |> IO.iodata_to_binary() == expected
+
+      x = [delete: {:query, "name:Persona"}]
+      expected = "\"delete\":{\"query\":\"name:Persona\"}"
+      assert Encode.encode(x, opts) |> IO.iodata_to_binary() == expected
+    end
   end
 
   describe "transform" do
@@ -229,9 +241,25 @@ defmodule HuiEncodeTest do
       assert Encode.transform(x, opts) == expected
 
       x = %Query.Update{commit: true, delete_id: ["tt1650453", "tt1650453"]}
-      expected1 = [commit: true, expungeDeletes: nil, waitSearcher: nil]
-      expected2 = [delete: [id: "tt1650453", id: "tt1650453"]]
+      expected1 = [delete: [id: "tt1650453", id: "tt1650453"]]
+      expected2 = [commit: true, expungeDeletes: nil, waitSearcher: nil]
       assert Encode.transform(x, opts) == [expected1, expected2]
+    end
+
+    test "update struct: delete by query" do
+      opts = %Encode.Options{format: :json}
+      x = %Query.Update{delete_query: ["name:Persona", "genre:Drama"], commit: true}
+
+      expected = [
+        [delete: [query: "name:Persona", query: "genre:Drama"]],
+        [commit: true, expungeDeletes: nil, waitSearcher: nil]
+      ]
+
+      assert Encode.transform(x, opts) == expected
+
+      x = %Query.Update{delete_query: "name:Persona"}
+      expected = [[delete: {:query, "name:Persona"}]]
+      assert Encode.transform(x, opts) == expected
     end
 
     test "raise exception for unsupported encoding format" do

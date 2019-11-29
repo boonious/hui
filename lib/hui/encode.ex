@@ -10,12 +10,13 @@ defmodule Hui.Encode do
 
   @url_delimiters {"=", "&"}
   @json_delimters {":", ","}
-  @update_encoding_sequence [:doc, :commit, :delete_id]
+  @update_encoding_sequence [:doc, :delete_id, :delete_query, :commit]
 
   @update_field_sequence %{
-    :doc => [:commitWithin, :overwrite, :doc],
     :commit => [:commit, :expungeDeletes, :waitSearcher],
-    :delete_id => [:delete_id]
+    :doc => [:commitWithin, :overwrite, :doc],
+    :delete_id => [:delete_id],
+    :delete_query => [:delete_query]
   }
 
   defmodule Options do
@@ -151,6 +152,8 @@ defmodule Hui.Encode do
       k_prefix && per_field_field != nil -> {:"f.#{per_field_field}.#{k_prefix}.#{k}", v}
       k == :delete_id and is_list(v) -> {:delete, v |> Enum.map(&{:id, &1})}
       k == :delete_id and is_binary(v) -> {:delete, {:id, v}}
+      k == :delete_query and is_list(v) -> {:delete, v |> Enum.map(&{:query, &1})}
+      k == :delete_query and is_binary(v) -> {:delete, {:query, v}}
       true -> {k, v}
     end
   end
