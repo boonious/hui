@@ -10,13 +10,14 @@ defmodule Hui.Encode do
 
   @url_delimiters {"=", "&"}
   @json_delimters {":", ","}
-  @update_encoding_sequence [:doc, :delete_id, :delete_query, :commit]
+  @update_encoding_sequence [:doc, :delete_id, :delete_query, :commit, :optimize]
 
   @update_field_sequence %{
     :commit => [:commit, :expungeDeletes, :waitSearcher],
     :doc => [:commitWithin, :overwrite, :doc],
     :delete_id => [:delete_id],
-    :delete_query => [:delete_query]
+    :delete_query => [:delete_query],
+    :optimize => [:optimize, :maxSegments, :waitSearcher]
   }
 
   defmodule Options do
@@ -55,6 +56,19 @@ defmodule Hui.Encode do
       ":",
       "{",
       _encode({:expungeDeletes, e}, opts, {":", sep}),
+      _encode({:waitSearcher, w}, opts, {":", ""}),
+      "}"
+    ]
+  end
+
+  def encode([optimize: true, maxSegments: m, waitSearcher: w], %{format: :json} = opts) do
+    sep = unless is_nil(w), do: elem(@json_delimters, 1), else: ""
+
+    [
+      "\"optimize\"",
+      ":",
+      "{",
+      _encode({:maxSegments, m}, opts, {":", sep}),
       _encode({:waitSearcher, w}, opts, {":", ""}),
       "}"
     ]

@@ -160,7 +160,7 @@ defmodule HuiUpdateTest do
       Hui.delete!(url, ["tt1650453", "tt1650453"])
     end
 
-    test "should delete docs by query", context do
+    test "delete docs by query", context do
       url = %Hui.URL{
         url: "http://localhost:#{context.bypass.port}",
         handler: "update",
@@ -168,8 +168,8 @@ defmodule HuiUpdateTest do
       }
 
       query = %Query.Update{delete_query: ["name:Persona", "genre:Drama"], commit: true}
-      expected_data = query |> Encoder.encode()
-      setup_bypass_for_post_req(context.bypass, expected_data)
+      expected = query |> Encoder.encode()
+      setup_bypass_for_post_req(context.bypass, expected)
 
       Hui.delete_by_query(url, ["name:Persona", "genre:Drama"])
       Hui.delete_by_query!(url, ["name:Persona", "genre:Drama"])

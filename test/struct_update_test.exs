@@ -17,14 +17,15 @@ defmodule HuiStructUpdateTest do
         headers: [{"Content-type", "application/json"}]
       }
 
-      expected_data = File.read!("./test/data/update_doc5.json")
-      update_doc = expected_data |> Poison.decode!()
-      doc_map = update_doc["add"]["doc"]
-      commitWithin = update_doc["add"]["commitWithin"]
-      overwrite = update_doc["add"]["overwrite"]
+      expected = File.read!("./test/data/update_doc5.json")
+      update_doc = expected |> Poison.decode!()
 
-      x = %Query.Update{doc: doc_map, commitWithin: commitWithin, overwrite: overwrite}
-      setup_bypass_for_post_req(context.bypass, expected_data)
+      d = update_doc["add"]["doc"]
+      c = update_doc["add"]["commitWithin"]
+      o = update_doc["add"]["overwrite"]
+
+      x = %Query.Update{doc: d, commitWithin: c, overwrite: o}
+      setup_bypass_for_post_req(context.bypass, expected)
       test_update_req(url, x)
     end
 
@@ -54,6 +55,21 @@ defmodule HuiStructUpdateTest do
 
       x = %Query.Update{delete_query: ["name:Persona", "genre:Drama"]}
       setup_bypass_for_post_req(context.bypass, expected_data)
+      test_update_req(url, x)
+    end
+
+    test "optimize", context do
+      url = %Hui.URL{
+        url: "http://localhost:#{context.bypass.port}",
+        handler: "update",
+        headers: [{"Content-type", "application/json"}]
+      }
+
+      x = %Query.Update{optimize: true, maxSegments: 10, waitSearcher: false}
+      #expected = "{\"optimize\":{\"maxSegments\":10,\"waitSearcher\":false}}"
+      expected = "{\"optimize\":{\"waitSearcher\":false,\"maxSegments\":10}}" # to be replaced by the above
+
+      setup_bypass_for_post_req(context.bypass, expected)
       test_update_req(url, x)
     end
 

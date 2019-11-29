@@ -158,6 +158,18 @@ defmodule HuiEncodeTest do
       expected = "\"delete\":{\"query\":\"name:Persona\"}"
       assert Encode.encode(x, opts) |> IO.iodata_to_binary() == expected
     end
+
+    test "update: optimize" do
+      opts = %Encode.Options{format: :json}
+
+      x = [optimize: true, maxSegments: nil, waitSearcher: nil]
+      expected = "\"optimize\":{}"
+      assert Encode.encode(x, opts) |> IO.iodata_to_binary() == expected
+
+      x = [optimize: true, maxSegments: 10, waitSearcher: false]
+      expected = "\"optimize\":{\"maxSegments\":10,\"waitSearcher\":false}"
+      assert Encode.encode(x, opts) |> IO.iodata_to_binary() == expected
+    end
   end
 
   describe "transform" do
@@ -259,6 +271,18 @@ defmodule HuiEncodeTest do
 
       x = %Query.Update{delete_query: "name:Persona"}
       expected = [[delete: {:query, "name:Persona"}]]
+      assert Encode.transform(x, opts) == expected
+    end
+
+    test "update struct: optimize" do
+      opts = %Encode.Options{format: :json}
+
+      x = %Query.Update{optimize: true}
+      expected = [[optimize: true, maxSegments: nil, waitSearcher: nil]]
+      assert Encode.transform(x, opts) == expected
+
+      x = %Query.Update{optimize: true, maxSegments: 10, waitSearcher: false}
+      expected = [[optimize: true, maxSegments: 10, waitSearcher: false]]
       assert Encode.transform(x, opts) == expected
     end
 
