@@ -57,4 +57,6 @@ defmodule Hui.Query.DisMax do
           tie: float,
           uf: binary
         }
+
+  def new(), do: %__MODULE__{}
 end

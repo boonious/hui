@@ -18,4 +18,6 @@ defmodule Hui.Query.Suggest do
           reloadAll: boolean,
           suggest: boolean
         }
+
+  def new(), do: %__MODULE__{}
 end

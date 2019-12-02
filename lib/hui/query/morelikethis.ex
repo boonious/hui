@@ -41,4 +41,6 @@ defmodule Hui.Query.MoreLikeThis do
           mlt: boolean,
           qf: binary
         }
+
+  def new(), do: %__MODULE__{}
 end

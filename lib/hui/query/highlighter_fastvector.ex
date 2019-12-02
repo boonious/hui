@@ -39,4 +39,6 @@ defmodule Hui.Query.HighlighterFastVector do
           per_field: boolean,
           phraseLimit: number
         }
+
+  def new(), do: %__MODULE__{}
 end

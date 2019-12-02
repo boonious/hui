@@ -390,4 +390,76 @@ defmodule HuiStructTest do
              }
     end
   end
+
+  describe "new instance" do
+    test "Common" do
+      x = Query.Common.new()
+      assert x.__struct__ == Query.Common
+    end
+
+    test "DisMax" do
+      x = Query.DisMax.new()
+      assert x.__struct__ == Query.DisMax
+    end
+
+    test "FacetInterval" do
+      x = Query.FacetInterval.new()
+      assert x.__struct__ == Query.FacetInterval
+    end
+
+    test "FacetRange" do
+      x = Query.FacetRange.new()
+      assert x.__struct__ == Query.FacetRange
+    end
+
+    test "Facet" do
+      x = Query.Facet.new()
+      assert x.__struct__ == Query.Facet
+    end
+
+    test "Highlight" do
+      x = Query.Highlight.new()
+      assert x.__struct__ == Query.Highlight
+    end
+
+    test "HighlighterFastVector" do
+      x = Query.HighlighterFastVector.new()
+      assert x.__struct__ == Query.HighlighterFastVector
+    end
+
+    test "HighlighterOriginal" do
+      x = Query.HighlighterOriginal.new()
+      assert x.__struct__ == Query.HighlighterOriginal
+    end
+
+    test "HighlighterUnified" do
+      x = Query.HighlighterUnified.new()
+      assert x.__struct__ == Query.HighlighterUnified
+    end
+
+    test "MoreLikeThis" do
+      x = Query.MoreLikeThis.new()
+      assert x.__struct__ == Query.MoreLikeThis
+    end
+
+    test "SpellCheck" do
+      x = Query.SpellCheck.new()
+      assert x.__struct__ == Query.SpellCheck
+    end
+
+    test "Standard" do
+      x = Query.Standard.new()
+      assert x.__struct__ == Query.Standard
+    end
+
+    test "Suggest" do
+      x = Query.Suggest.new()
+      assert x.__struct__ == Query.Suggest
+    end
+
+    test "Update" do
+      x = Query.Update.new()
+      assert x.__struct__ == Query.Update
+    end
+  end
 end

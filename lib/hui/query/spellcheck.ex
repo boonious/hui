@@ -53,4 +53,6 @@ defmodule Hui.Query.SpellCheck do
           "shards.qt": binary,
           spellcheck: boolean
         }
+
+  def new(), do: %__MODULE__{}
 end

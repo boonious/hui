@@ -75,4 +75,6 @@ defmodule Hui.Query.Common do
           wt: binary,
           _route_: binary
         }
+
+  def new(), do: %__MODULE__{}
 end

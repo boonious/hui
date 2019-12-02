@@ -42,6 +42,8 @@ defmodule Hui.Query.HighlighterOriginal do
           "regex.pattern": binary,
           "regex.slop": number,
           "simple.post": binary,
-          "simple.pre": binary,
+          "simple.pre": binary
         }
+
+  def new(), do: %__MODULE__{}
 end

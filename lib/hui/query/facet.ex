@@ -87,4 +87,6 @@ defmodule Hui.Query.Facet do
           sort: :count | :index,
           threads: number
         }
+
+  def new(), do: %__MODULE__{}
 end

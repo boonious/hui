@@ -44,4 +44,6 @@ defmodule Hui.Query.Highlight do
           "tag.pre": binary,
           usePhraseHighlighter: boolean
         }
+
+  def new(), do: %__MODULE__{}
 end

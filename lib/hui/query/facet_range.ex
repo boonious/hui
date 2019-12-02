@@ -164,4 +164,6 @@ defmodule Hui.Query.FacetRange do
           range: binary,
           start: binary
         }
+
+  def new(), do: %__MODULE__{}
 end

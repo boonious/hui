@@ -93,4 +93,6 @@ defmodule Hui.Query.FacetInterval do
   the faceting struct - `t:Hui.Query.Facet.t/0`.
   """
   @type t :: %__MODULE__{interval: binary, set: binary | list(binary), per_field: boolean}
+
+  def new(), do: %__MODULE__{}
 end

@@ -101,6 +101,8 @@ defmodule Hui.Query.Update do
           waitSearcher: boolean
         }
 
+  def new(), do: %__MODULE__{}
+
   @doc false
   @spec encode(Query.Update.t()) :: binary
   @deprecated "testing"

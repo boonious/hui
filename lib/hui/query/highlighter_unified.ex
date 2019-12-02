@@ -38,4 +38,6 @@ defmodule Hui.Query.HighlighterUnified do
           "tag.ellipsis": binary,
           weightMatches: boolean
         }
+
+  def new(), do: %__MODULE__{}
 end
