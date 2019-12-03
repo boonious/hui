@@ -42,5 +42,6 @@ defmodule Hui.Query.MoreLikeThis do
           qf: binary
         }
 
+  @spec new :: t
   def new(), do: %__MODULE__{}
 end

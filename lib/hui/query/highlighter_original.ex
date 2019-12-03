@@ -45,5 +45,6 @@ defmodule Hui.Query.HighlighterOriginal do
           "simple.pre": binary
         }
 
+  @spec new :: t
   def new(), do: %__MODULE__{}
 end

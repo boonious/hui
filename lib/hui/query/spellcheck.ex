@@ -54,5 +54,6 @@ defmodule Hui.Query.SpellCheck do
           spellcheck: boolean
         }
 
+  @spec new :: t
   def new(), do: %__MODULE__{}
 end

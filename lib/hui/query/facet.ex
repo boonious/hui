@@ -88,5 +88,6 @@ defmodule Hui.Query.Facet do
           threads: number
         }
 
+  @spec new :: t
   def new(), do: %__MODULE__{}
 end

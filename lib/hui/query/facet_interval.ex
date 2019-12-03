@@ -94,5 +94,6 @@ defmodule Hui.Query.FacetInterval do
   """
   @type t :: %__MODULE__{interval: binary, set: binary | list(binary), per_field: boolean}
 
+  @spec new :: t
   def new(), do: %__MODULE__{}
 end

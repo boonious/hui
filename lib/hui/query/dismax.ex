@@ -58,5 +58,6 @@ defmodule Hui.Query.DisMax do
           uf: binary
         }
 
+  @spec new :: t
   def new(), do: %__MODULE__{}
 end

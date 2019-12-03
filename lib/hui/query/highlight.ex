@@ -45,5 +45,6 @@ defmodule Hui.Query.Highlight do
           usePhraseHighlighter: boolean
         }
 
+  @spec new :: t
   def new(), do: %__MODULE__{}
 end

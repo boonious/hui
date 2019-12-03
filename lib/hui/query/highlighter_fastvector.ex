@@ -40,5 +40,6 @@ defmodule Hui.Query.HighlighterFastVector do
           phraseLimit: number
         }
 
+  @spec new :: t
   def new(), do: %__MODULE__{}
 end

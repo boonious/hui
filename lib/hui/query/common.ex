@@ -76,5 +76,6 @@ defmodule Hui.Query.Common do
           _route_: binary
         }
 
+  @spec new :: t
   def new(), do: %__MODULE__{}
 end

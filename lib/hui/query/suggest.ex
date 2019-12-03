@@ -19,5 +19,6 @@ defmodule Hui.Query.Suggest do
           suggest: boolean
         }
 
+  @spec new :: t
   def new(), do: %__MODULE__{}
 end
