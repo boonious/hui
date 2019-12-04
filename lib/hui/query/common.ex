@@ -76,6 +76,10 @@ defmodule Hui.Query.Common do
           _route_: binary
         }
 
+  @spec new(integer, integer, binary | list(binary), binary) :: t
+  def new(rows, start \\ nil, fq \\ nil, sort \\ nil),
+    do: %__MODULE__{rows: rows, start: start, fq: fq, sort: sort}
+
   @spec new :: t
   def new(), do: %__MODULE__{}
 end
