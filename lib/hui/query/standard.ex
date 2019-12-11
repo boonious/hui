@@ -13,6 +13,9 @@ defmodule Hui.Query.Standard do
   """
   @type t :: %__MODULE__{q: binary, "q.op": binary, df: binary, sow: boolean}
 
+  @spec new(binary) :: t
+  def new(q), do: %__MODULE__{q: q}
+
   @spec new :: t
   def new(), do: %__MODULE__{q: ""}
 end
