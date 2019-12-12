@@ -448,16 +448,47 @@ defmodule HuiStructTest do
     test "FacetInterval" do
       x = Query.FacetInterval.new()
       assert x.__struct__ == Query.FacetInterval
+
+      {interval, set} = {"price", ["[0,10]", "(10,100]"]}
+
+      x = Query.FacetInterval.new(interval)
+      assert x.interval == interval
+      assert is_nil(x.set)
+
+      x = Query.FacetInterval.new(interval, set)
+      assert x.interval == interval
+      assert x.set == set
     end
 
     test "FacetRange" do
       x = Query.FacetRange.new()
       assert x.__struct__ == Query.FacetRange
+
+      {r, g, s, e} = {"year", "+10YEARS", 1700, 1799}
+      x = Query.FacetRange.new(r, g, s, e)
+      assert x.range == r
+      assert x.gap == g
+      assert x.start == s
+      assert x.end == e
     end
 
     test "Facet" do
       x = Query.Facet.new()
       assert x.__struct__ == Query.Facet
+
+      {f, q} = {["type", "year"], "year:2001"}
+
+      x = Query.Facet.new(f)
+      assert x.field == f
+      assert is_nil(x.query)
+
+      x = Query.Facet.new(f, q)
+      assert x.field == f
+      assert x.query == q
+
+      x = Query.Facet.new(nil, q)
+      assert is_nil(x.field)
+      assert x.query == q
     end
 
     test "Highlight" do

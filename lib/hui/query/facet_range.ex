@@ -165,6 +165,9 @@ defmodule Hui.Query.FacetRange do
           start: binary
         }
 
+  @spec new(binary, binary, binary, binary) :: t
+  def new(r, g, s, e), do: %__MODULE__{range: r, gap: g, start: s, end: e}
+
   @spec new :: t
   def new(), do: %__MODULE__{}
 end

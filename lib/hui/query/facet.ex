@@ -88,6 +88,9 @@ defmodule Hui.Query.Facet do
           threads: number
         }
 
+  @spec new(binary | list(binary), binary | list(binary)) :: t
+  def new(field, query \\ nil), do: %__MODULE__{field: field, query: query}
+
   @spec new :: t
   def new(), do: %__MODULE__{}
 end

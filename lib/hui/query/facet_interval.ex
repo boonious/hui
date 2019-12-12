@@ -86,13 +86,16 @@ defmodule Hui.Query.FacetInterval do
 
   """
 
-  defstruct [:interval, set: [], per_field: false]
+  defstruct [:interval, :set, per_field: false]
 
   @typedoc """
   Struct for interval faceting parameters, use in conjunction with
   the faceting struct - `t:Hui.Query.Facet.t/0`.
   """
   @type t :: %__MODULE__{interval: binary, set: binary | list(binary), per_field: boolean}
+
+  @spec new(binary, binary | list(binary)) :: t
+  def new(interval, set \\ nil), do: %__MODULE__{interval: interval, set: set}
 
   @spec new :: t
   def new(), do: %__MODULE__{}
