@@ -465,6 +465,7 @@ defmodule HuiStructTest do
       assert x.__struct__ == Query.FacetRange
 
       {r, g, s, e} = {"year", "+10YEARS", 1700, 1799}
+
       x = Query.FacetRange.new(r, g, s, e)
       assert x.range == r
       assert x.gap == g
@@ -494,6 +495,23 @@ defmodule HuiStructTest do
     test "Highlight" do
       x = Query.Highlight.new()
       assert x.__struct__ == Query.Highlight
+
+      {fl, snippets, fragsize} = {"title,description", 3, 250}
+
+      x = Query.Highlight.new(fl)
+      assert x.fl == fl
+      assert is_nil(x.snippets)
+      assert is_nil(x.fragsize)
+
+      x = Query.Highlight.new(fl, snippets)
+      assert x.fl == fl
+      assert x.snippets == snippets
+      assert is_nil(x.fragsize)
+
+      x = Query.Highlight.new(fl, snippets, fragsize)
+      assert x.fl == fl
+      assert x.snippets == snippets
+      assert x.fragsize == fragsize
     end
 
     test "HighlighterFastVector" do

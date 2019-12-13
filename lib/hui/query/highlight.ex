@@ -45,6 +45,10 @@ defmodule Hui.Query.Highlight do
           usePhraseHighlighter: boolean
         }
 
+  @spec new(binary, number, number) :: t
+  def new(fl, snippets \\ nil, fragsize \\ nil),
+    do: %__MODULE__{fl: fl, fragsize: fragsize, snippets: snippets}
+
   @spec new :: t
   def new(), do: %__MODULE__{}
 end
