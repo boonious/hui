@@ -517,16 +517,50 @@ defmodule HuiStructTest do
     test "HighlighterFastVector" do
       x = Query.HighlighterFastVector.new()
       assert x.__struct__ == Query.HighlighterFastVector
+
+      {alt_field, len, highlight} = {"description", 500, false}
+
+      x = Query.HighlighterFastVector.new(alt_field)
+      assert x.alternateField == alt_field
+      assert is_nil(x.maxAlternateFieldLength)
+      assert is_nil(x.highlightAlternate)
+
+      x = Query.HighlighterFastVector.new(alt_field, len, highlight)
+      assert x.alternateField == alt_field
+      assert x.maxAlternateFieldLength == len
+      assert x.highlightAlternate == highlight
     end
 
     test "HighlighterOriginal" do
       x = Query.HighlighterOriginal.new()
       assert x.__struct__ == Query.HighlighterOriginal
+
+      {alt_field, len, highlight} = {"description", 500, false}
+
+      x = Query.HighlighterOriginal.new(alt_field)
+      assert x.alternateField == alt_field
+      assert is_nil(x.maxAlternateFieldLength)
+      assert is_nil(x.highlightAlternate)
+
+      x = Query.HighlighterOriginal.new(alt_field, len, highlight)
+      assert x.alternateField == alt_field
+      assert x.maxAlternateFieldLength == len
+      assert x.highlightAlternate == highlight
     end
 
     test "HighlighterUnified" do
       x = Query.HighlighterUnified.new()
       assert x.__struct__ == Query.HighlighterUnified
+
+      {d, s} = {true, :POSTINGS}
+
+      x = Query.HighlighterUnified.new(d)
+      assert x.defaultSummary == d
+      assert is_nil(x.offsetSource)
+
+      x = Query.HighlighterUnified.new(d, s)
+      assert x.defaultSummary == d
+      assert x.offsetSource == s
     end
 
     test "MoreLikeThis" do

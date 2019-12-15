@@ -45,6 +45,14 @@ defmodule Hui.Query.HighlighterOriginal do
           "simple.pre": binary
         }
 
+  @spec new(binary, integer, boolean) :: t
+  def new(field, len \\ nil, highlight \\ nil),
+    do: %__MODULE__{
+      alternateField: field,
+      maxAlternateFieldLength: len,
+      highlightAlternate: highlight
+    }
+
   @spec new :: t
   def new(), do: %__MODULE__{}
 end

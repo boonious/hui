@@ -39,6 +39,10 @@ defmodule Hui.Query.HighlighterUnified do
           weightMatches: boolean
         }
 
+  @spec new(atom, boolean) :: t
+  def new(d, s \\ nil) when is_boolean(d),
+    do: %__MODULE__{defaultSummary: d, offsetSource: s}
+
   @spec new :: t
   def new(), do: %__MODULE__{}
 end
