@@ -42,6 +42,16 @@ defmodule Hui.Query.MoreLikeThis do
           qf: binary
         }
 
+  @spec new(binary, number, number, number, number) :: t
+  def new(fl, count \\ nil, min_tf \\ nil, min_df \\ nil, max_df \\ nil),
+    do: %__MODULE__{
+      fl: fl,
+      count: count,
+      mintf: min_tf,
+      mindf: min_df,
+      maxdf: max_df
+    }
+
   @spec new :: t
   def new(), do: %__MODULE__{}
 end

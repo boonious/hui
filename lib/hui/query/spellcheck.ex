@@ -54,6 +54,9 @@ defmodule Hui.Query.SpellCheck do
           spellcheck: boolean
         }
 
+  @spec new(binary, boolean) :: t
+  def new(q, collate \\ nil), do: %__MODULE__{q: q, collate: collate}
+
   @spec new :: t
   def new(), do: %__MODULE__{}
 end

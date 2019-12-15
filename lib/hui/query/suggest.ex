@@ -19,6 +19,10 @@ defmodule Hui.Query.Suggest do
           suggest: boolean
         }
 
+  @spec new(binary, number, binary | list(binary), binary) :: t
+  def new(q, count \\ nil, dictionaries \\ nil, context \\ nil),
+    do: %__MODULE__{q: q, count: count, dictionary: dictionaries, cfq: context}
+
   @spec new :: t
   def new(), do: %__MODULE__{}
 end
