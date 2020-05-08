@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.3 (2020-05-08)
+* Remove various deprecated functions and data structs
+* `new` instantiation function for data structs
+
 ## 0.9.2 (2019-11-29)
 
 * New JSON Encoder protocol implementation for `Hui.Query.Update` struct
