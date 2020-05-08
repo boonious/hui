@@ -117,73 +117,9 @@ defmodule Hui.URL do
     end
   end
 
-  @doc false
-  @spec encode_query(url_params) :: binary
-  @deprecated "Please use Hui.Encoder instead"
-  # coveralls-ignore-start
-  def encode_query(%Hui.H3{} = url_params), do: encode_query(url_params |> Map.to_list |> Enum.sort)
-  def encode_query(%Hui.F.Range{} = url_params), do: encode_query(url_params |> Map.to_list, "facet.range", url_params.range, url_params.per_field)
-  def encode_query(%Hui.F.Interval{} = url_params), do: encode_query(url_params |> Map.to_list, "facet.interval", url_params.interval, url_params.per_field)
-  def encode_query(url_params) when is_map(url_params), do: encode_query(url_params |> Map.to_list)
-
-  def encode_query([{:__struct__, Hui.Q} | tail]), do: tail |> encode_query
-  def encode_query([{:__struct__, Hui.F} | tail]), do: Enum.map(tail, &prefix/1) |> encode_query
-  def encode_query([{:__struct__, Hui.H} | tail]), do: Enum.map(tail, &prefix(&1, "hl")) |> encode_query
-  def encode_query([{:__struct__, Hui.H1} | tail]), do: Enum.map(tail, &prefix(&1, "hl")) |> encode_query
-  def encode_query([{:__struct__, Hui.H2} | tail]), do: Enum.map(tail, &prefix(&1, "hl")) |> encode_query
-  def encode_query([{:__struct__, Hui.H3} | tail]), do: Enum.map(tail, &prefix(&1, "hl")) |> encode_query
-  def encode_query([{:__struct__, Hui.S} | tail]), do: Enum.map(tail, &prefix(&1, "suggest")) |> encode_query
-  def encode_query([{:__struct__, Hui.Sp} | tail]), do: Enum.map(tail, &prefix(&1, "spellcheck")) |> encode_query
-  def encode_query([{:__struct__, Hui.M} | tail]), do: Enum.map(tail, &prefix(&1, "mlt")) |> encode_query
-
-  def encode_query(enumerable) when is_list(enumerable), do: Enum.reject(enumerable, &invalid_param?/1) |> Enum.map_join("&", &encode/1)
-  def encode_query(_), do: ""
-
-  def encode_query([{:__struct__, _struct} | tail], prefix, field, per_field), do: Enum.map(tail, &prefix(&1, prefix, field, per_field)) |> encode_query
-  # coveralls-ignore-stop
-
   @doc "Returns the string representation (URL path) of the given `t:Hui.URL.t/0` struct."
   @spec to_string(t) :: binary
   defdelegate to_string(uri), to: String.Chars.Hui.URL
-
-  # coveralls-ignore-start
-  defp encode({k,v}) when is_list(v), do: Enum.reject(v, &invalid_param?/1) |> Enum.map_join("&", &encode({k,&1}))
-  defp encode({k,v}) when is_binary(v), do: "#{k}=#{URI.encode_www_form(v)}"
-
-  # when value is a also struct, e.g. %Hui.F.Range/Interval{}
-  defp encode({_k,v}) when is_map(v), do: encode_query(v)
-
-  defp encode({k,v}), do: "#{k}=#{v}"
-  defp encode([]), do: ""
-  defp encode(v), do: v
-
-  # kv pairs with empty, nil or [] values
-  defp invalid_param?(""), do: true
-  defp invalid_param?(nil), do: true
-  defp invalid_param?([]), do: true
-  defp invalid_param?(x) when is_tuple(x), do: is_nil(elem(x,1)) or elem(x,1) == "" or elem(x, 1) == [] or elem(x,0) == :__struct__
-  defp invalid_param?(_x), do: false
-
-  # render kv pairs according to Solr prefix /per field syntax
-  # e.g. `field: "year"` to `"facet.field": "year"`, `f.[field].facet.gap`
-  defp prefix({k,v}) when k == :facet, do: {k,v}
-  defp prefix({k,v}, prefix \\ "facet", field \\ "", per_field \\ false) do
-    case {k,prefix} do
-      {:facet, _} -> {:facet, v}
-      {:hl, _} -> {:hl, v}
-      {:suggest, _} -> {:suggest, v}
-      {:spellcheck, _} -> {:spellcheck, v}
-      {:mlt, _} -> {:mlt, v}
-      {:range, "facet.range"} -> {:"facet.range", v} # render the same way despite per field setting
-      {:method, "facet.range"} -> {:"facet.range.method", v} # ditto
-      {:interval, "facet.interval"} -> {:"facet.interval", v} # ditto
-      {:per_field, _} -> {k, nil} # do not render this field
-      {:per_field_method, _} -> if per_field, do: {:"f.#{field}.#{prefix}.method", v}, else: {k, nil}
-      {_, _} -> if per_field, do: {:"f.#{field}.#{prefix}.#{k}", v}, else: {:"#{prefix}.#{k}", v}
-    end
-  end
-  # coveralls-ignore-stop
-
 end
 
 # implement `to_string` for %Hui.URL{} in Elixir generally via the String.Chars protocol
