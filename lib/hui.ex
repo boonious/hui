@@ -12,8 +12,6 @@ defmodule Hui do
   """
 
   import Hui.Guards
-  # deprecated
-  alias Hui.Request
 
   alias Hui.Query
   alias HTTPoison.Response
@@ -50,11 +48,6 @@ defmodule Hui do
   ```
   """
   @spec q(query) :: {:ok, Response.t()} | {:error, Hui.Error.t()}
-  # deprecated - to be removed in a future version
-  # coveralls-ignore-start
-  def q(%Hui.Q{} = query), do: Request.search(:default, [query])
-  # coveralls-ignore-stop
-
   def q(q) when is_list(q), do: query(q, :default)
 
   @doc """
@@ -63,11 +56,6 @@ defmodule Hui do
   See `q/1`.
   """
   @spec q!(Hui.Q.t() | Request.query_struct_list() | Keyword.t()) :: Response.t()
-  # deprecated - to be removed in a future version
-  # coveralls-ignore-start
-  def q!(%Hui.Q{} = query), do: Request.search(:default, true, [query])
-  # coveralls-ignore-stop
-
   def q!(q) when is_list(q), do: query!(q, :default)
 
   @doc """
@@ -191,11 +179,6 @@ defmodule Hui do
   ```
   """
   @spec search(url, query) :: {:ok, Response.t()} | {:error, Hui.Error.t()}
-  # deprecated - will be removed in a future version
-  # coveralls-ignore-start
-  def search(url, %Hui.Q{} = query), do: Request.search(url, [query])
-  # coveralls-ignore-stop
-
   def search(url, q) when is_list(q) or is_map(q), do: query(q, url)
 
   @doc """
@@ -204,11 +187,6 @@ defmodule Hui do
   See `search/2`.
   """
   @spec search!(url, Hui.Q.t() | Request.query_struct_list() | Keyword.t()) :: Response.t()
-  # deprecated - will be removed in a future version
-  # coveralls-ignore-start
-  def search!(url, %Hui.Q{} = query), do: Request.search(url, true, [query])
-  # coveralls-ignore-stop
-
   def search!(url, q) when is_list(q) or is_map(q), do: query!(q, url)
 
   @doc """
@@ -282,31 +260,6 @@ defmodule Hui do
     [x, y, z] |> query!(url)
   end
 
-  # coveralls-ignore-start
-  @doc false
-  @spec spellcheck(url, Query.SpellCheck.t()) :: {:ok, Response.t()} | {:error, Hui.Error.t()}
-  @deprecated "Please use search/2 with Hui.Query.SpellCheck query struct."
-  def spellcheck(url, %Hui.Sp{} = query), do: Request.search(url, [query])
-
-  @doc false
-  @spec spellcheck!(url, Hui.Sp.t()) :: Response.t()
-  @deprecated "Please use search!/2 with Hui.Query.SpellCheck struct."
-  def spellcheck!(url, %Hui.Sp{} = query), do: Request.search(url, true, [query])
-
-  @doc false
-  @spec spellcheck(url, Hui.Sp.t(), Hui.Q.t()) :: {:ok, Response.t()} | {:error, Hui.Error.t()}
-  @deprecated "Please use search/2 with Hui.Query.SpellCheck struct."
-  def spellcheck(url, %Hui.Sp{} = query_sp, %Hui.Q{} = query),
-    do: Request.search(url, [query, query_sp])
-
-  @doc false
-  @spec spellcheck!(url, Hui.Sp.t(), Hui.Q.t()) :: Response.t()
-  @deprecated "Please use search/2 with Hui.Query.SpellCheck struct."
-  def spellcheck!(url, %Hui.Sp{} = query_sp, %Hui.Q{} = query),
-    do: Request.search(url, true, [query, query_sp])
-
-  # coveralls-ignore-stop
-
   @doc """
   Issue a structured suggest query to a specified Solr endpoint.
 
@@ -363,21 +316,6 @@ defmodule Hui do
     %Query.Suggest{q: q, count: count, dictionary: dictionaries, cfq: context}
     |> query!(url)
   end
-
-  # coveralls-ignore-start
-  @doc false
-  @spec mlt(url, Hui.Q.t(), Hui.M.t()) :: {:ok, Response.t()} | {:error, Hui.Error.t()}
-  @deprecated "Please use search/2 with Hui.Query.MoreLikeThis struct."
-  def mlt(url, %Hui.Q{} = query_struct, %Hui.M{} = mlt_query_struct),
-    do: Request.search(url, [query_struct, mlt_query_struct])
-
-  @doc false
-  @deprecated "Please use search/2 with Hui.Query.MoreLikeThis struct."
-  @spec mlt!(url, Hui.Q.t(), Hui.M.t()) :: Response.t()
-  def mlt!(url, %Hui.Q{} = query_struct, %Hui.M{} = mlt_query_struct),
-    do: Request.search(url, true, [query_struct, mlt_query_struct])
-
-  # coveralls-ignore-stop
 
   @doc """
   Updates or adds Solr documents to an index or collection.
