@@ -44,33 +44,6 @@ defmodule HuiSearchTest do
      error_nxdomain: error_nxdomain}
   end
 
-  describe "http client" do
-    # malformed Solr endpoints, unable cores or bad query params (404, 400 etc.)
-    test "handle errors", context do
-      Bypass.expect(context.bypass, fn conn ->
-        Plug.Conn.resp(conn, 404, "")
-      end)
-
-      {_, resp} = Hui.search("http://localhost:#{context.bypass.port}", q: "http test")
-      assert 404 = resp.status_code
-    end
-
-    test "handle unreachable host or offline server", context do
-      Bypass.down(context.bypass)
-
-      assert {:error, %Hui.Error{reason: :econnrefused}} =
-               Hui.search("http://localhost:#{context.bypass.port}", q: "http test")
-    end
-
-    test "raise error when host unreachable", context do
-      Bypass.down(context.bypass)
-
-      assert_raise HTTPoison.Error, ":econnrefused", fn ->
-        Hui.search!("http://localhost:#{context.bypass.port}", q: "http test")
-      end
-    end
-  end
-
   describe "q functions (:default configured %Hui.URL)" do
     # simple tests since `q` forward calls
     # to `search` which is tested further below
