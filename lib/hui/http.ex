@@ -1,5 +1,5 @@
 defmodule Hui.Http do
-  @default Hui.Http.Httpoison
+  @default_client Hui.Http.Httpoison
 
   @type t :: %__MODULE__{
           body: term,
@@ -17,4 +17,10 @@ defmodule Hui.Http do
 
   @callback get(request :: t) :: {:ok, t} | {:error, term}
   @callback post(request :: t) :: {:ok, t} | {:error, term}
+
+  @spec get(client :: module, request :: t) :: {:ok, t} | {:error, term}
+  def get(client \\ @default_client, request), do: client.get(request)
+
+  @spec post(client :: module, request :: t) :: {:ok, t} | {:error, term}
+  def post(client \\ @default_client, request), do: client.post(request)
 end
