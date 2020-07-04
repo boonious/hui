@@ -49,16 +49,16 @@ defmodule HuiSearchTest do
     # to `search` which is tested further below
     test "call configured default URL" do
       {_, resp} = Hui.q("a", 1, 5, "type:text", ["type", "year"])
-      assert resp.status_code == 200
+      assert resp.status == 200
 
       {_, resp} = Hui.q(q: "test")
-      assert resp.status_code == 200
+      assert resp.status == 200
 
       resp = Hui.q!("a", 1, 5, "type:text", ["type", "year"])
-      assert resp.status_code == 200
+      assert resp.status == 200
 
       resp = Hui.q!(q: "test")
-      assert resp.status_code == 200
+      assert resp.status == 200
     end
   end
 
@@ -179,10 +179,10 @@ defmodule HuiSearchTest do
       experted_request_url = Hui.URL.to_string(url) <> "?" <> Hui.Encoder.encode(query)
 
       {_, resp} = Hui.search(:library, query)
-      assert experted_request_url == resp.request_url
+      assert experted_request_url == resp.url
 
       resp = Hui.search!(:library, query)
-      assert experted_request_url == resp.request_url
+      assert experted_request_url == resp.url
     end
 
     test "handle bad URL" do
@@ -192,7 +192,8 @@ defmodule HuiSearchTest do
 
     test "decode and return raw JSON Solr response as Map", context do
       Bypass.expect(context.bypass, fn conn ->
-        Plug.Conn.resp(conn, 200, context.simple_search_response_sample)
+        Plug.Conn.put_resp_header(conn, "content-type", "application/json")
+        |> Plug.Conn.resp(200, context.simple_search_response_sample)
       end)
 
       {_, resp} = Hui.search("http://localhost:#{context.bypass.port}", q: "*")
@@ -249,12 +250,12 @@ defmodule HuiSearchTest do
       url = "http://localhost:#{context.bypass.port}"
 
       {_, resp} = Hui.search(url, "apache documentation")
-      assert String.match?(resp.request_url, ~r/q=apache\+documentation/)
+      assert String.match?(resp.url, ~r/q=apache\+documentation/)
 
       expected = "q=a&fq=type%3Atext&rows=1&start=5&facet=true&facet.field=type&facet.field=year"
 
       {_, resp} = Hui.search(url, "a", 1, 5, "type:text", ["type", "year"])
-      assert String.match?(resp.request_url, ~r/#{expected}/)
+      assert String.match?(resp.url, ~r/#{expected}/)
     end
   end
 
@@ -267,12 +268,12 @@ defmodule HuiSearchTest do
       url = "http://localhost:#{context.bypass.port}"
 
       resp = Hui.search!(url, "apache documentation")
-      assert String.match?(resp.request_url, ~r/q=apache\+documentation/)
+      assert String.match?(resp.url, ~r/q=apache\+documentation/)
 
       expected = "q=a&fq=type%3Atext&rows=1&start=5&facet=true&facet.field=type&facet.field=year"
 
       resp = Hui.search!(url, "a", 1, 5, "type:text", ["type", "year"])
-      assert String.match?(resp.request_url, ~r/#{expected}/)
+      assert String.match?(resp.url, ~r/#{expected}/)
     end
   end
 
@@ -290,10 +291,10 @@ defmodule HuiSearchTest do
           "suggest.q=ha&suggest=true"
 
       {_, resp} = Hui.suggest(url, "t")
-      assert String.match?(resp.request_url, ~r/suggest.q=t&suggest=true/)
+      assert String.match?(resp.url, ~r/suggest.q=t&suggest=true/)
 
       {_, resp} = Hui.suggest(url, "ha", 5, ["name_infix", "ln_prefix", "fn_prefix"], "1939")
-      assert String.match?(resp.request_url, ~r/#{expected}/)
+      assert String.match?(resp.url, ~r/#{expected}/)
     end
 
     test "handle malformed parameters", context do
@@ -316,10 +317,10 @@ defmodule HuiSearchTest do
           "suggest.q=ha&suggest=true"
 
       resp = Hui.suggest!(url, "t")
-      assert String.match?(resp.request_url, ~r/suggest.q=t&suggest=true/)
+      assert String.match?(resp.url, ~r/suggest.q=t&suggest=true/)
 
       resp = Hui.suggest!(url, "ha", 5, ["name_infix", "ln_prefix", "fn_prefix"], "1939")
-      assert String.match?(resp.request_url, ~r/#{experted}/)
+      assert String.match?(resp.url, ~r/#{experted}/)
     end
 
     test "handle malformed parameters" do

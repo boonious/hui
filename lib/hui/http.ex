@@ -2,7 +2,7 @@ defmodule Hui.Http do
   @default_client Hui.Http.Httpoison
 
   @type t :: %__MODULE__{
-          body: term,
+          body: binary | map,
           headers: list,
           options: keyword,
           status: integer,

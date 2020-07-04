@@ -7,8 +7,9 @@ defmodule Hui.Query do
   - `post/2`, `post!/2`
   """
 
-  use HTTPoison.Base
+  import Hui.Http
 
+  alias Hui.Http
   alias Hui.URL
   alias Hui.Encoder
   alias Hui.Query
@@ -53,12 +54,13 @@ defmodule Hui.Query do
   of a request, e.g. `timeout`, `recv_timeout`, `max_redirect` etc.
   """
   @spec get(solr_url, solr_query) :: {:ok, HTTPoison.Response.t()} | {:error, HTTPoison.Error.t()}
-  @impl true
   def get(%URL{} = solr_url, solr_query) do
-    endpoint = to_string(solr_url)
-    query = Encoder.encode(solr_query)
-
-    get([endpoint, "?", query] |> IO.iodata_to_binary(), solr_url.headers, solr_url.options)
+    %Http{
+      url: [to_string(solr_url), "?", Encoder.encode(solr_query)] |> IO.iodata_to_binary(),
+      headers: solr_url.headers,
+      options: solr_url.options
+    }
+    |> get()
   end
 
   @doc """
@@ -69,12 +71,16 @@ defmodule Hui.Query do
   See `get/2` for more detailed information.
   """
   @spec get!(solr_url, solr_query) :: HTTPoison.Response.t()
-  @impl true
   def get!(%URL{} = solr_url, solr_query) do
-    endpoint = to_string(solr_url)
-    query = Encoder.encode(solr_query)
-
-    get!([endpoint, "?", query] |> IO.iodata_to_binary(), solr_url.headers, solr_url.options)
+    case %Http{
+           url: [to_string(solr_url), "?", Encoder.encode(solr_query)] |> IO.iodata_to_binary(),
+           headers: solr_url.headers,
+           options: solr_url.options
+         }
+         |> get() do
+      {:ok, resp} -> resp
+      {:error, error} -> raise error
+    end
   end
 
   @doc """
@@ -82,37 +88,27 @@ defmodule Hui.Query do
   """
   @spec post(solr_url, solr_update_query) ::
           {:ok, HTTPoison.Response.t()} | {:error, HTTPoison.Error.t()}
-  @impl true
   def post(%URL{} = solr_url, solr_query) do
-    endpoint = to_string(solr_url)
-    data = if is_binary(solr_query), do: solr_query, else: Encoder.encode(solr_query)
+    body = if is_binary(solr_query), do: solr_query, else: Encoder.encode(solr_query)
 
-    post(endpoint, data, solr_url.headers, solr_url.options)
+    post(%Http{
+      url: to_string(solr_url),
+      headers: solr_url.headers,
+      options: solr_url.options,
+      body: body
+    })
   end
 
   @doc """
   Issues a POST update request to a specific Solr endpoint, raising an exception in case of failure.
   """
   @spec post!(solr_url, solr_update_query) :: HTTPoison.Response.t()
-  @impl true
   def post!(%URL{} = solr_url, solr_query) do
-    endpoint = to_string(solr_url)
-    data = if is_binary(solr_query), do: solr_query, else: Encoder.encode(solr_query)
+    body = if is_binary(solr_query), do: solr_query, else: Encoder.encode(solr_query)
 
-    post!(endpoint, data, solr_url.headers, solr_url.options)
-  end
-
-  # implement HTTPoison.Base callback:
-  # decode JSON data, return other response formats as raw text
-  @impl true
-  def process_response_body(""), do: ""
-
-  def process_response_body(body) do
-    {status, solr_results} = Poison.decode(body)
-
-    case status do
-      :ok -> solr_results
-      :error -> body
+    case post(%Http{url: to_string(solr_url), headers: solr_url.headers, options: solr_url.options, body: body}) do
+      {:ok, resp} -> resp
+      {:error, error} -> raise error
     end
   end
 end
