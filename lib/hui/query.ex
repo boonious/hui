@@ -3,7 +3,7 @@ defmodule Hui.Query do
 
   Hui.Query module provides underpinning HTTP-based request functions for Solr, including:
 
-  - `get/2`, `get!/2`
+  - `get/2`
   - `post/2`, `post!/2`
   """
 
@@ -61,26 +61,6 @@ defmodule Hui.Query do
       options: solr_url.options
     }
     |> get()
-  end
-
-  @doc """
-  Issues a get request of Solr query to a specific endpoint, raising an exception in case of failure.
-
-  If the request does not fail, the response is returned.
-
-  See `get/2` for more detailed information.
-  """
-  @spec get!(solr_url, solr_query) :: HTTPoison.Response.t()
-  def get!(%URL{} = solr_url, solr_query) do
-    case %Http{
-           url: [to_string(solr_url), "?", Encoder.encode(solr_query)] |> IO.iodata_to_binary(),
-           headers: solr_url.headers,
-           options: solr_url.options
-         }
-         |> get() do
-      {:ok, resp} -> resp
-      {:error, error} -> raise error
-    end
   end
 
   @doc """

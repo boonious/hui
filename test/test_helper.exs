@@ -13,18 +13,10 @@ defmodule TestHelpers do
       |> Regex.compile!()
 
     assert String.match?(resp.url, regex)
-
-    # include tests for Query.get!
-    resp = Hui.Query.get!(url, query)
-    assert String.match?(resp.url, regex)
   end
 
   def test_search_req_url(url, query, regex) do
     {_status, resp} = Hui.search(url, query)
-    assert String.match?(resp.url, regex)
-
-    # include tests for search!
-    resp = Hui.search!(url, query)
     assert String.match?(resp.url, regex)
   end
 
@@ -37,10 +29,6 @@ defmodule TestHelpers do
       |> Regex.compile!()
 
     assert String.match?(resp.url, regex)
-
-    # include tests for search!
-    resp = Hui.search!(url, query)
-    assert String.match?(resp.url, regex)
   end
 
   def test_all_search_live(query, expected_params, expected_url) do
@@ -50,17 +38,6 @@ defmodule TestHelpers do
     assert String.match?(resp.url, expected_url)
 
     {_, resp} = Hui.search(:default, query)
-    requested_params = resp.body["responseHeader"]["params"]
-    assert expected_params == requested_params
-    assert String.match?(resp.url, expected_url)
-
-    # bang functions test
-    resp = Hui.q!(query)
-    requested_params = resp.body["responseHeader"]["params"]
-    assert expected_params == requested_params
-    assert String.match?(resp.url, expected_url)
-
-    resp = Hui.search!(:default, query)
     requested_params = resp.body["responseHeader"]["params"]
     assert expected_params == requested_params
     assert String.match?(resp.url, expected_url)
@@ -99,20 +76,20 @@ defmodule TestHelpers do
     Hui.update(url, delete_msg)
     Hui.update(url, %Hui.Query.Update{commit: true})
     ids = if is_list(id), do: Enum.join(id, " OR "), else: id
-    resp = Hui.search!(:default, q: "*", fq: ["id:(#{ids})"])
+    {_, resp} = Hui.search(:default, q: "*", fq: ["id:(#{ids})"])
     assert resp.body["response"]["numFound"] == 0
   end
 
   def delete_verify_doc_deletion(%Hui.URL{} = url, %Hui.Query.Update{} = delete_msg, id) do
     Hui.update(url, delete_msg)
     ids = if is_list(id), do: Enum.join(id, " OR "), else: id
-    resp = Hui.search!(:default, q: "*", fq: ["id:(#{ids})"])
+    {_, resp} = Hui.search(:default, q: "*", fq: ["id:(#{ids})"])
     assert resp.body["response"]["numFound"] == 0
   end
 
   def verify_docs_exist(url, id) do
     ids = if is_list(id), do: Enum.join(id, " OR "), else: id
-    resp = Hui.search!(url, q: "*", fq: ["id:(#{ids})"])
+    {_, resp} = Hui.search(url, q: "*", fq: ["id:(#{ids})"])
     assert resp.body["response"]["numFound"] == length(id)
     docs = resp.body["response"]["docs"] |> Enum.map(&Map.get(&1, "id"))
     for x <- id, do: assert(Enum.member?(docs, x))
@@ -120,7 +97,7 @@ defmodule TestHelpers do
 
   def verify_docs_missing(url, id) do
     ids = if is_list(id), do: Enum.join(id, " OR "), else: id
-    resp = Hui.search!(url, q: "*", fq: ["id:(#{ids})"])
+    {_, resp} = Hui.search(url, q: "*", fq: ["id:(#{ids})"])
     assert resp.body["response"]["numFound"] == 0
     docs = resp.body["response"]["docs"] |> Enum.map(&Map.get(&1, "id"))
     for x <- id, do: refute(Enum.member?(docs, x))

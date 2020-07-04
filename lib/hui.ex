@@ -51,14 +51,6 @@ defmodule Hui do
   def q(q) when is_list(q), do: query(q, :default)
 
   @doc """
-  Issue a keyword list or structured query to the default Solr endpoint, raising an exception in case of failure.
-
-  See `q/1`.
-  """
-  @spec q!(Hui.Q.t() | Request.query_struct_list() | Keyword.t()) :: Response.t()
-  def q!(q) when is_list(q), do: query!(q, :default)
-
-  @doc """
   Convenience function for issuing various typical queries to the default Solr endpoint.
 
   ### Example
@@ -87,27 +79,6 @@ defmodule Hui do
 
   def q(keywords, rows, start, filters, facet_fields, sort) do
     search(:default, keywords, rows, start, filters, facet_fields, sort)
-  end
-
-  @doc """
-  Convenience function for issuing various typical queries to the default Solr endpoint,
-  raise an exception in case of failure.
-  """
-  @spec q!(
-          binary,
-          nil | integer,
-          nil | integer,
-          nil | binary | list(binary),
-          nil | binary | list(binary),
-          nil | binary
-        ) :: Response.t()
-  def q!(keywords, rows \\ nil, start \\ nil, filters \\ nil, facet_fields \\ nil, sort \\ nil)
-
-  def q!(keywords, _, _, _, _, _) when is_nil_empty(keywords),
-    do: raise(%Hui.Error{reason: :einval})
-
-  def q!(keywords, rows, start, filters, facet_fields, sort) do
-    search!(:default, keywords, rows, start, filters, facet_fields, sort)
   end
 
   @doc """
@@ -182,14 +153,6 @@ defmodule Hui do
   def search(url, q) when is_list(q) or is_map(q), do: query(q, url)
 
   @doc """
-  Issue a keyword list or structured query to a specified Solr endpoint, raise an exception in case of failure.
-
-  See `search/2`.
-  """
-  @spec search!(url, Hui.Q.t() | Request.query_struct_list() | Keyword.t()) :: Response.t()
-  def search!(url, q) when is_list(q) or is_map(q), do: query!(q, url)
-
-  @doc """
   Convenience function for issuing various typical queries to a specified Solr endpoint.
 
   See `q/6`.
@@ -225,42 +188,6 @@ defmodule Hui do
   end
 
   @doc """
-  Convenience function for issuing various typical queries to a specified Solr endpoint,
-  raise an exception in case of failure.
-
-  See `q/6`.
-  """
-  @spec search!(
-          url,
-          binary,
-          nil | integer,
-          nil | integer,
-          nil | binary | list(binary),
-          nil | binary | list(binary),
-          nil | binary
-        ) :: Response.t()
-  def search!(
-        url,
-        keywords,
-        rows \\ nil,
-        start \\ nil,
-        filters \\ nil,
-        facet_fields \\ nil,
-        sort \\ nil
-      )
-
-  def search!(url, keywords, _, _, _, _, _) when is_nil_empty(keywords) or is_nil_empty(url),
-    do: raise(%Hui.Error{reason: :einval})
-
-  def search!(url, keywords, rows, start, filters, facet_fields, sort) do
-    x = %Query.Standard{q: keywords}
-    y = %Query.Common{rows: rows, start: start, fq: filters, sort: sort}
-    z = %Query.Facet{field: facet_fields}
-
-    [x, y, z] |> query!(url)
-  end
-
-  @doc """
   Issue a structured suggest query to a specified Solr endpoint.
 
   ### Example
@@ -272,12 +199,6 @@ defmodule Hui do
   """
   @spec suggest(url, Query.Suggest.t()) :: {:ok, Response.t()} | {:error, Hui.Error.t()}
   def suggest(url, %Query.Suggest{} = q), do: q |> query(url)
-
-  @doc """
-  Issue a structured suggester query to a specified Solr endpoint, raise an exception in case of failure.
-  """
-  @spec suggest!(url, Query.Suggest.t()) :: Response.t()
-  def suggest!(url, %Query.Suggest{} = q), do: q |> query!(url)
 
   @doc """
   Convenience function for issuing a suggester query to a specified Solr endpoint.
@@ -299,22 +220,6 @@ defmodule Hui do
   def suggest(url, q, count, dictionaries, context) do
     %Query.Suggest{q: q, count: count, dictionary: dictionaries, cfq: context}
     |> query(url)
-  end
-
-  @doc """
-  Convenience function for issuing a suggester query to a specified Solr endpoint,
-  raise an exception in case of failure.
-  """
-  @spec suggest!(url, binary, nil | integer, nil | binary | list(binary), nil | binary) ::
-          Response.t()
-  def suggest!(url, q, count \\ nil, dictionaries \\ nil, context \\ nil)
-
-  def suggest!(url, q, _, _, _) when is_nil_empty(q) or is_nil_empty(url),
-    do: raise(%Hui.Error{reason: :einval})
-
-  def suggest!(url, q, count, dictionaries, context) do
-    %Query.Suggest{q: q, count: count, dictionary: dictionaries, cfq: context}
-    |> query!(url)
   end
 
   @doc """
@@ -551,11 +456,10 @@ defmodule Hui do
     end
   end
 
-  defp query!(q, url, method \\ :get) do
+  defp query!(q, url, method) do
     {status, url} = parse_url(url)
 
     case {status, method} do
-      {:ok, :get} -> _parse_resp(Query.get!(url, q))
       {:ok, :post} -> _parse_resp(Query.post!(url, q))
       {:error, _} -> raise(@error_nxdomain)
     end
