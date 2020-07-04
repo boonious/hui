@@ -61,14 +61,12 @@ defmodule TestHelpers do
     # invoke post requests
     # assertions - see Bypass setup in 'setup_bypass_for_post_req'
     Hui.Query.post(url, query)
-    Hui.Query.post!(url, query)
   end
 
   def test_update_req(url, query, commit \\ true) do
     # invoke update requests
     # assertions - see Bypass setup in 'setup_bypass_for_post_req'
     Hui.update(url, query, commit)
-    Hui.update!(url, query, commit)
   end
 
   # for live update tests

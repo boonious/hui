@@ -3,8 +3,7 @@ defmodule Hui.Query do
 
   Hui.Query module provides underpinning HTTP-based request functions for Solr, including:
 
-  - `get/2`
-  - `post/2`, `post!/2`
+  - `get/2`, `post/2`
   """
 
   import Hui.Http
@@ -77,18 +76,5 @@ defmodule Hui.Query do
       options: solr_url.options,
       body: body
     })
-  end
-
-  @doc """
-  Issues a POST update request to a specific Solr endpoint, raising an exception in case of failure.
-  """
-  @spec post!(solr_url, solr_update_query) :: HTTPoison.Response.t()
-  def post!(%URL{} = solr_url, solr_query) do
-    body = if is_binary(solr_query), do: solr_query, else: Encoder.encode(solr_query)
-
-    case post(%Http{url: to_string(solr_url), headers: solr_url.headers, options: solr_url.options, body: body}) do
-      {:ok, resp} -> resp
-      {:error, error} -> raise error
-    end
   end
 end
