@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.10.0 (2020-07-06)
+* New HTTP client architecture: introduce a behaviour with a HTTPoison implementation
+* Begin HTTPoison dependency decoupling
+* Removal of all bang (!) functions towards a simpler core library
+
 ## 0.9.3 (2020-05-08)
 * Remove various deprecated functions and data structs
 * `new` instantiation function for data structs
