@@ -10,10 +10,7 @@ defmodule HuiQueryTest do
     resp_xml = File.read!("./test/data/simple_search_response.xml")
     bypass = Bypass.open()
 
-    {:ok,
-     bypass: bypass,
-     simple_search_response_sample: resp,
-     simple_search_response_sample_xml: resp_xml}
+    {:ok, bypass: bypass, simple_search_response_sample: resp, simple_search_response_sample_xml: resp_xml}
   end
 
   describe "Query.get supports" do
@@ -285,7 +282,8 @@ defmodule HuiQueryTest do
   describe "response processing" do
     test "parse json response", context do
       Bypass.expect(context.bypass, fn conn ->
-        Plug.Conn.resp(conn, 200, context.simple_search_response_sample)
+        Plug.Conn.put_resp_header(conn, "content-type", "application/json;charset=utf-8")
+        |> Plug.Conn.resp(200, context.simple_search_response_sample)
       end)
 
       solr_params = [q: "*", rows: 10, fq: ["cat:electronics", "popularity:[0 TO *]"]]

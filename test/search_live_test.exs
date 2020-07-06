@@ -171,11 +171,6 @@ defmodule HuiSearchLiveTest do
       requested_params = resp.body["responseHeader"]["params"]
       assert expected_params == requested_params
       assert String.match?(resp.request_url, ~r/#{expected_url}/)
-
-      resp = Hui.suggest!(:default, x)
-      requested_params = resp.body["responseHeader"]["params"]
-      assert expected_params == requested_params
-      assert String.match?(resp.request_url, ~r/#{expected_url}/)
     end
 
     test "convenience function" do
@@ -193,11 +188,6 @@ defmodule HuiSearchLiveTest do
       }
 
       {_, resp} = Hui.suggest(:default, "ha", 5, ["name_infix", "ln_prefix", "fn_prefix"], "1939")
-      requested_params = resp.body["responseHeader"]["params"]
-      assert expected_params == requested_params
-      assert String.match?(resp.request_url, ~r/#{expected_url}/)
-
-      resp = Hui.suggest!(:default, "ha", 5, ["name_infix", "ln_prefix", "fn_prefix"], "1939")
       requested_params = resp.body["responseHeader"]["params"]
       assert expected_params == requested_params
       assert String.match?(resp.request_url, ~r/#{expected_url}/)

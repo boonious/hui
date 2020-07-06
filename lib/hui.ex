@@ -51,14 +51,6 @@ defmodule Hui do
   def q(q) when is_list(q), do: query(q, :default)
 
   @doc """
-  Issue a keyword list or structured query to the default Solr endpoint, raising an exception in case of failure.
-
-  See `q/1`.
-  """
-  @spec q!(Hui.Q.t() | Request.query_struct_list() | Keyword.t()) :: Response.t()
-  def q!(q) when is_list(q), do: query!(q, :default)
-
-  @doc """
   Convenience function for issuing various typical queries to the default Solr endpoint.
 
   ### Example
@@ -87,27 +79,6 @@ defmodule Hui do
 
   def q(keywords, rows, start, filters, facet_fields, sort) do
     search(:default, keywords, rows, start, filters, facet_fields, sort)
-  end
-
-  @doc """
-  Convenience function for issuing various typical queries to the default Solr endpoint,
-  raise an exception in case of failure.
-  """
-  @spec q!(
-          binary,
-          nil | integer,
-          nil | integer,
-          nil | binary | list(binary),
-          nil | binary | list(binary),
-          nil | binary
-        ) :: Response.t()
-  def q!(keywords, rows \\ nil, start \\ nil, filters \\ nil, facet_fields \\ nil, sort \\ nil)
-
-  def q!(keywords, _, _, _, _, _) when is_nil_empty(keywords),
-    do: raise(%Hui.Error{reason: :einval})
-
-  def q!(keywords, rows, start, filters, facet_fields, sort) do
-    search!(:default, keywords, rows, start, filters, facet_fields, sort)
   end
 
   @doc """
@@ -182,14 +153,6 @@ defmodule Hui do
   def search(url, q) when is_list(q) or is_map(q), do: query(q, url)
 
   @doc """
-  Issue a keyword list or structured query to a specified Solr endpoint, raise an exception in case of failure.
-
-  See `search/2`.
-  """
-  @spec search!(url, Hui.Q.t() | Request.query_struct_list() | Keyword.t()) :: Response.t()
-  def search!(url, q) when is_list(q) or is_map(q), do: query!(q, url)
-
-  @doc """
   Convenience function for issuing various typical queries to a specified Solr endpoint.
 
   See `q/6`.
@@ -225,42 +188,6 @@ defmodule Hui do
   end
 
   @doc """
-  Convenience function for issuing various typical queries to a specified Solr endpoint,
-  raise an exception in case of failure.
-
-  See `q/6`.
-  """
-  @spec search!(
-          url,
-          binary,
-          nil | integer,
-          nil | integer,
-          nil | binary | list(binary),
-          nil | binary | list(binary),
-          nil | binary
-        ) :: Response.t()
-  def search!(
-        url,
-        keywords,
-        rows \\ nil,
-        start \\ nil,
-        filters \\ nil,
-        facet_fields \\ nil,
-        sort \\ nil
-      )
-
-  def search!(url, keywords, _, _, _, _, _) when is_nil_empty(keywords) or is_nil_empty(url),
-    do: raise(%Hui.Error{reason: :einval})
-
-  def search!(url, keywords, rows, start, filters, facet_fields, sort) do
-    x = %Query.Standard{q: keywords}
-    y = %Query.Common{rows: rows, start: start, fq: filters, sort: sort}
-    z = %Query.Facet{field: facet_fields}
-
-    [x, y, z] |> query!(url)
-  end
-
-  @doc """
   Issue a structured suggest query to a specified Solr endpoint.
 
   ### Example
@@ -272,12 +199,6 @@ defmodule Hui do
   """
   @spec suggest(url, Query.Suggest.t()) :: {:ok, Response.t()} | {:error, Hui.Error.t()}
   def suggest(url, %Query.Suggest{} = q), do: q |> query(url)
-
-  @doc """
-  Issue a structured suggester query to a specified Solr endpoint, raise an exception in case of failure.
-  """
-  @spec suggest!(url, Query.Suggest.t()) :: Response.t()
-  def suggest!(url, %Query.Suggest{} = q), do: q |> query!(url)
 
   @doc """
   Convenience function for issuing a suggester query to a specified Solr endpoint.
@@ -299,22 +220,6 @@ defmodule Hui do
   def suggest(url, q, count, dictionaries, context) do
     %Query.Suggest{q: q, count: count, dictionary: dictionaries, cfq: context}
     |> query(url)
-  end
-
-  @doc """
-  Convenience function for issuing a suggester query to a specified Solr endpoint,
-  raise an exception in case of failure.
-  """
-  @spec suggest!(url, binary, nil | integer, nil | binary | list(binary), nil | binary) ::
-          Response.t()
-  def suggest!(url, q, count \\ nil, dictionaries \\ nil, context \\ nil)
-
-  def suggest!(url, q, _, _, _) when is_nil_empty(q) or is_nil_empty(url),
-    do: raise(%Hui.Error{reason: :einval})
-
-  def suggest!(url, q, count, dictionaries, context) do
-    %Query.Suggest{q: q, count: count, dictionary: dictionaries, cfq: context}
-    |> query!(url)
   end
 
   @doc """
@@ -413,19 +318,6 @@ defmodule Hui do
   end
 
   @doc """
-  Updates or adds Solr documents to an index or collection, raise an exception in case of failure.
-  """
-  @spec update!(binary | Hui.URL.t(), update_query, boolean) :: Response.t()
-  def update!(url, q, commit \\ true) do
-    cond do
-      is_binary(q) -> q
-      is_map(q) and Map.has_key?(q, :__struct__) -> q
-      is_map(q) or is_list(q) -> %Query.Update{doc: q, commit: commit}
-    end
-    |> query!(url, :post)
-  end
-
-  @doc """
   Deletes Solr documents.
 
   This function accepts a single or list of IDs and immediately delete the corresponding
@@ -456,15 +348,6 @@ defmodule Hui do
   end
 
   @doc """
-  Deletes Solr documents, raise an exception in case of failure.
-  """
-  @spec delete!(binary | Hui.URL.t(), binary | list(binary), boolean) :: Response.t()
-  def delete!(url, ids, commit \\ true) when is_binary(ids) or is_list(ids) do
-    %Query.Update{delete_id: ids, commit: commit}
-    |> query!(url, :post)
-  end
-
-  @doc """
   Deletes Solr documents by filter queries.
 
   This function accepts a single or list of filter queries and immediately delete the corresponding
@@ -490,15 +373,6 @@ defmodule Hui do
   def delete_by_query(url, q, commit \\ true) when is_binary(q) or is_list(q) do
     %Query.Update{delete_query: q, commit: commit}
     |> query(url, :post)
-  end
-
-  @doc """
-  Deletes Solr documents by filter queries, raise an exception in case of failure.
-  """
-  @spec delete_by_query!(binary | Hui.URL.t(), binary | list(binary), boolean) :: Response.t()
-  def delete_by_query!(url, q, commit \\ true) when is_binary(q) or is_list(q) do
-    %Query.Update{delete_query: q, commit: commit}
-    |> query!(url, :post)
   end
 
   @doc """
@@ -532,15 +406,6 @@ defmodule Hui do
     |> query(url, :post)
   end
 
-  @doc """
-  Commit any added or deleted Solr documents to the index, raise an exception in case of failure.
-  """
-  @spec commit!(binary | Hui.URL.t(), boolean) :: Response.t()
-  def commit!(url, wait_searcher \\ true) do
-    %Query.Update{commit: true, waitSearcher: wait_searcher}
-    |> query!(url, :post)
-  end
-
   defp query(q, url, method \\ :get) do
     {status, url} = parse_url(url)
 
@@ -548,16 +413,6 @@ defmodule Hui do
       {:ok, :get} -> _parse_resp(Query.get(url, q))
       {:ok, :post} -> _parse_resp(Query.post(url, q))
       {:error, _} -> {:error, @error_nxdomain}
-    end
-  end
-
-  defp query!(q, url, method \\ :get) do
-    {status, url} = parse_url(url)
-
-    case {status, method} do
-      {:ok, :get} -> _parse_resp(Query.get!(url, q))
-      {:ok, :post} -> _parse_resp(Query.post!(url, q))
-      {:error, _} -> raise(@error_nxdomain)
     end
   end
 

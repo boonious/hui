@@ -12,11 +12,7 @@ defmodule HuiUpdateTest do
     error_einval = %Hui.Error{reason: :einval}
     error_nxdomain = %Hui.Error{reason: :nxdomain}
 
-    {:ok,
-     bypass: bypass,
-     update_doc: update_doc,
-     error_einval: error_einval,
-     error_nxdomain: error_nxdomain}
+    {:ok, bypass: bypass, update_doc: update_doc, error_einval: error_einval, error_nxdomain: error_nxdomain}
   end
 
   describe "update" do
@@ -157,7 +153,6 @@ defmodule HuiUpdateTest do
       setup_bypass_for_post_req(context.bypass, expected)
 
       Hui.delete(url, ["tt1650453", "tt1650453"])
-      Hui.delete!(url, ["tt1650453", "tt1650453"])
     end
 
     test "delete docs by query", context do
@@ -172,7 +167,6 @@ defmodule HuiUpdateTest do
       setup_bypass_for_post_req(context.bypass, expected)
 
       Hui.delete_by_query(url, ["name:Persona", "genre:Drama"])
-      Hui.delete_by_query!(url, ["name:Persona", "genre:Drama"])
     end
 
     test "commit docs", context do
@@ -186,7 +180,6 @@ defmodule HuiUpdateTest do
       setup_bypass_for_post_req(context.bypass, expected)
 
       Hui.commit(url)
-      Hui.commit!(url)
     end
 
     test "handle missing or malformed URL", context do
@@ -195,14 +188,6 @@ defmodule HuiUpdateTest do
       assert {:error, context.error_nxdomain} == Hui.update([], context.update_doc)
       assert {:error, context.error_nxdomain} == Hui.update(:blahblah, context.update_doc)
       assert {:error, context.error_nxdomain} == Hui.update(%Hui.URL{url: "boo"}, "")
-    end
-
-    test "(bang) handle missing or malformed URL" do
-      assert_raise Hui.Error, ":nxdomain", fn -> Hui.update!(nil, "") end
-      assert_raise Hui.Error, ":nxdomain", fn -> Hui.update!([], "") end
-      assert_raise Hui.Error, ":nxdomain", fn -> Hui.update!(:blahblah, "") end
-      assert_raise Hui.Error, ":nxdomain", fn -> Hui.update!("", "") end
-      assert_raise HTTPoison.Error, ":nxdomain", fn -> Hui.update!(%Hui.URL{url: "boo"}, "") end
     end
   end
 end
