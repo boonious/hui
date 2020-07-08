@@ -11,15 +11,40 @@ defmodule Hui.Http.HttpoisonTest do
     %{bypass: bypass, bypass_url: bypass_url}
   end
 
-  test "get/1", %{bypass: bypass, bypass_url: bypass_url} do
-    Bypass.expect(bypass, fn conn ->
-      Plug.Conn.resp(conn, 200, "getting a response")
-    end)
+  describe "get/1" do
+    test "response status and body", %{bypass: bypass, bypass_url: url} do
+      Bypass.expect(bypass, fn conn ->
+        Plug.Conn.resp(conn, 200, "getting a response")
+      end)
 
-    {_, resp} = %Http{url: bypass_url} |> Httpoison.get()
+      {_, resp} = %Http{url: url} |> Httpoison.get()
 
-    assert 200 = resp.status
-    assert "getting a response" = resp.body
+      assert resp.status == 200
+      assert resp.body == "getting a response"
+    end
+
+    test "returns a map body for json response", %{bypass: bypass, bypass_url: url} do
+      json = %{"responseHeader" => "123", "response" => %{"numFound" => 47}} |> Poison.encode!()
+
+      Bypass.expect(bypass, fn conn ->
+        Plug.Conn.put_resp_header(conn, "content-type", "application/json;charset=utf-8")
+        |> Plug.Conn.resp(200, json)
+      end)
+
+      {_, resp} = %Http{url: url} |> Httpoison.get()
+
+      assert resp.body == json |> Poison.decode!()
+    end
+
+    test "returns the unparsed binary body if json response is invalid", %{bypass: bypass, bypass_url: url} do
+      Bypass.expect(bypass, fn conn ->
+        Plug.Conn.put_resp_header(conn, "content-type", "application/json;charset=utf-8")
+        |> Plug.Conn.resp(200, "non json response")
+      end)
+
+      {_, resp} = %Http{url: url} |> Httpoison.get()
+      assert resp.body == "non json response"
+    end
   end
 
   test "post/1", %{bypass: bypass, bypass_url: bypass_url} do
