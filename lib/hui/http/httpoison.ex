@@ -4,14 +4,10 @@ defmodule Hui.Http.Httpoison do
   @behaviour Hui.Http
 
   @impl Hui.Http
-  def get(request) do
-    HTTPoison.get(request.url, request.headers, request.options)
-    |> handle_response
-  end
+  def dispatch(req) do
+    body = if req.body == nil, do: "", else: req.body
 
-  @impl Hui.Http
-  def post(request) do
-    HTTPoison.post(request.url, request.body, request.headers, request.options)
+    HTTPoison.request(req.method, req.url, body, req.headers, req.options)
     |> handle_response
   end
 

@@ -4,23 +4,21 @@ defmodule Hui.Http do
   @type t :: %__MODULE__{
           body: binary | map,
           headers: list,
+          method: :get | :post,
           options: keyword,
           status: integer,
-          url: binary | iodata
+          url: iodata
         }
 
   defstruct body: nil,
             headers: [],
+            method: :get,
             options: [],
             status: nil,
             url: ""
 
-  @callback get(request :: t) :: {:ok, t} | {:error, term}
-  @callback post(request :: t) :: {:ok, t} | {:error, term}
+  @callback dispatch(request :: t) :: {:ok, t} | {:error, term}
 
-  @spec get(client :: module, request :: t) :: {:ok, t} | {:error, term}
-  def get(client \\ @default_client, request), do: client.get(request)
-
-  @spec post(client :: module, request :: t) :: {:ok, t} | {:error, term}
-  def post(client \\ @default_client, request), do: client.post(request)
+  @spec dispatch(http_request :: t, client :: module) :: {:ok, t} | {:error, term}
+  def dispatch(http_request, client \\ @default_client), do: client.dispatch(http_request)
 end

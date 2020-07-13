@@ -17,7 +17,7 @@ defmodule Hui.Http.HttpoisonTest do
         Plug.Conn.resp(conn, 200, "getting a response")
       end)
 
-      {_, resp} = %Http{url: url} |> Httpoison.get()
+      {_, resp} = %Http{url: url} |> Httpoison.dispatch()
 
       assert resp.status == 200
       assert resp.body == "getting a response"
@@ -31,7 +31,7 @@ defmodule Hui.Http.HttpoisonTest do
         |> Plug.Conn.resp(200, json)
       end)
 
-      {_, resp} = %Http{url: url} |> Httpoison.get()
+      {_, resp} = %Http{url: url} |> Httpoison.dispatch()
 
       assert resp.body == json |> Poison.decode!()
     end
@@ -42,7 +42,7 @@ defmodule Hui.Http.HttpoisonTest do
         |> Plug.Conn.resp(200, "non json response")
       end)
 
-      {_, resp} = %Http{url: url} |> Httpoison.get()
+      {_, resp} = %Http{url: url} |> Httpoison.dispatch()
       assert resp.body == "non json response"
     end
   end
@@ -50,10 +50,12 @@ defmodule Hui.Http.HttpoisonTest do
   test "post/1", %{bypass: bypass, bypass_url: bypass_url} do
     Bypass.expect(bypass, fn conn ->
       assert {:ok, "request body", conn} = Plug.Conn.read_body(conn)
+      assert conn.method == "POST"
+
       Plug.Conn.resp(conn, 200, "")
     end)
 
-    {_, resp} = %Http{url: bypass_url, body: "request body"} |> Httpoison.post()
+    {_, resp} = %Http{method: :post, url: bypass_url, body: "request body"} |> Httpoison.dispatch()
     assert 200 = resp.status
   end
 
@@ -62,7 +64,7 @@ defmodule Hui.Http.HttpoisonTest do
       Plug.Conn.resp(conn, 404, "")
     end)
 
-    {_, resp} = %Http{url: bypass_url} |> Httpoison.get()
+    {_, resp} = %Http{url: bypass_url} |> Httpoison.dispatch()
     assert 404 = resp.status
   end
 
@@ -70,6 +72,6 @@ defmodule Hui.Http.HttpoisonTest do
     Bypass.down(bypass)
 
     expected_error = %HTTPoison.Error{id: nil, reason: :econnrefused}
-    assert {:error, expected_error} == %Http{url: bypass_url} |> Httpoison.get()
+    assert {:error, expected_error} == %Http{url: bypass_url} |> Httpoison.dispatch()
   end
 end

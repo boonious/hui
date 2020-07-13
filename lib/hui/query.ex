@@ -55,11 +55,11 @@ defmodule Hui.Query do
   @spec get(solr_url, solr_query) :: {:ok, HTTPoison.Response.t()} | {:error, HTTPoison.Error.t()}
   def get(%URL{} = solr_url, solr_query) do
     %Http{
-      url: [to_string(solr_url), "?", Encoder.encode(solr_query)] |> IO.iodata_to_binary(),
+      url: [to_string(solr_url), "?", Encoder.encode(solr_query)],
       headers: solr_url.headers,
       options: solr_url.options
     }
-    |> get()
+    |> dispatch()
   end
 
   @doc """
@@ -70,11 +70,13 @@ defmodule Hui.Query do
   def post(%URL{} = solr_url, solr_query) do
     body = if is_binary(solr_query), do: solr_query, else: Encoder.encode(solr_query)
 
-    post(%Http{
+    %Http{
       url: to_string(solr_url),
       headers: solr_url.headers,
+      method: :post,
       options: solr_url.options,
       body: body
-    })
+    }
+    |> dispatch()
   end
 end
