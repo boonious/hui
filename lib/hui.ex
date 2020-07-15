@@ -12,12 +12,28 @@ defmodule Hui do
   """
 
   import Hui.Guards
+  import Hui.Http
 
+  alias Hui.Encoder
+  alias Hui.Http
   alias Hui.Query
   alias HTTPoison.Response
+  alias Hui.URL
 
   @type url :: binary | atom | Hui.URL.t()
-  @type query :: Query.solr_query()
+
+  @type querying_struct :: Query.Standard.t() | Query.Common.t() | Query.DisMax.t()
+  @type faceting_struct :: Query.Facet.t() | Query.FacetRange.t() | Query.FacetInterval.t()
+  @type highlighting_struct ::
+          Query.Highlight.t()
+          | Query.HighlighterUnified.t()
+          | Query.HighlighterOriginal.t()
+          | Query.HighlighterFastVector.t()
+
+  @type misc_struct :: Query.MoreLikeThis.t() | Query.Suggest.t() | Query.SpellCheck.t()
+  @type solr_struct :: querying_struct | faceting_struct | highlighting_struct | misc_struct
+
+  @type query :: Keyword.t() | map | solr_struct | [solr_struct]
   @type update_query :: binary | map | list(map) | Query.Update.t()
 
   # invalid / non existing host or domain
@@ -406,12 +422,63 @@ defmodule Hui do
     |> query(url, :post)
   end
 
+  @doc """
+  Issues a get request of Solr query to a specific endpoint.
+
+  The query can be a keyword list or a list of Hui query structs (`t:query/0`).
+
+  ## Example - parameters
+
+  ```
+    url = %Hul.URL{url: "http://..."}
+
+    # query via a list of keywords, which are unbound and sent to Solr directly
+    Hui.get(url, q: "glen cova", facet: "true", "facet.field": ["type", "year"])
+
+    # query via Hui structs
+    alias Hui.Query
+    Hui.get(url, %Query.DisMax{q: "glen cova"})
+    Hui.get(url, [%Query.DisMax{q: "glen"}, %Query.Facet{field: ["type", "year"]}])
+  ```
+
+  The use of structs is more idiomatic and succinct. It is bound to qualified Solr fields.
+
+  See `t:Hui.URL.t/0` struct about specifying HTTP headers and HTTPoison options
+  of a request, e.g. `timeout`, `recv_timeout`, `max_redirect` etc.
+  """
+  @spec get(url, query) :: {:ok, HTTPoison.Response.t()} | {:error, HTTPoison.Error.t()}
+  def get(%URL{} = solr_url, solr_query) do
+    %Http{
+      url: [to_string(solr_url), "?", Encoder.encode(solr_query)],
+      headers: solr_url.headers,
+      options: solr_url.options
+    }
+    |> dispatch()
+  end
+
+  @doc """
+  Issues a POST update request to a specific Solr endpoint, for data indexing and deletion.
+  """
+  @spec post(url, update_query) :: {:ok, HTTPoison.Response.t()} | {:error, HTTPoison.Error.t()}
+  def post(%URL{} = solr_url, solr_query) do
+    body = if is_binary(solr_query), do: solr_query, else: Encoder.encode(solr_query)
+
+    %Http{
+      url: to_string(solr_url),
+      headers: solr_url.headers,
+      method: :post,
+      options: solr_url.options,
+      body: body
+    }
+    |> dispatch()
+  end
+
   defp query(q, url, method \\ :get) do
     {status, url} = parse_url(url)
 
     case {status, method} do
-      {:ok, :get} -> _parse_resp(Query.get(url, q))
-      {:ok, :post} -> _parse_resp(Query.post(url, q))
+      {:ok, :get} -> _parse_resp(get(url, q))
+      {:ok, :post} -> _parse_resp(post(url, q))
       {:error, _} -> {:error, @error_nxdomain}
     end
   end

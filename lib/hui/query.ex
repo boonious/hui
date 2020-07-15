@@ -1,10 +1,7 @@
 defmodule Hui.Query do
-  @moduledoc """
-
-  Hui.Query module provides underpinning HTTP-based request functions for Solr, including:
-
-  - `get/2`, `post/2`
-  """
+  @moduledoc deprecated: """
+               Please use the `get/2` and `post/2` functions in `Hui` instead.
+             """
 
   import Hui.Http
 
@@ -28,31 +25,9 @@ defmodule Hui.Query do
   @type solr_update_query :: binary | Query.Update.t()
   @type solr_url :: Hui.URL.t()
 
-  @doc """
-  Issues a get request of Solr query to a specific endpoint.
-
-  The query can be a keyword list or a list of Hui query structs (`t:solr_query/0`).
-
-  ## Example - parameters
-
-  ```
-    url = %Hul.URL{url: "http://..."}
-
-    # query via a list of keywords, which are unbound and sent to Solr directly
-    Hui.Query.get(url, q: "glen cova", facet: "true", "facet.field": ["type", "year"])
-
-    # query via Hui structs
-    alias Hui.Query
-    Hui.Query.get(url, %Query.DisMax{q: "glen cova"})
-    Hui.Query.get(url, [%Query.DisMax{q: "glen"}, %Query.Facet{field: ["type", "year"]}])
-  ```
-
-  The use of structs is more idiomatic and succinct. It is bound to qualified Solr fields.
-
-  See `t:Hui.URL.t/0` struct about specifying HTTP headers and HTTPoison options
-  of a request, e.g. `timeout`, `recv_timeout`, `max_redirect` etc.
-  """
+  @doc false
   @spec get(solr_url, solr_query) :: {:ok, HTTPoison.Response.t()} | {:error, HTTPoison.Error.t()}
+  @deprecated "Please use `Hui.get/2`."
   def get(%URL{} = solr_url, solr_query) do
     %Http{
       url: [to_string(solr_url), "?", Encoder.encode(solr_query)],
@@ -62,11 +37,9 @@ defmodule Hui.Query do
     |> dispatch()
   end
 
-  @doc """
-  Issues a POST update request to a specific Solr endpoint, for data indexing and deletion.
-  """
-  @spec post(solr_url, solr_update_query) ::
-          {:ok, HTTPoison.Response.t()} | {:error, HTTPoison.Error.t()}
+  @doc false
+  @spec post(solr_url, solr_update_query) :: {:ok, HTTPoison.Response.t()} | {:error, HTTPoison.Error.t()}
+  @deprecated "Please use `Hui.post/2`."
   def post(%URL{} = solr_url, solr_query) do
     body = if is_binary(solr_query), do: solr_query, else: Encoder.encode(solr_query)
 
