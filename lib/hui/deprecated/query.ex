@@ -28,6 +28,7 @@ defmodule Hui.Query do
   @doc false
   @spec get(solr_url, solr_query) :: {:ok, HTTPoison.Response.t()} | {:error, HTTPoison.Error.t()}
   @deprecated "Please use `Hui.get/2`."
+  # coveralls-ignore-start
   def get(%URL{} = solr_url, solr_query) do
     %Http{
       url: [to_string(solr_url), "?", Encoder.encode(solr_query)],
@@ -52,4 +53,5 @@ defmodule Hui.Query do
     }
     |> dispatch()
   end
+  # coveralls-ignore-stop
 end
