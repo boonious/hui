@@ -22,7 +22,7 @@ defmodule Hui.URL do
 
   ```
 
-  `t:Hui.URL.t/0` struct also enables HTTP headers and [HTTPoison options](https://hexdocs.pm/httpoison/HTTPoison.html#request/5)
+  `t:Hui.URL.t/0` struct also enables HTTP headers and options, e.g. [HTTPoison options](https://hexdocs.pm/httpoison/HTTPoison.html#request/5)
   to be specified in keyword lists. HTTPoison options provide further controls for a request, e.g. `timeout`, `recv_timeout`,
   `max_redirect`, `params` etc.
 
@@ -34,7 +34,7 @@ defmodule Hui.URL do
   """
 
   defstruct [:url, handler: "select", headers: [], options: []]
-  @type headers :: HTTPoison.Base.headers
+  @type headers :: [{binary(), binary()}]
   @type options :: Keyword.t
 
   @typedoc """
@@ -50,7 +50,7 @@ defmodule Hui.URL do
   endpoint fronting several Solr upstreams.
   - `handler`: name of a Solr request handler that processes requests.
   - `headers`: HTTP headers.
-  - `options`: [HTTPoison options](https://hexdocs.pm/httpoison/HTTPoison.html#request/5).
+  - `options`: e.g. [HTTPoison options](https://hexdocs.pm/httpoison/HTTPoison.html#request/5).
 
   """
   @type t :: %__MODULE__{url: nil | binary, handler: nil | binary, headers: nil | headers, options: nil | options}

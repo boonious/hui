@@ -70,8 +70,6 @@ defmodule Hui.Http.HttpoisonTest do
 
   test "handle unreachable host", %{bypass: bypass, bypass_url: bypass_url} do
     Bypass.down(bypass)
-
-    expected_error = %HTTPoison.Error{id: nil, reason: :econnrefused}
-    assert {:error, expected_error} == %Http{url: bypass_url} |> Httpoison.dispatch()
+    assert {:error, %Hui.Error{reason: :econnrefused}} == %Http{url: bypass_url} |> Httpoison.dispatch()
   end
 end

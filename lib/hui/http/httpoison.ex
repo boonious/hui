@@ -18,7 +18,9 @@ defmodule Hui.Http.Httpoison do
     end
   end
 
-  defp handle_response({:error, resp}), do: {:error, resp}
+  defp handle_response({:error, %HTTPoison.Error{reason: reason}}) do 
+    {:error, %Hui.Error{reason: reason}}
+  end
 
   defp headers_map(headers), do: Enum.into(headers, %{}, fn {k, v} -> {String.downcase(k), String.downcase(v)} end)
 
