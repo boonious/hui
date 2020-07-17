@@ -16,14 +16,12 @@ defmodule HuiUrlTest do
       assert {:ok, %Hui.URL{url: _, handler: _}} = Hui.URL.configured_url(:default)
       assert {:ok, %Hui.URL{url: _, handler: _}} = Hui.URL.configured_url(:suggester)
 
-      assert {:error, %Hui.Error{reason: :nxdomain}} =
-               Hui.URL.configured_url(:random_url_not_in_config)
+      assert {:error, %Hui.Error{reason: :nxdomain}} = Hui.URL.configured_url(:random_url_not_in_config)
     end
 
     # Using the config :hui examples in config.exs
     test "configured_url should return configured headers and options in %Hui.URL stuct" do
-      {:ok, %Hui.URL{url: _, handler: _, headers: headers, options: options}} =
-        Hui.URL.configured_url(:default)
+      {:ok, %Hui.URL{url: _, handler: _, headers: headers, options: options}} = Hui.URL.configured_url(:default)
 
       refute headers == []
       refute options == []

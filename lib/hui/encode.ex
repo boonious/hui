@@ -40,6 +40,7 @@ defmodule Hui.Encode do
   def encode([commitWithin: c, overwrite: o, doc: d], %{format: :json} = opts) do
     docs = if is_list(d), do: d, else: [d]
 
+    # TODO: find a better way than Enum.reverse/tl to remove the `.` in the last add doc
     for doc <- docs do
       [
         "\"add\"",
@@ -52,7 +53,10 @@ defmodule Hui.Encode do
         ","
       ]
     end
-    |> List.flatten |> Enum.reverse() |> tl() |> Enum.reverse() # remove last `.`
+    |> List.flatten()
+    |> Enum.reverse()
+    |> tl()
+    |> Enum.reverse()
   end
 
   def encode([commit: true, expungeDeletes: e, waitSearcher: w], %{format: :json} = opts) do

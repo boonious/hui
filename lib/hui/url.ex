@@ -35,7 +35,7 @@ defmodule Hui.URL do
 
   defstruct [:url, handler: "select", headers: [], options: []]
   @type headers :: [{binary(), binary()}]
-  @type options :: Keyword.t
+  @type options :: Keyword.t()
 
   @typedoc """
   Struct for a Solr endpoint with a request handler and any associated HTTP headers and options.
@@ -54,11 +54,6 @@ defmodule Hui.URL do
 
   """
   @type t :: %__MODULE__{url: nil | binary, handler: nil | binary, headers: nil | headers, options: nil | options}
-
-  @typedoc """
-  Solr parameters as keyword list or structs.
-  """
-  @type url_params :: Keyword.t | Hui.Q.t | Hui.D.t | Hui.F.t | Hui.F.Range.t | Hui.F.Interval.t
 
   @doc """
   Returns a configured default Solr endpoint as `t:Hui.URL.t/0` struct.
@@ -81,6 +76,7 @@ defmodule Hui.URL do
   @spec default_url! :: t | nil
   def default_url! do
     {status, default_url} = configured_url(:default)
+
     case status do
       :ok -> default_url
       :error -> nil
@@ -104,13 +100,19 @@ defmodule Hui.URL do
   ```
 
   """
+  # TODO: refactor this function, use module attributes in this module or in "Hui" to retrieve config settings
   @spec configured_url(atom) :: {:ok, t} | {:error, binary} | nil
   def configured_url(config_key) do
     url = Application.get_env(:hui, config_key)[:url]
     handler = Application.get_env(:hui, config_key)[:handler]
-    headers = if Application.get_env(:hui, config_key)[:headers], do: Application.get_env(:hui, config_key)[:headers], else: []
-    options = if Application.get_env(:hui, config_key)[:options], do: Application.get_env(:hui, config_key)[:options], else: []
-    case {url,handler} do
+
+    headers =
+      if Application.get_env(:hui, config_key)[:headers], do: Application.get_env(:hui, config_key)[:headers], else: []
+
+    options =
+      if Application.get_env(:hui, config_key)[:options], do: Application.get_env(:hui, config_key)[:options], else: []
+
+    case {url, handler} do
       {nil, _} -> {:error, %Hui.Error{reason: :nxdomain}}
       {_, nil} -> {:ok, %Hui.URL{url: url, headers: headers, options: options}}
       {_, _} -> {:ok, %Hui.URL{url: url, handler: handler, headers: headers, options: options}}
@@ -124,5 +126,5 @@ end
 
 # implement `to_string` for %Hui.URL{} in Elixir generally via the String.Chars protocol
 defimpl String.Chars, for: Hui.URL do
-  def to_string(%Hui.URL{url: url, handler: handler}), do: [url, "/", handler] |> IO.iodata_to_binary
+  def to_string(%Hui.URL{url: url, handler: handler}), do: [url, "/", handler] |> IO.iodata_to_binary()
 end

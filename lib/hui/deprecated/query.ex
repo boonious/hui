@@ -53,5 +53,6 @@ defmodule Hui.Query do
     }
     |> dispatch()
   end
+
   # coveralls-ignore-stop
 end

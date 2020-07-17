@@ -77,8 +77,7 @@ defmodule HuiSearchLiveTest do
         "rows" => "10"
       }
 
-      expected_url =
-        ~r/q=%2A&echoParams=explicit&fq=cat%3Aelectronics&fq=popularity%3A%5B0\+TO\+%2A%5D&rows=10/
+      expected_url = ~r/q=%2A&echoParams=explicit&fq=cat%3Aelectronics&fq=popularity%3A%5B0\+TO\+%2A%5D&rows=10/
 
       test_all_search_live([x, y], expected_params, expected_url)
     end
