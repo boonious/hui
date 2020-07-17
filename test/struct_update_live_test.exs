@@ -131,8 +131,7 @@ defmodule HuiStructUpdateLiveTest do
 
       doc_map2 = %{
         "actor_ss" => ["Bibi Andersson", "Liv Ullmann", "Margaretha Krook"],
-        "desc" =>
-          "A nurse is put in charge of a mute actress and finds that their personas are melding together.",
+        "desc" => "A nurse is put in charge of a mute actress and finds that their personas are melding together.",
         "directed_by" => ["Ingmar Bergman"],
         "genre" => ["Drama", "Thriller"],
         "id" => "tt0060827",

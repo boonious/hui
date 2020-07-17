@@ -5,7 +5,7 @@ defmodule TestHelpers do
   import ExUnit.Assertions
 
   def test_get_req_url(url, query) do
-    {_status, resp} = Hui.Query.get(url, query)
+    {_status, resp} = Hui.get(url, query)
 
     regex =
       Hui.Encoder.encode(query)
@@ -57,12 +57,14 @@ defmodule TestHelpers do
     end)
   end
 
+  # TODO: to remove this since this is neither a test nor assertion
   def test_post_req(url, query) do
     # invoke post requests
     # assertions - see Bypass setup in 'setup_bypass_for_post_req'
-    Hui.Query.post(url, query)
+    Hui.post(url, query)
   end
 
+  # TODO: to remove this since this is neither a test nor assertion
   def test_update_req(url, query, commit \\ true) do
     # invoke update requests
     # assertions - see Bypass setup in 'setup_bypass_for_post_req'

@@ -12,16 +12,30 @@ defmodule Hui do
   """
 
   import Hui.Guards
+  import Hui.Http
 
+  alias Hui.Encoder
+  alias Hui.Error
+  alias Hui.Http
   alias Hui.Query
-  alias HTTPoison.Response
 
   @type url :: binary | atom | Hui.URL.t()
-  @type query :: Query.solr_query()
+
+  @type querying_struct :: Query.Standard.t() | Query.Common.t() | Query.DisMax.t()
+  @type faceting_struct :: Query.Facet.t() | Query.FacetRange.t() | Query.FacetInterval.t()
+  @type highlighting_struct ::
+          Query.Highlight.t()
+          | Query.HighlighterUnified.t()
+          | Query.HighlighterOriginal.t()
+          | Query.HighlighterFastVector.t()
+
+  @type misc_struct :: Query.MoreLikeThis.t() | Query.Suggest.t() | Query.SpellCheck.t()
+  @type solr_struct :: querying_struct | faceting_struct | highlighting_struct | misc_struct
+
+  @type query :: Keyword.t() | map | solr_struct | [solr_struct]
   @type update_query :: binary | map | list(map) | Query.Update.t()
 
-  # invalid / non existing host or domain
-  @error_nxdomain %Hui.Error{reason: :nxdomain}
+  @type http_response :: Http.response()
 
   @doc """
   Issue a keyword list or structured query to the default Solr endpoint.
@@ -47,8 +61,8 @@ defmodule Hui do
     Hui.q([x, y, z])
   ```
   """
-  @spec q(query) :: {:ok, Response.t()} | {:error, Hui.Error.t()}
-  def q(q) when is_list(q), do: query(q, :default)
+  @spec q(query) :: http_response
+  def q(query) when is_list(query), do: get(:default, query)
 
   @doc """
   Convenience function for issuing various typical queries to the default Solr endpoint.
@@ -71,11 +85,9 @@ defmodule Hui do
           nil | binary | list(binary),
           nil | binary | list(binary),
           nil | binary
-        ) :: {:ok, Response.t()} | {:error, Hui.Error.t()}
+        ) :: http_response
   def q(keywords, rows \\ nil, start \\ nil, filters \\ nil, facet_fields \\ nil, sort \\ nil)
-
-  def q(keywords, _, _, _, _, _) when is_nil_empty(keywords),
-    do: {:error, %Hui.Error{reason: :einval}}
+  def q(keywords, _, _, _, _, _) when is_nil_empty(keywords), do: {:error, %Error{reason: :einval}}
 
   def q(keywords, rows, start, filters, facet_fields, sort) do
     search(:default, keywords, rows, start, filters, facet_fields, sort)
@@ -149,8 +161,8 @@ defmodule Hui do
   }
   ```
   """
-  @spec search(url, query) :: {:ok, Response.t()} | {:error, Hui.Error.t()}
-  def search(url, q) when is_list(q) or is_map(q), do: query(q, url)
+  @spec search(url, query) :: http_response
+  def search(url, query) when is_list(query) or is_map(query), do: get(url, query)
 
   @doc """
   Convenience function for issuing various typical queries to a specified Solr endpoint.
@@ -165,26 +177,21 @@ defmodule Hui do
           nil | binary | list(binary),
           nil | binary | list(binary),
           nil | binary
-        ) :: {:ok, Response.t()} | {:error, Hui.Error.t()}
-  def search(
-        url,
-        keywords,
-        rows \\ nil,
-        start \\ nil,
-        filters \\ nil,
-        facet_fields \\ nil,
-        sort \\ nil
-      )
+        ) :: http_response
+  def search(url, keywords, rows \\ nil, start \\ nil, filters \\ nil, facet_fields \\ nil, sort \\ nil)
 
   def search(url, keywords, _, _, _, _, _) when is_nil_empty(keywords) or is_nil_empty(url),
-    do: {:error, %Hui.Error{reason: :einval}}
+    do: {:error, %Error{reason: :einval}}
 
   def search(url, keywords, rows, start, filters, facet_fields, sort) do
-    x = %Query.Standard{q: keywords}
-    y = %Query.Common{rows: rows, start: start, fq: filters, sort: sort}
-    z = %Query.Facet{field: facet_fields}
-
-    [x, y, z] |> query(url)
+    get(
+      url,
+      [
+        %Query.Standard{q: keywords},
+        %Query.Common{rows: rows, start: start, fq: filters, sort: sort},
+        %Query.Facet{field: facet_fields}
+      ]
+    )
   end
 
   @doc """
@@ -197,8 +204,8 @@ defmodule Hui do
     Hui.suggest(:library, suggest_query)
   ```
   """
-  @spec suggest(url, Query.Suggest.t()) :: {:ok, Response.t()} | {:error, Hui.Error.t()}
-  def suggest(url, %Query.Suggest{} = q), do: q |> query(url)
+  @spec suggest(url, Query.Suggest.t()) :: http_response
+  def suggest(url, %Query.Suggest{} = query), do: get(url, query)
 
   @doc """
   Convenience function for issuing a suggester query to a specified Solr endpoint.
@@ -210,16 +217,12 @@ defmodule Hui do
     Hui.suggest(:autocomplete, "bo", 5, ["name_infix", "ln_prefix", "fn_prefix"], "1939")
   ```
   """
-  @spec suggest(url, binary, nil | integer, nil | binary | list(binary), nil | binary) ::
-          {:ok, Response.t()} | {:error, Hui.Error.t()}
+  @spec suggest(url, binary, nil | integer, nil | binary | list(binary), nil | binary) :: http_response
   def suggest(url, q, count \\ nil, dictionaries \\ nil, context \\ nil)
-
-  def suggest(url, q, _, _, _) when is_nil_empty(q) or is_nil_empty(url),
-    do: {:error, %Hui.Error{reason: :einval}}
+  def suggest(url, q, _, _, _) when is_nil_empty(q) or is_nil_empty(url), do: {:error, %Error{reason: :einval}}
 
   def suggest(url, q, count, dictionaries, context) do
-    %Query.Suggest{q: q, count: count, dictionary: dictionaries, cfq: context}
-    |> query(url)
+    get(url, %Query.Suggest{q: q, count: count, dictionary: dictionaries, cfq: context})
   end
 
   @doc """
@@ -307,14 +310,13 @@ defmodule Hui do
     {status, resp} = Hui.update(url, %Query.Update{commit: true, expungeDeletes: true})
   ```
   """
-  @spec update(url, update_query, boolean) :: {:ok, Response.t()} | {:error, Hui.Error.t()}
-  def update(url, q, commit \\ true) do
-    cond do
-      is_binary(q) -> q
-      is_map(q) and Map.has_key?(q, :__struct__) -> q
-      is_map(q) or is_list(q) -> %Query.Update{doc: q, commit: commit}
-    end
-    |> query(url, :post)
+  @spec update(url, update_query, boolean) :: http_response
+  def update(url, docs, commit \\ true)
+  def update(url, docs, _commit) when is_binary(docs), do: post(url, docs)
+  def update(url, %Query.Update{} = docs, _commit), do: post(url, docs)
+
+  def update(url, docs, commit) when is_map(docs) or is_list(docs) do
+    post(url, %Query.Update{doc: docs, commit: commit})
   end
 
   @doc """
@@ -339,12 +341,9 @@ defmodule Hui do
     Hui.delete(url, ["tt2358891", "tt1602620"], false) # delete without immediate commit
   ```
   """
-  @spec delete(binary | Hui.URL.t(), binary | list(binary), boolean) ::
-          {:ok, Response.t()} | {:error, Hui.Error.t()}
-
+  @spec delete(url, binary | list(binary), boolean) :: http_response
   def delete(url, ids, commit \\ true) when is_binary(ids) or is_list(ids) do
-    %Query.Update{delete_id: ids, commit: commit}
-    |> query(url, :post)
+    post(url, %Query.Update{delete_id: ids, commit: commit})
   end
 
   @doc """
@@ -367,12 +366,9 @@ defmodule Hui do
     Hui.delete_by_query(url, ["genre:Drama", "name:Persona"]) # delete with a list of filters
   ```
   """
-  @spec delete_by_query(binary | Hui.URL.t(), binary | list(binary), boolean) ::
-          {:ok, Response.t()} | {:error, Hui.Error.t()}
-
+  @spec delete_by_query(url, binary | list(binary), boolean) :: http_response
   def delete_by_query(url, q, commit \\ true) when is_binary(q) or is_list(q) do
-    %Query.Update{delete_query: q, commit: commit}
-    |> query(url, :post)
+    post(url, %Query.Update{delete_query: q, commit: commit})
   end
 
   @doc """
@@ -400,39 +396,71 @@ defmodule Hui do
   Use `t:Hui.Query.Update.t/0` struct for other types of commit and index optimisation, e.g. expunge deleted docs to
   physically remove docs from the index, which could be a system-intensive operation.
   """
-  @spec commit(binary | Hui.URL.t(), boolean) :: {:ok, Response.t()} | {:error, Hui.Error.t()}
+  @spec commit(url, boolean) :: http_response
   def commit(url, wait_searcher \\ true) do
-    %Query.Update{commit: true, waitSearcher: wait_searcher}
-    |> query(url, :post)
+    post(url, %Query.Update{commit: true, waitSearcher: wait_searcher})
   end
 
-  defp query(q, url, method \\ :get) do
-    {status, url} = parse_url(url)
+  @doc """
+  Issues a get request of Solr query to a specific endpoint.
 
-    case {status, method} do
-      {:ok, :get} -> _parse_resp(Query.get(url, q))
-      {:ok, :post} -> _parse_resp(Query.post(url, q))
-      {:error, _} -> {:error, @error_nxdomain}
-    end
-  end
+  The query can be a keyword list or a list of Hui query structs (`t:query/0`).
 
-  defp parse_url(%Hui.URL{} = url), do: {:ok, url}
-  defp parse_url(url) when is_atom(url), do: Hui.URL.configured_url(url)
+  ## Example - parameters
 
-  defp parse_url(url) when is_binary(url) do
-    uri = URI.parse(url)
+  ```
+    url = %Hul.URL{url: "http://..."}
 
-    if uri.scheme != nil && uri.host =~ ~r/./ do
-      {:ok, %Hui.URL{url: url}}
+    # query via a list of keywords, which are unbound and sent to Solr directly
+    Hui.get(url, q: "glen cova", facet: "true", "facet.field": ["type", "year"])
+
+    # query via Hui structs
+    alias Hui.Query
+    Hui.get(url, %Query.DisMax{q: "glen cova"})
+    Hui.get(url, [%Query.DisMax{q: "glen"}, %Query.Facet{field: ["type", "year"]}])
+  ```
+
+  The use of structs is more idiomatic and succinct. It is bound to qualified Solr fields.
+
+  See `t:Hui.URL.t/0` struct about specifying HTTP headers and options
+  for a request, e.g. `timeout`, `recv_timeout`, `max_redirect` etc.
+  """
+  @spec get(url, query) :: http_response
+  def get(url, query) do
+    with {:ok, url_struct} <- fetch_url(url) do
+      %Http{
+        url: [to_string(url_struct), "?", Encoder.encode(query)],
+        headers: url_struct.headers,
+        options: url_struct.options
+      }
+      |> dispatch()
     else
-      {:error, @error_nxdomain}
+      {:error, reason} -> {:error, reason}
     end
   end
 
-  defp parse_url(_), do: {:error, @error_nxdomain}
+  @doc """
+  Issues a POST update request to a specific Solr endpoint, for data indexing and deletion.
+  """
+  @spec post(url, update_query) :: http_response
+  def post(url, docs) do
+    with {:ok, url_struct} <- fetch_url(url) do
+      %Http{
+        url: to_string(url_struct),
+        headers: url_struct.headers,
+        method: :post,
+        options: url_struct.options,
+        body: if(is_binary(docs), do: docs, else: Encoder.encode(docs))
+      }
+      |> dispatch()
+    else
+      {:error, reason} -> {:error, reason}
+    end
+  end
 
-  defp _parse_resp({:error, %HTTPoison.Error{id: _, reason: reason}}),
-    do: {:error, %Hui.Error{reason: reason}}
+  defp fetch_url(%Hui.URL{} = url), do: {:ok, url}
+  defp fetch_url(url) when is_atom(url), do: Hui.URL.configured_url(url)
 
-  defp _parse_resp(resp), do: resp
+  defp fetch_url(url) when is_nil_empty(url), do: {:error, %Error{reason: :nxdomain}}
+  defp fetch_url(url) when is_binary(url), do: {:ok, %Hui.URL{url: url}}
 end
