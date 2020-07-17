@@ -279,18 +279,20 @@ The structs and their associated type spec also provide binding to and introspec
 
 ### Parsing Solr results
 
-Hui returns Solr results as `HTTPoison.Response` struct containing the Solr response.
+Hui returns Solr results as `HTTP` response struct containing the Solr response.
 
 ```elixir
   {:ok,
-   %HTTPoison.Response{
+   %Hui.Http{
     body: "...[Solr reponse]..",
     headers: [
       {"Content-Type", "application/json;charset=utf-8"},
       {"Content-Length", "4005"}
     ],
-    request_url: "http://localhost:8983/solr/gettingstarted/select?q=%2A",
-    status_code: 200
+    method: :get,
+    options: [], 
+    status: 200,
+    url: "http://localhost:8983/solr/gettingstarted/select?q=%2A"
    }
   }
 ```
@@ -317,7 +319,7 @@ by adding `hui` to your list of dependencies in `mix.exs`:
 ```elixir
   def deps do
     [
-      {:hui, "~> 0.10.0"}
+      {:hui, "~> 0.10.1"}
     ]
   end
 ```
