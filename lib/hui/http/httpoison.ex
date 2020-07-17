@@ -18,7 +18,7 @@ defmodule Hui.Http.Httpoison do
     end
   end
 
-  defp handle_response({:error, %HTTPoison.Error{reason: reason}}) do 
+  defp handle_response({:error, %HTTPoison.Error{reason: reason}}) do
     {:error, %Hui.Error{reason: reason}}
   end
 

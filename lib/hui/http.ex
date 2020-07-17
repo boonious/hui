@@ -1,12 +1,13 @@
 defmodule Hui.Http do
   @default_client Hui.Http.Httpoison
 
+  @type response :: {:ok, t} | {:error, Hui.Error.t()}
   @type t :: %__MODULE__{
-          body: binary | map,
+          body: nil | binary | map,
           headers: list,
           method: :get | :post,
           options: keyword,
-          status: integer,
+          status: nil | integer,
           url: iodata
         }
 
@@ -17,8 +18,8 @@ defmodule Hui.Http do
             status: nil,
             url: ""
 
-  @callback dispatch(request :: t) :: {:ok, t} | {:error, Hui.Error.t()}
+  @callback dispatch(request :: t) :: response
 
-  @spec dispatch(http_request :: t, client :: module) :: {:ok, t} | {:error, Hui.Error.t()}
-  def dispatch(http_request, client \\ @default_client), do: client.dispatch(http_request)
+  @spec dispatch(request :: t, client :: module) :: response
+  def dispatch(request, client \\ @default_client), do: client.dispatch(request)
 end
