@@ -5,28 +5,44 @@ defmodule HuiEncoderTest do
   alias Hui.Encoder
   alias Hui.Query
 
-  test "encodes map" do
-    assert Encoder.encode(%{q: "loch", rows: 10}) == "q=loch&rows=10"
+  describe "encode map" do
+    setup do
+      %{
+        query: %{
+          q: "harry",
+          rows: 10,
+          fq: ["cat:book", "price:[1.99 TO 9.99]"],
+          fl: "id,name"
+        }
+      }
+    end
 
-    assert Encoder.encode(%{
-             q: "harry",
-             wt: "json",
-             fq: ["cat:book", "inStock:true", "price:[1.99 TO 9.99]"],
-             fl: "id,name,author,price"
-           }) ==
-             "fl=id%2Cname%2Cauthor%2Cprice&fq=cat%3Abook&fq=inStock%3Atrue&fq=price%3A%5B1.99+TO+9.99%5D&q=harry&wt=json"
+    test "in binary format", %{query: query} do
+      assert Encoder.encode(query) == "fl=id%2Cname&fq=cat%3Abook&fq=price%3A%5B1.99+TO+9.99%5D&q=harry&rows=10"
+    end
+
+    test "in iolist format", %{query: query} do
+      assert Encoder.encode(query, %{format: :iolist}) == [
+               ["fl", "=", "id%2Cname", "&"],
+               ["fq=cat%3Abook&fq=price%3A%5B1.99+TO+9.99%5D", "&"],
+               ["q", "=", "harry", "&"],
+               ["rows", "=", "10", ""]
+             ]
+    end
   end
 
-  test "encodes keyword list" do
-    assert Encoder.encode(q: "loch", rows: 10) == "q=loch&rows=10"
+  describe "encode keyword list" do
+    test "in binary format" do
+      assert Encoder.encode(q: "loch", rows: 10) == "q=loch&rows=10"
+    end
 
-    assert Encoder.encode(
-             q: "harry",
-             wt: "json",
-             fq: ["cat:book", "inStock:true", "price:[1.99 TO 9.99]"],
-             fl: "id,name,author,price"
-           ) ==
-             "q=harry&wt=json&fq=cat%3Abook&fq=inStock%3Atrue&fq=price%3A%5B1.99+TO+9.99%5D&fl=id%2Cname%2Cauthor%2Cprice"
+    test "in iolist format" do
+      assert Encoder.encode([q: "harry", rows: 10, start: 100], %{format: :iolist}) == [
+               ["q", "=", "harry", "&"],
+               ["rows", "=", "10", "&"],
+               ["start", "=", "100", ""]
+             ]
+    end
   end
 
   test "encodes should handle empty, nil values / lists" do

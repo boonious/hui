@@ -7,7 +7,7 @@ defprotocol Hui.Encoder do
   A protocol that underpins Solr query encoding.
   """
 
-  @type options :: keyword
+  @type options :: map
   @type query :: Hui.Query.solr_query()
 
   @doc """
@@ -35,28 +35,40 @@ defprotocol Hui.Encoder do
   See `Hui.Query.Facet`, `Hui.Query.FacetRange`, `Hui.Query.FacetInterval` for more examples.
   """
   @spec encode(query, options) :: iodata
-  def encode(query, opts \\ [])
+  def encode(query, options \\ %{format: :binary})
 end
 
 defimpl Hui.Encoder, for: [Query.Standard, Query.Common, Query.DisMax] do
-  def encode(query, _opts) do
+  def encode(query, %{format: format}) do
+    case format do
+      :iolist -> encode(query)
+      _ -> encode(query) |> IO.iodata_to_binary()
+    end
+  end
+
+  def encode(query) do
     query
     |> Map.to_list()
     |> Encode.encode()
-    |> IO.iodata_to_binary()
   end
 end
 
 # for structs without per-field encoding requirement
 defimpl Hui.Encoder, for: [Query.Facet, Query.MoreLikeThis, Query.SpellCheck, Query.Suggest] do
-  def encode(query, _opts) do
+  def encode(query, %{format: format}) do
+    case format do
+      :iolist -> encode(query)
+      _ -> encode(query) |> IO.iodata_to_binary()
+    end
+  end
+
+  def encode(query) do
     {prefix, _} = Hui.URLPrefixField.prefix_field()[query.__struct__]
     options = %Encode.Options{prefix: prefix}
 
     query
     |> Encode.transform(options)
     |> Encode.encode(options)
-    |> IO.iodata_to_binary()
   end
 end
 
@@ -70,7 +82,14 @@ defimpl Hui.Encoder,
     Query.HighlighterOriginal,
     Query.HighlighterFastVector
   ] do
-  def encode(query, _opts) do
+  def encode(query, %{format: format}) do
+    case format do
+      :iolist -> encode(query)
+      _ -> encode(query) |> IO.iodata_to_binary()
+    end
+  end
+
+  def encode(query) do
     {prefix, field_key} = Hui.URLPrefixField.prefix_field()[query.__struct__]
     per_field_field = query |> Map.get(field_key)
 
@@ -82,14 +101,15 @@ defimpl Hui.Encoder,
     query
     |> Encode.transform(options)
     |> Encode.encode(options)
-    |> IO.iodata_to_binary()
   end
 end
 
+# TODO: implement iolist option
 defimpl Hui.Encoder, for: Query.Update do
-  def encode(q, _opts) do
+  def encode(query, _options) do
+    # TODO: rename :format option, :content_type
     opts = %Options{format: :json}
-    transforms = Encode.transform(q, opts)
+    transforms = Encode.transform(query, opts)
 
     json_fragments =
       for t <- transforms do
@@ -102,26 +122,39 @@ defimpl Hui.Encoder, for: Query.Update do
   end
 end
 
-# general map data struct encoding
 defimpl Hui.Encoder, for: Map do
-  def encode(query, _opts) do
+  def encode(query, %{format: format}) do
+    case format do
+      :iolist -> encode(query)
+      _ -> encode(query) |> IO.iodata_to_binary()
+    end
+  end
+
+  def encode(query) do
     query
     |> Map.to_list()
     |> Encode.encode()
-    |> IO.iodata_to_binary()
   end
 end
 
+# TODO: implement iolist option
 defimpl Hui.Encoder, for: List do
   # encode a list of map or structs
-  def encode([x | y], _opts) when is_map(x) do
-    [x | y] |> Enum.map_join("&", &Hui.Encoder.encode(&1))
+  def encode([x | y], %{format: format}) when is_map(x) do
+    case format do
+      :iolist -> [x | y] |> Enum.map(&Hui.Encoder.encode(&1))
+      _ -> [x | y] |> Enum.map_join("&", &Hui.Encoder.encode(&1))
+    end
   end
 
   # encode params in arbitrary keyword list
-  def encode([x | y], _opts) when is_tuple(x) do
-    Encode.encode([x | y]) |> IO.iodata_to_binary()
+  def encode(query, %{format: format}) do
+    case format do
+      :iolist -> encode(query)
+      _ -> encode(query) |> IO.iodata_to_binary()
+    end
   end
 
-  def encode([], _opts), do: ""
+  def encode([x | y]) when is_tuple(x), do: Encode.encode([x | y])
+  def encode([]), do: ""
 end
