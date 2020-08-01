@@ -183,6 +183,10 @@ defmodule Hui do
   def search(url, keywords, _, _, _, _, _) when is_nil_empty(keywords) or is_nil_empty(url),
     do: {:error, %Error{reason: :einval}}
 
+  def search(url, keywords, nil, nil, nil, nil, nil) do
+    get(url, %Query.Standard{q: keywords})
+  end
+
   def search(url, keywords, rows, start, filters, facet_fields, sort) do
     get(
       url,
