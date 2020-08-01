@@ -35,16 +35,12 @@ defmodule HuiTest do
 
   # testing with Bypass
   setup do
-    resp = File.read!("./test/data/simple_search_response.json")
-    resp_xml = File.read!("./test/data/simple_search_response.xml")
     bypass = Bypass.open()
 
     error_nxdomain = %Hui.Error{reason: :nxdomain}
 
     {:ok,
      bypass: bypass,
-     simple_search_response_sample: resp,
-     simple_search_response_sample_xml: resp_xml,
      error_nxdomain: error_nxdomain}
   end
 
@@ -114,7 +110,7 @@ defmodule HuiTest do
     test "returns map response when HTTP client decodes response", %{bypass: bypass} do
       Bypass.expect(bypass, fn conn ->
         Plug.Conn.put_resp_header(conn, "content-type", "application/json")
-        |> Plug.Conn.resp(200, File.read!("./test/data/simple_search_response.json"))
+        |> Plug.Conn.resp(200, File.read!("./test/fixtures/search_response.json"))
       end)
 
       {_, resp} = Hui.search("http://localhost:#{bypass.port}", q: "*")
@@ -123,7 +119,7 @@ defmodule HuiTest do
 
     test "returns binary response when HTTP client does not decodes response", %{bypass: bypass} do
       Bypass.expect(bypass, fn conn ->
-        Plug.Conn.resp(conn, 200, File.read!("./test/data/simple_search_response.xml"))
+        Plug.Conn.resp(conn, 200, File.read!("./test/fixtures/search_response.xml"))
       end)
 
       {_, resp} = Hui.search("http://localhost:#{bypass.port}", q: "*")
@@ -504,7 +500,7 @@ defmodule HuiTest do
   describe "get/2 handles" do
     test "a list of structs", context do
       Bypass.expect(context.bypass, fn conn ->
-        Plug.Conn.resp(conn, 200, context.simple_search_response_sample)
+        Plug.Conn.resp(conn, 200, "")
       end)
 
       url = %URL{url: "http://localhost:#{context.bypass.port}"}
@@ -516,7 +512,7 @@ defmodule HuiTest do
 
     test "DisMax struct", context do
       Bypass.expect(context.bypass, fn conn ->
-        Plug.Conn.resp(conn, 200, context.simple_search_response_sample)
+        Plug.Conn.resp(conn, 200, "")
       end)
 
       url = %URL{url: "http://localhost:#{context.bypass.port}"}
@@ -539,7 +535,7 @@ defmodule HuiTest do
 
     test "SolrCloud struct", context do
       Bypass.expect(context.bypass, fn conn ->
-        Plug.Conn.resp(conn, 200, context.simple_search_response_sample)
+        Plug.Conn.resp(conn, 200, "")
       end)
 
       url = %URL{url: "http://localhost:#{context.bypass.port}"}
@@ -629,7 +625,7 @@ defmodule HuiTest do
 
     test "suggester struct", context do
       Bypass.expect(context.bypass, fn conn ->
-        Plug.Conn.resp(conn, 200, context.simple_search_response_sample)
+        Plug.Conn.resp(conn, 200, "")
       end)
 
       url = %URL{url: "http://localhost:#{context.bypass.port}"}
@@ -640,7 +636,7 @@ defmodule HuiTest do
 
     test "spellchecking struct", context do
       Bypass.expect(context.bypass, fn conn ->
-        Plug.Conn.resp(conn, 200, context.simple_search_response_sample)
+        Plug.Conn.resp(conn, 200, "")
       end)
 
       url = %URL{url: "http://localhost:#{context.bypass.port}"}
@@ -664,7 +660,7 @@ defmodule HuiTest do
 
     test "more-like-this struct", context do
       Bypass.expect(context.bypass, fn conn ->
-        Plug.Conn.resp(conn, 200, context.simple_search_response_sample)
+        Plug.Conn.resp(conn, 200, "")
       end)
 
       url = %URL{url: "http://localhost:#{context.bypass.port}"}
