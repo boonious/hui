@@ -39,9 +39,7 @@ defmodule HuiTest do
 
     error_nxdomain = %Hui.Error{reason: :nxdomain}
 
-    {:ok,
-     bypass: bypass,
-     error_nxdomain: error_nxdomain}
+    {:ok, bypass: bypass, error_nxdomain: error_nxdomain}
   end
 
   describe "q functions (:default configured %Hui.URL)" do
@@ -218,25 +216,36 @@ defmodule HuiTest do
     assert {:error, @error_nxdomain} == Hui.search("boo", q: "*")
   end
 
-  describe "suggest" do
-    test "convenience function", context do
-      Bypass.expect(context.bypass, fn conn ->
-        Plug.Conn.resp(conn, 200, "")
-      end)
+  test "suggest/2", %{bypass: bypass} do
+    Bypass.expect(bypass, fn conn ->
+      assert conn.query_string == "suggest.count=10&suggest.dictionary=name_infix&suggest.q=ha&suggest=true"
+      Plug.Conn.resp(conn, 200, "")
+    end)
 
-      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}"}
+    Hui.suggest(
+      %Hui.URL{url: "http://localhost:#{bypass.port}"},
+      %Hui.Query.Suggest{q: "ha", count: 10, dictionary: "name_infix"}
+    )
+  end
 
-      expected =
-        "suggest.cfq=1939&suggest.count=5&" <>
-          "suggest.dictionary=name_infix&suggest.dictionary=ln_prefix&suggest.dictionary=fn_prefix&" <>
-          "suggest.q=ha&suggest=true"
+  test "suggest/5", %{bypass: bypass} do
+    expected =
+      "suggest.cfq=1939&suggest.count=5&" <>
+        "suggest.dictionary=name_infix&suggest.dictionary=ln_prefix&suggest.dictionary=fn_prefix&" <>
+        "suggest.q=ha&suggest=true"
 
-      {_, resp} = Hui.suggest(url, "t")
-      assert String.match?(resp.url, ~r/suggest.q=t&suggest=true/)
+    Bypass.expect(bypass, fn conn ->
+      assert conn.query_string == expected
+      Plug.Conn.resp(conn, 200, "")
+    end)
 
-      {_, resp} = Hui.suggest(url, "ha", 5, ["name_infix", "ln_prefix", "fn_prefix"], "1939")
-      assert String.match?(resp.url, ~r/#{expected}/)
-    end
+    Hui.suggest(
+      %Hui.URL{url: "http://localhost:#{bypass.port}"},
+      "ha",
+      5,
+      ["name_infix", "ln_prefix", "fn_prefix"],
+      "1939"
+    )
   end
 
   describe "update/3" do
