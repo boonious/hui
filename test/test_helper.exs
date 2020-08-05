@@ -1,3 +1,5 @@
+Code.require_file("fixtures/update.exs", __DIR__)
+
 ExUnit.start()
 Application.ensure_all_started(:bypass)
 
@@ -15,7 +17,7 @@ defmodule TestHelpers do
     assert String.match?(resp.url, regex)
   end
 
-  def setup_bypass_for_post_req(bypass, expected_data, content_type \\ "application/json", resp \\ "") do
+  def setup_bypass_for_update_query(bypass, expected_data, content_type \\ "application/json", resp \\ "") do
     Bypass.expect(bypass, fn conn ->
       assert String.match?(conn.request_path, ~r/\/update/)
       assert "POST" == conn.method
