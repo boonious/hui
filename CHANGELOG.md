@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.10.2 (2020-08-06)
+* Extensive test refactoring
+
 ## 0.10.1 (2020-07-17)
 * Simpler Http client behaviour with a single `dispatch` callback, update HTTPoison (reference) implementation
 * Hui.Query module deprecation
