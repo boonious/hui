@@ -39,6 +39,6 @@ defmodule Fixtures.Update do
     ]
   end
 
-  def update_json(doc, commit: commit), do: %Update{doc: doc, commit: commit} |> Encoder.encode()
+  def update_json(doc, cmds), do: %Update{struct(Update, cmds) | doc: doc} |> Encoder.encode()
   def update_json(doc), do: %Update{doc: doc} |> Encoder.encode()
 end
