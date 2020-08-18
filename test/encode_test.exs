@@ -5,18 +5,18 @@ defmodule HuiEncodeTest do
   alias Hui.Encode.Options
   alias Hui.Query
 
-  describe "encode" do
-    test "IO data" do
-      x = [df: "words_txt", q: "loch", "q.op": "AND", sow: true]
+  # new encoder being developed gradually
+  # for https://github.com/boonious/hui/issues/7
+  alias Hui.EncodeNew
+  alias Hui.EncodeNew.Options
 
-      expected = [
-        ["df", "=", "words_txt", "&"],
-        ["q", "=", "loch", "&"],
-        ["q.op", "=", "AND", "&"],
-        ["sow", "=", "true", ""]
-      ]
+  describe "encode/2" do
+    test "keywords query into IO list" do
+      query = [q: "loch", "q.op": "AND", sow: true, rows: 61]
+      io_list = ["q", 61, "loch", 38, ["q.op", 61, "AND", 38, ["sow", 61, "true", 38, ["rows", 61, "61"]]]]
 
-      assert Encode.encode(x) == expected
+      assert EncodeNew.encode(query) == io_list
+      assert EncodeNew.encode(query) |> IO.iodata_to_binary() == "q=loch&q.op=AND&sow=true&rows=61"
     end
 
     test "omit nil or empty keywords" do
