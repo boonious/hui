@@ -7,55 +7,57 @@ defmodule HuiEncodeTest do
 
   # new encoder being developed gradually
   # for https://github.com/boonious/hui/issues/7
-  alias Hui.EncodeNew
+  import Hui.EncodeNew
   alias Hui.EncodeNew.Options
 
-  describe "encode/2" do
-    test "keywords query into IO list" do
+  describe "encode/1 keywords" do
+    test "into IO list" do
       query = [q: "loch", "q.op": "AND", sow: true, rows: 61]
       io_list = ["q", 61, "loch", 38, ["q.op", 61, "AND", 38, ["sow", 61, "true", 38, ["rows", 61, "61"]]]]
 
-      assert EncodeNew.encode(query) == io_list
-      assert EncodeNew.encode(query) |> IO.iodata_to_binary() == "q=loch&q.op=AND&sow=true&rows=61"
-    end
-
-    test "omit nil or empty keywords" do
-      x = [df: nil, q: "loch", "q.op": "", sow: nil]
-      assert Encode.encode(x) == [["q", "=", "loch", ""]]
+      assert encode(query) == io_list
+      assert encode(query) |> to_string == "q=loch&q.op=AND&sow=true&rows=61"
     end
 
     # TODO: more tests for specific Solr query syntax
-    test "Solr queries" do
-      x = [q: "series_t:(blac? OR ambe*)"]
-      assert Encode.encode(x) == [["q", "=", "series_t%3A%28blac%3F+OR+ambe%2A%29", ""]]
+    test "with Solr local params value into IO list" do
+      assert encode(q: "series_t:(blac? OR ambe*)") == ["q", 61, "series_t%3A%28blac%3F+OR+ambe%2A%29"]
     end
 
-    # fq: [x, y] => "fq=x&fq=y"
-    test "keyword with listed values" do
-      x = [q: "loch", fq: ["type:image"]]
-      assert Encode.encode(x) == [["q", "=", "loch", "&"], ["fq=type%3Aimage", ""]]
+    # fq: [x] => "fq=x"
+    test "with a single-value list into IO list" do
+      query = [q: "loch", fq: ["type:image"]]
 
-      x = [
+      assert encode(query) == ["q", 61, "loch", 38, ["fq", 61, "type%3Aimage"]]
+      assert encode(query) |> to_string == "q=loch&fq=type%3Aimage"
+    end
+
+    # fq: [x, y, z] => "fq=x&fq=y&fq=z"
+    test "with a list value into IO list" do
+      query = [
         wt: "json",
         fq: ["cat:book", "inStock:true", "price:[1.99 TO 9.99]"],
-        fl: "id,name,author,price"
+        fl: "id,name"
       ]
 
-      expected = [
-        ["wt", "=", "json", "&"],
-        ["fq=cat%3Abook&fq=inStock%3Atrue&fq=price%3A%5B1.99+TO+9.99%5D", "&"],
-        ["fl", "=", "id%2Cname%2Cauthor%2Cprice", ""]
+      io_list = [
+        "wt",
+        61,
+        "json",
+        38,
+        [
+          "fq",
+          61,
+          "cat%3Abook",
+          38,
+          ["fq", 61, "inStock%3Atrue", 38, ["fq", 61, "price%3A%5B1.99+TO+9.99%5D", 38, ["fl", 61, "id%2Cname"]]]
+        ]
       ]
 
-      assert Encode.encode(x) == expected
-    end
+      assert encode(query) == io_list
 
-    test "handle empty, nil values / lists" do
-      assert Encode.encode(q: nil, fq: ["", "date", nil, "", "year"]) == [["fq=date&fq=year", ""]]
-      assert Encode.encode(fq: ["", "date", nil, "", "year"], q: "") == [["fq=date&fq=year", ""]]
-
-      expected = [["q", "=", "loch", "&"], ["fq=date&fq=year", ""]]
-      assert Encode.encode(q: "loch", fq: ["", "date", nil, "", "year"]) == expected
+      assert encode(query) |> to_string ==
+               "wt=json&fq=cat%3Abook&fq=inStock%3Atrue&fq=price%3A%5B1.99+TO+9.99%5D&fl=id%2Cname"
     end
   end
 

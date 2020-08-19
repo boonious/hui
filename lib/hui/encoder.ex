@@ -99,8 +99,9 @@ defimpl Hui.Encoder,
     }
 
     query
-    |> Encode.transform(options)
-    |> Encode.encode(options)
+    |> Map.to_list()
+    |> EncodeNew.sanitise()
+    |> EncodeNew.encode(options)
   end
 end
 
@@ -133,7 +134,7 @@ defimpl Hui.Encoder, for: Map do
   def encode(query) do
     query
     |> Map.to_list()
-    |> Encode.encode()
+    |> EncodeNew.encode()
   end
 end
 
@@ -155,6 +156,6 @@ defimpl Hui.Encoder, for: List do
     end
   end
 
-  def encode([x | y]) when is_tuple(x), do: Encode.encode([x | y])
+  def encode([x | y]) when is_tuple(x), do: EncodeNew.encode([x | y])
   def encode([]), do: ""
 end

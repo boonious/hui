@@ -23,10 +23,17 @@ defmodule HuiEncoderTest do
 
     test "in iolist format", %{query: query} do
       assert Encoder.encode(query, %{format: :iolist}) == [
-               ["fl", "=", "id%2Cname", "&"],
-               ["fq=cat%3Abook&fq=price%3A%5B1.99+TO+9.99%5D", "&"],
-               ["q", "=", "harry", "&"],
-               ["rows", "=", "10", ""]
+               "fl",
+               61,
+               "id%2Cname",
+               38,
+               [
+                 "fq",
+                 61,
+                 "cat%3Abook",
+                 38,
+                 ["fq", 61, "price%3A%5B1.99+TO+9.99%5D", 38, ["q", 61, "harry", 38, ["rows", 61, "10"]]]
+               ]
              ]
     end
   end
@@ -38,23 +45,18 @@ defmodule HuiEncoderTest do
 
     test "in iolist format" do
       assert Encoder.encode([q: "harry", rows: 10, start: 100], %{format: :iolist}) == [
-               ["q", "=", "harry", "&"],
-               ["rows", "=", "10", "&"],
-               ["start", "=", "100", ""]
+               "q",
+               61,
+               "harry",
+               38,
+               ["rows", 61, "10", 38, ["start", 61, "100"]]
              ]
     end
   end
 
-  test "encodes should handle empty, nil values / lists" do
+  test "encoder should raise error when query encoding is not defined" do
     assert_raise Protocol.UndefinedError, fn -> Hui.Encoder.encode(nil) end
     assert_raise Protocol.UndefinedError, fn -> Hui.Encoder.encode("") end
-
-    assert "" == Hui.Encoder.encode(q: "")
-    assert "" == Hui.Encoder.encode(fq: [])
-    assert "" == Hui.Encoder.encode(fl: nil)
-    assert "" == Hui.Encoder.encode(q: nil, fq: "")
-    assert "" == Hui.Encoder.encode(q: nil, fq: [])
-    assert "fq=date&fq=year" == Hui.Encoder.encode(q: nil, fq: ["", "date", nil, "", "year"])
   end
 
   test "encodes Standard struct" do
