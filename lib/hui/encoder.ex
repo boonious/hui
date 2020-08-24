@@ -2,6 +2,8 @@ alias Hui.Query
 alias Hui.Encode
 alias Hui.Encode.Options
 
+alias Hui.EncodeNew
+
 defprotocol Hui.Encoder do
   @moduledoc """
   A protocol that underpins Solr query encoding.
@@ -49,7 +51,7 @@ defimpl Hui.Encoder, for: [Query.Standard, Query.Common, Query.DisMax] do
   def encode(query) do
     query
     |> Map.to_list()
-    |> Encode.encode()
+    |> EncodeNew.encode()
   end
 end
 
