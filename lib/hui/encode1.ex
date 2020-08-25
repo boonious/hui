@@ -23,7 +23,7 @@ defmodule Hui.EncodeNew do
   """
   @spec encode(list(keyword)) :: iodata()
   def encode([]), do: []
-  def encode(query) when is_list(query), do: transform(sanitise(query), @url_delimiters)
+  def encode(query) when is_list(query), do: transform(query, @url_delimiters)
 
   defp transform([h | t], delimiters), do: transform({h, t}, delimiters)
 
@@ -39,7 +39,48 @@ defmodule Hui.EncodeNew do
 
   defp value({_k, v}), do: URI.encode_www_form(to_string(v))
 
-  defp sanitise(query) do
+  @doc """
+  Encodes Solr query structs that require special handling into IO data.
+  """
+  @spec encode(query, options) :: iodata()
+  def encode(query, %{format: :url} = options), do: transform(query, options, @url_delimiters)
+
+  defp transform([h | t], opts, delimiters), do: transform({h, t}, opts, delimiters)
+
+  # expands and transforms fq: [x, y, z] => "fq=x&fq=&fq=z"
+  defp transform({{k, v}, t}, opts, _delimiters) when is_list(v) do
+    encode(Enum.map(v, &{k, &1}) ++ t, opts)
+  end
+
+  defp transform({{_k, %{:__struct__ => _} = v}, t}, opts, {eql, delimiter}) do
+    case t do
+      [] -> Hui.Encoder.encode(v)
+      _ -> [Hui.Encoder.encode(v), delimiter | [transform(t, opts, {eql, delimiter})]]
+    end
+  end
+
+  defp transform({h, []}, opts, {eql, _delimiter}), do: [key(h, opts), eql, value(h, opts)]
+
+  defp transform({h, t}, opts, {eql, delimiter}) do
+    [key(h, opts), eql, value(h, opts), delimiter | [transform(t, opts, {eql, delimiter})]]
+  end
+
+  defp key({k, _v}, %{prefix: prefix, per_field: field}) do
+    key = to_string(k)
+
+    cond do
+      k in [:facet, :mlt, :spellcheck, :suggest] -> key
+      String.ends_with?(prefix, key) -> prefix
+      field != nil -> ["f", ".", field, ".", prefix, ".", key] |> to_string()
+      field == nil -> [prefix, ".", key] |> to_string()
+    end
+  end
+
+  defp value({_k, v}, _opts), do: URI.encode_www_form(to_string(v))
+
+  @doc false
+  @spec sanitise(list()) :: list()
+  def sanitise(query) do
     query
     |> Enum.reject(fn {k, v} ->
       v in ["", nil, []] or k == :__struct__ or k == :per_field

@@ -51,6 +51,7 @@ defimpl Hui.Encoder, for: [Query.Standard, Query.Common, Query.DisMax] do
   def encode(query) do
     query
     |> Map.to_list()
+    |> EncodeNew.sanitise()
     |> EncodeNew.encode()
   end
 end
@@ -69,8 +70,9 @@ defimpl Hui.Encoder, for: [Query.Facet, Query.MoreLikeThis, Query.SpellCheck, Qu
     options = %Encode.Options{prefix: prefix}
 
     query
-    |> Encode.transform(options)
-    |> Encode.encode(options)
+    |> Map.to_list()
+    |> EncodeNew.sanitise()
+    |> EncodeNew.encode(options)
   end
 end
 
