@@ -11,6 +11,7 @@ defmodule HuiEncodeTest do
   alias Hui.EncodeNew.Options
 
   describe "when encoding format is :url" do
+    # encode/1 implies :url encoding format
     test "encode/1 keywords" do
       query = [q: "loch", "q.op": "AND", sow: true, rows: 61]
       io_list = ["q", 61, "loch", 38, ["q.op", 61, "AND", 38, ["sow", 61, "true", 38, ["rows", 61, "61"]]]]
@@ -58,6 +59,49 @@ defmodule HuiEncodeTest do
 
       assert encode(query) |> to_string ==
                "wt=json&fq=cat%3Abook&fq=inStock%3Atrue&fq=price%3A%5B1.99+TO+9.99%5D&fl=id%2Cname"
+    end
+
+    test "encode/1 map query" do
+      query = %{
+        q: "harry",
+        rows: 10,
+        fq: ["cat:book", "price:[1.99 TO 9.99]"],
+        fl: "id,name"
+      }
+
+      io_list = [
+        "fl",
+        61,
+        "id%2Cname",
+        38,
+        [
+          "fq",
+          61,
+          "cat%3Abook",
+          38,
+          [
+            "fq",
+            61,
+            "price%3A%5B1.99+TO+9.99%5D",
+            38,
+            ["q", 61, "harry", 38, ["rows", 61, "10"]]
+          ]
+        ]
+      ]
+
+      assert encode(query) == io_list
+      assert encode(query) |> to_string == "fl=id%2Cname&fq=cat%3Abook&fq=price%3A%5B1.99+TO+9.99%5D&q=harry&rows=10"
+    end
+
+    # explicit set encoding format to :url
+    test "encode/2 keywords" do
+      query = [q: "loch", "q.op": "AND", sow: true, rows: 61]
+      io_list = ["q", 61, "loch", 38, ["q.op", 61, "AND", 38, ["sow", 61, "true", 38, ["rows", 61, "61"]]]]
+
+      opts = %Options{format: :url}
+
+      assert encode(query, opts) == io_list
+      assert encode(query, opts) |> to_string == "q=loch&q.op=AND&sow=true&rows=61"
     end
 
     test "encode/2 facet struct" do
@@ -128,8 +172,9 @@ defmodule HuiEncodeTest do
     end
   end
 
-  describe "encode (JSON)" do
-    test "IO data" do
+  # next
+  describe "when encoding format is :json" do
+    test "encode/2 keywords" do
       x = [df: "words_txt", q: "loch", "q.op": "AND", sow: true]
       opts = %Options{format: :json}
 
@@ -145,7 +190,9 @@ defmodule HuiEncodeTest do
       expected_json = "{" <> (expected |> IO.iodata_to_binary()) <> "}"
       assert is_map(Poison.decode!(expected_json)) == true
     end
+  end
 
+  describe "encode (JSON)" do
     test "update: doc, commitWithin, overwrite (JSON)" do
       x = [
         commitWithin: 10,

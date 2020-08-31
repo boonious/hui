@@ -67,7 +67,7 @@ defimpl Hui.Encoder, for: [Query.Facet, Query.MoreLikeThis, Query.SpellCheck, Qu
 
   def encode(query) do
     {prefix, _} = Hui.URLPrefixField.prefix_field()[query.__struct__]
-    options = %Encode.Options{prefix: prefix}
+    options = %EncodeNew.Options{prefix: prefix}
 
     query
     |> Map.to_list()
@@ -97,7 +97,7 @@ defimpl Hui.Encoder,
     {prefix, field_key} = Hui.URLPrefixField.prefix_field()[query.__struct__]
     per_field_field = query |> Map.get(field_key)
 
-    options = %Encode.Options{
+    options = %EncodeNew.Options{
       prefix: prefix,
       per_field: if(query.per_field, do: per_field_field, else: nil)
     }
@@ -142,7 +142,6 @@ defimpl Hui.Encoder, for: Map do
   end
 end
 
-# TODO: implement iolist option
 defimpl Hui.Encoder, for: List do
   # encode a list of map or structs
   def encode([x | y], %{format: format}) when is_map(x) do

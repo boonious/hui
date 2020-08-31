@@ -3,8 +3,7 @@ defmodule Hui.EncodeNew do
   Utilities for encoding Solr query and update data structures.
   """
 
-  @type query :: Hui.Query.solr_query()
-  @type options :: Hui.Encode.Options.t()
+  @type options :: __MODULE__.Options.t()
 
   @url_delimiters {?=, ?&}
 
@@ -21,49 +20,35 @@ defmodule Hui.EncodeNew do
   @doc """
   Encodes keywords list into IO data.
   """
-  @spec encode(list(keyword)) :: iodata()
+  @spec encode(keyword() | map()) :: iodata()
   def encode([]), do: []
-  def encode(query) when is_list(query), do: transform(query, @url_delimiters)
-
-  defp transform([h | t], delimiters), do: transform({h, t}, delimiters)
-
-  # expands and transforms fq: [x, y, z] => "fq=x&fq=&fq=z"
-  defp transform({{k, v}, t}, _delimiters) when is_list(v), do: encode(Enum.map(v, &{k, &1}) ++ t)
-  defp transform({h, []}, {eql, _delimiter}), do: [key(h), eql, value(h)]
-
-  defp transform({h, t}, {eql, delimiter}) do
-    [key(h), eql, value(h), delimiter | [transform(t, {eql, delimiter})]]
-  end
-
-  defp key({k, _v}), do: to_string(k)
-
-  defp value({_k, v}), do: URI.encode_www_form(to_string(v))
+  def encode(query) when is_list(query), do: encode(query, %Options{})
+  def encode(query) when is_map(query), do: encode(query |> Map.to_list(), %Options{})
 
   @doc """
-  Encodes Solr query structs that require special handling into IO data.
+  Encodes keywords of Solr query structs that require special handling into IO data.
   """
-  @spec encode(query, options) :: iodata()
-  def encode(query, %{format: :url} = options), do: transform(query, options, @url_delimiters)
-
-  defp transform([h | t], opts, delimiters), do: transform({h, t}, opts, delimiters)
+  @spec encode(keyword(), options) :: iodata()
+  def encode(query, options)
+  def encode([h | t], %{format: :url} = opts), do: transform({h, t}, opts, @url_delimiters)
 
   # expands and transforms fq: [x, y, z] => "fq=x&fq=&fq=z"
-  defp transform({{k, v}, t}, opts, _delimiters) when is_list(v) do
-    encode(Enum.map(v, &{k, &1}) ++ t, opts)
-  end
+  defp transform({{k, v}, t}, opts, _delimiters) when is_list(v), do: encode(Enum.map(v, &{k, &1}) ++ t, opts)
 
-  defp transform({{_k, %{:__struct__ => _} = v}, t}, opts, {eql, delimiter}) do
+  defp transform({{_k, %{:__struct__ => _} = v}, t}, opts, {_eql, delimiter}) do
     case t do
       [] -> Hui.Encoder.encode(v)
-      _ -> [Hui.Encoder.encode(v), delimiter | [transform(t, opts, {eql, delimiter})]]
+      _ -> [Hui.Encoder.encode(v), delimiter | [encode(t, opts)]]
     end
   end
 
   defp transform({h, []}, opts, {eql, _delimiter}), do: [key(h, opts), eql, value(h, opts)]
 
   defp transform({h, t}, opts, {eql, delimiter}) do
-    [key(h, opts), eql, value(h, opts), delimiter | [transform(t, opts, {eql, delimiter})]]
+    [key(h, opts), eql, value(h, opts), delimiter | [encode(t, opts)]]
   end
+
+  defp key({k, _v}, %{prefix: nil}), do: to_string(k)
 
   defp key({k, _v}, %{prefix: prefix, per_field: field}) do
     key = to_string(k)
