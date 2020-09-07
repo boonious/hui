@@ -8,10 +8,10 @@ defmodule Hui.EncodeNew do
   @url_delimiters {?=, ?&}
 
   defmodule Options do
-    defstruct [:per_field, :prefix, format: :url]
+    defstruct [:per_field, :prefix, type: :url]
 
     @type t :: %__MODULE__{
-            format: :url | :json,
+            type: :url | :json,
             per_field: binary,
             prefix: binary
           }
@@ -30,7 +30,7 @@ defmodule Hui.EncodeNew do
   """
   @spec encode(keyword(), options) :: iodata()
   def encode(query, options)
-  def encode([h | t], %{format: :url} = opts), do: transform({h, t}, opts, @url_delimiters)
+  def encode([h | t], %{type: :url} = opts), do: transform({h, t}, opts, @url_delimiters)
 
   # expands and transforms fq: [x, y, z] => "fq=x&fq=&fq=z"
   defp transform({{k, v}, t}, opts, _delimiters) when is_list(v), do: encode(Enum.map(v, &{k, &1}) ++ t, opts)

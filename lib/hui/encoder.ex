@@ -13,10 +13,7 @@ defprotocol Hui.Encoder do
   @type query :: Hui.Query.solr_query()
 
   @doc """
-  Transform various Solr query types - `t:Hui.Query.solr_query/0` into string.
-
-  The argument `opts` will be used to specify encoding format
-  (not used currently).
+  Encode various Solr query types - `t:Hui.Query.solr_query/0` into IO list or string.
 
   ## Example - encoding keyword list
 

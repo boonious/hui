@@ -10,8 +10,8 @@ defmodule HuiEncodeTest do
   import Hui.EncodeNew
   alias Hui.EncodeNew.Options
 
-  describe "when encoding format is :url" do
-    # encode/1 implies :url encoding format
+  describe "when encoding type is :url" do
+    # encode/1 implies :url encoding type
     test "encode/1 keywords" do
       query = [q: "loch", "q.op": "AND", sow: true, rows: 61]
       io_list = ["q", 61, "loch", 38, ["q.op", 61, "AND", 38, ["sow", 61, "true", 38, ["rows", 61, "61"]]]]
@@ -93,12 +93,12 @@ defmodule HuiEncodeTest do
       assert encode(query) |> to_string == "fl=id%2Cname&fq=cat%3Abook&fq=price%3A%5B1.99+TO+9.99%5D&q=harry&rows=10"
     end
 
-    # explicit set encoding format to :url
+    # explicit set encoding type to :url
     test "encode/2 keywords" do
       query = [q: "loch", "q.op": "AND", sow: true, rows: 61]
       io_list = ["q", 61, "loch", 38, ["q.op", 61, "AND", 38, ["sow", 61, "true", 38, ["rows", 61, "61"]]]]
 
-      opts = %Options{format: :url}
+      opts = %Options{type: :url}
 
       assert encode(query, opts) == io_list
       assert encode(query, opts) |> to_string == "q=loch&q.op=AND&sow=true&rows=61"
@@ -176,7 +176,7 @@ defmodule HuiEncodeTest do
   describe "when encoding format is :json" do
     test "encode/2 keywords" do
       x = [df: "words_txt", q: "loch", "q.op": "AND", sow: true]
-      opts = %Options{format: :json}
+      opts = %Encode.Options{format: :json}
 
       expected = [
         ["\"", "df", "\"", ":", "\"words_txt\"", ","],
