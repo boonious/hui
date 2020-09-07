@@ -5,62 +5,176 @@ defmodule HuiEncodeTest do
   alias Hui.Encode.Options
   alias Hui.Query
 
-  describe "encode" do
-    test "IO data" do
-      x = [df: "words_txt", q: "loch", "q.op": "AND", sow: true]
+  # new encoder being developed gradually
+  # for https://github.com/boonious/hui/issues/7
+  import Hui.EncodeNew
+  alias Hui.EncodeNew.Options
 
-      expected = [
-        ["df", "=", "words_txt", "&"],
-        ["q", "=", "loch", "&"],
-        ["q.op", "=", "AND", "&"],
-        ["sow", "=", "true", ""]
-      ]
+  describe "when encoding format is :url" do
+    # encode/1 implies :url encoding format
+    test "encode/1 keywords" do
+      query = [q: "loch", "q.op": "AND", sow: true, rows: 61]
+      io_list = ["q", 61, "loch", 38, ["q.op", 61, "AND", 38, ["sow", 61, "true", 38, ["rows", 61, "61"]]]]
 
-      assert Encode.encode(x) == expected
-    end
-
-    test "omit nil or empty keywords" do
-      x = [df: nil, q: "loch", "q.op": "", sow: nil]
-      assert Encode.encode(x) == [["q", "=", "loch", ""]]
+      assert encode(query) == io_list
+      assert encode(query) |> to_string == "q=loch&q.op=AND&sow=true&rows=61"
     end
 
     # TODO: more tests for specific Solr query syntax
-    test "Solr queries" do
-      x = [q: "series_t:(blac? OR ambe*)"]
-      assert Encode.encode(x) == [["q", "=", "series_t%3A%28blac%3F+OR+ambe%2A%29", ""]]
+    test "encode/1 keywords with Solr local params" do
+      assert encode(q: "series_t:(blac? OR ambe*)") == ["q", 61, "series_t%3A%28blac%3F+OR+ambe%2A%29"]
     end
 
-    # fq: [x, y] => "fq=x&fq=y"
-    test "keyword with listed values" do
-      x = [q: "loch", fq: ["type:image"]]
-      assert Encode.encode(x) == [["q", "=", "loch", "&"], ["fq=type%3Aimage", ""]]
+    # fq: [x] => "fq=x"
+    test "encode/1 keywords with a single-value list" do
+      query = [q: "loch", fq: ["type:image"]]
 
-      x = [
+      assert encode(query) == ["q", 61, "loch", 38, ["fq", 61, "type%3Aimage"]]
+      assert encode(query) |> to_string == "q=loch&fq=type%3Aimage"
+    end
+
+    # fq: [x, y, z] => "fq=x&fq=y&fq=z"
+    test "encode/1 keywords with a list value" do
+      query = [
         wt: "json",
         fq: ["cat:book", "inStock:true", "price:[1.99 TO 9.99]"],
-        fl: "id,name,author,price"
+        fl: "id,name"
       ]
 
-      expected = [
-        ["wt", "=", "json", "&"],
-        ["fq=cat%3Abook&fq=inStock%3Atrue&fq=price%3A%5B1.99+TO+9.99%5D", "&"],
-        ["fl", "=", "id%2Cname%2Cauthor%2Cprice", ""]
+      io_list = [
+        "wt",
+        61,
+        "json",
+        38,
+        [
+          "fq",
+          61,
+          "cat%3Abook",
+          38,
+          ["fq", 61, "inStock%3Atrue", 38, ["fq", 61, "price%3A%5B1.99+TO+9.99%5D", 38, ["fl", 61, "id%2Cname"]]]
+        ]
       ]
 
-      assert Encode.encode(x) == expected
+      assert encode(query) == io_list
+
+      assert encode(query) |> to_string ==
+               "wt=json&fq=cat%3Abook&fq=inStock%3Atrue&fq=price%3A%5B1.99+TO+9.99%5D&fl=id%2Cname"
     end
 
-    test "handle empty, nil values / lists" do
-      assert Encode.encode(q: nil, fq: ["", "date", nil, "", "year"]) == [["fq=date&fq=year", ""]]
-      assert Encode.encode(fq: ["", "date", nil, "", "year"], q: "") == [["fq=date&fq=year", ""]]
+    test "encode/1 map query" do
+      query = %{
+        q: "harry",
+        rows: 10,
+        fq: ["cat:book", "price:[1.99 TO 9.99]"],
+        fl: "id,name"
+      }
 
-      expected = [["q", "=", "loch", "&"], ["fq=date&fq=year", ""]]
-      assert Encode.encode(q: "loch", fq: ["", "date", nil, "", "year"]) == expected
+      io_list = [
+        "fl",
+        61,
+        "id%2Cname",
+        38,
+        [
+          "fq",
+          61,
+          "cat%3Abook",
+          38,
+          [
+            "fq",
+            61,
+            "price%3A%5B1.99+TO+9.99%5D",
+            38,
+            ["q", 61, "harry", 38, ["rows", 61, "10"]]
+          ]
+        ]
+      ]
+
+      assert encode(query) == io_list
+      assert encode(query) |> to_string == "fl=id%2Cname&fq=cat%3Abook&fq=price%3A%5B1.99+TO+9.99%5D&q=harry&rows=10"
+    end
+
+    # explicit set encoding format to :url
+    test "encode/2 keywords" do
+      query = [q: "loch", "q.op": "AND", sow: true, rows: 61]
+      io_list = ["q", 61, "loch", 38, ["q.op", 61, "AND", 38, ["sow", 61, "true", 38, ["rows", 61, "61"]]]]
+
+      opts = %Options{format: :url}
+
+      assert encode(query, opts) == io_list
+      assert encode(query, opts) |> to_string == "q=loch&q.op=AND&sow=true&rows=61"
+    end
+
+    test "encode/2 facet struct" do
+      opts = %Options{prefix: "facet"}
+
+      encoded_io_list =
+        %Query.Facet{field: ["cat", "author_str"], mincount: 1}
+        |> Map.to_list()
+        |> sanitise()
+        |> encode(opts)
+
+      assert encoded_io_list == [
+               "facet",
+               61,
+               "true",
+               38,
+               ["facet.field", 61, "cat", 38, ["facet.field", 61, "author_str", 38, ["facet.mincount", 61, "1"]]]
+             ]
+
+      assert encoded_io_list |> to_string == "facet=true&facet.field=cat&facet.field=author_str&facet.mincount=1"
+    end
+
+    test "encode/2 facet range struct" do
+      opts = %Options{prefix: "facet"}
+
+      encoded_io_list =
+        %Query.FacetRange{range: "price", start: 0, end: 100, gap: 10, per_field: true}
+        |> Map.to_list()
+        |> sanitise()
+        |> encode(opts)
+
+      assert encoded_io_list == [
+               "facet.end",
+               61,
+               "100",
+               38,
+               ["facet.gap", 61, "10", 38, ["facet.range", 61, "price", 38, ["facet.start", 61, "0"]]]
+             ]
+
+      assert encoded_io_list |> to_string == "facet.end=100&facet.gap=10&facet.range=price&facet.start=0"
+    end
+
+    test "encode/2 facet per-field range struct" do
+      opts = %Options{prefix: "facet", per_field: "price"}
+
+      encoded_io_list =
+        %Query.FacetRange{range: "price", start: 0, end: 100, gap: 10, per_field: true}
+        |> Map.to_list()
+        |> sanitise()
+        |> encode(opts)
+
+      assert encoded_io_list == [
+               "f.price.facet.end",
+               61,
+               "100",
+               38,
+               [
+                 "f.price.facet.gap",
+                 61,
+                 "10",
+                 38,
+                 ["f.price.facet.range", 61, "price", 38, ["f.price.facet.start", 61, "0"]]
+               ]
+             ]
+
+      assert encoded_io_list |> to_string ==
+               "f.price.facet.end=100&f.price.facet.gap=10&f.price.facet.range=price&f.price.facet.start=0"
     end
   end
 
-  describe "encode (JSON)" do
-    test "IO data" do
+  # next
+  describe "when encoding format is :json" do
+    test "encode/2 keywords" do
       x = [df: "words_txt", q: "loch", "q.op": "AND", sow: true]
       opts = %Options{format: :json}
 
@@ -76,7 +190,9 @@ defmodule HuiEncodeTest do
       expected_json = "{" <> (expected |> IO.iodata_to_binary()) <> "}"
       assert is_map(Poison.decode!(expected_json)) == true
     end
+  end
 
+  describe "encode (JSON)" do
     test "update: doc, commitWithin, overwrite (JSON)" do
       x = [
         commitWithin: 10,
@@ -181,29 +297,6 @@ defmodule HuiEncodeTest do
   end
 
   describe "transform" do
-    test "query struct" do
-      x = %Query.Facet{field: ["cat", "author_str"], mincount: 1}
-      opts = %Encode.Options{prefix: "facet"}
-
-      expected = [facet: true, field: ["cat", "author_str"], mincount: 1]
-      assert Encode.transform(x) == expected
-
-      expected = [facet: true, "facet.field": ["cat", "author_str"], "facet.mincount": 1]
-      assert Encode.transform(x, opts) == expected
-
-      x = %Query.FacetRange{range: "price", start: 0, end: 100, gap: 10, per_field: true}
-      opts = %Encode.Options{prefix: "facet", per_field: "price"}
-
-      expected = [
-        "f.price.facet.end": 100,
-        "f.price.facet.gap": 10,
-        "f.price.facet.range": "price",
-        "f.price.facet.start": 0
-      ]
-
-      assert Encode.transform(x, opts) == expected
-    end
-
     # test transformation of update structs into ordered keyword lists
     test "update struct: doc, commitWithin, overwrite" do
       x = %Query.Update{doc: Fixtures.Update.single_doc(), commitWithin: 10, overwrite: true}

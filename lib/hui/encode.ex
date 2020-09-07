@@ -137,6 +137,7 @@ defmodule Hui.Encode do
   defp _encode({k, v}, %{format: :json}, {eql, sep}),
     do: ["\"", to_string(k), "\"", eql, Poison.encode!(v), sep]
 
+  ## TODO: refactor transform concerns into a separate module
   @doc """
   Transforms built-in query structs to keyword list.
 
