@@ -6,6 +6,7 @@ defmodule Hui.EncodeNew do
   @type options :: __MODULE__.Options.t()
 
   @url_delimiters {?=, ?&}
+  @json_delimiters {?:, ?,}
 
   defmodule Options do
     defstruct [:per_field, :prefix, type: :url]
@@ -30,10 +31,17 @@ defmodule Hui.EncodeNew do
   """
   @spec encode(keyword(), options) :: iodata()
   def encode(query, options)
+
   def encode([h | t], %{type: :url} = opts), do: transform({h, t}, opts, @url_delimiters)
 
+  # TODO: investigate feasibility of delegating more JSON k,v encoding to Jason or Poison
+  # hui currently uses Poison to encode data structs such as list
+  def encode([h | t], %{type: :json} = opts), do: transform({h, t}, opts, @json_delimiters)
+
   # expands and transforms fq: [x, y, z] => "fq=x&fq=&fq=z"
-  defp transform({{k, v}, t}, opts, _delimiters) when is_list(v), do: encode(Enum.map(v, &{k, &1}) ++ t, opts)
+  defp transform({{k, v}, t}, %{type: :url} = opts, _delimiters) when is_list(v) do
+    encode(Enum.map(v, &{k, &1}) ++ t, opts)
+  end
 
   defp transform({{_k, %{:__struct__ => _} = v}, t}, opts, {_eql, delimiter}) do
     case t do
@@ -48,7 +56,8 @@ defmodule Hui.EncodeNew do
     [key(h, opts), eql, value(h, opts), delimiter | [encode(t, opts)]]
   end
 
-  defp key({k, _v}, %{prefix: nil}), do: to_string(k)
+  defp key({k, _v}, %{prefix: nil, type: :url}), do: to_string(k)
+  defp key({k, _v}, %{prefix: nil, type: :json}), do: [?", to_string(k), ?"]
 
   defp key({k, _v}, %{prefix: prefix, per_field: field}) do
     key = to_string(k)
@@ -61,7 +70,8 @@ defmodule Hui.EncodeNew do
     end
   end
 
-  defp value({_k, v}, _opts), do: URI.encode_www_form(to_string(v))
+  defp value({_k, v}, %{type: :url}), do: URI.encode_www_form(to_string(v))
+  defp value({_k, v}, %{type: :json}), do: Poison.encode!(v)
 
   @doc false
   @spec sanitise(list()) :: list()

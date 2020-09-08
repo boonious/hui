@@ -172,23 +172,22 @@ defmodule HuiEncodeTest do
     end
   end
 
-  # next
-  describe "when encoding format is :json" do
+  describe "when encoding type is :json" do
     test "encode/2 keywords" do
-      x = [df: "words_txt", q: "loch", "q.op": "AND", sow: true]
-      opts = %Encode.Options{format: :json}
+      query = [df: "words_txt", q: "loch", "q.op": "AND", sow: true]
 
-      expected = [
-        ["\"", "df", "\"", ":", "\"words_txt\"", ","],
-        ["\"", "q", "\"", ":", "\"loch\"", ","],
-        ["\"", "q.op", "\"", ":", "\"AND\"", ","],
-        ["\"", "sow", "\"", ":", "true", ""]
+      io_list = [
+        [34, "df", 34],
+        58,
+        "\"words_txt\"",
+        44,
+        [[34, "q", 34], 58, "\"loch\"", 44, [[34, "q.op", 34], 58, "\"AND\"", 44, [[34, "sow", 34], 58, "true"]]]
       ]
 
-      assert Encode.encode(x, opts) == expected
+      opts = %Options{type: :json}
 
-      expected_json = "{" <> (expected |> IO.iodata_to_binary()) <> "}"
-      assert is_map(Poison.decode!(expected_json)) == true
+      assert encode(query, opts) == io_list
+      assert is_map(Poison.decode!([?{, io_list, ?}] |> IO.iodata_to_binary())) == true
     end
   end
 
