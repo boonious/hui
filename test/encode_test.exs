@@ -1,6 +1,8 @@
 defmodule HuiEncodeTest do
   use ExUnit.Case, async: true
 
+  import Fixtures.Update
+
   alias Hui.Encode
   alias Hui.Encode.Options
   alias Hui.Query
@@ -177,48 +179,56 @@ defmodule HuiEncodeTest do
       query = [df: "words_txt", q: "loch", "q.op": "AND", sow: true]
 
       io_list = [
-        [34, "df", 34],
-        58,
-        "\"words_txt\"",
-        44,
-        [[34, "q", 34], 58, "\"loch\"", 44, [[34, "q.op", 34], 58, "\"AND\"", 44, [[34, "sow", 34], 58, "true"]]]
+        123,
+        [
+          [34, "df", 34],
+          58,
+          [34, [[] | "words_txt"], 34],
+          44,
+          [
+            [34, "q", 34],
+            58,
+            [34, [[] | "loch"], 34],
+            44,
+            [[34, "q.op", 34], 58, [34, [[] | "AND"], 34], 44, [[34, "sow", 34], 58, "true"]]
+          ]
+        ],
+        125
       ]
 
       opts = %Options{type: :json}
 
-      assert encode(query, opts) == io_list
-      assert is_map(Poison.decode!([?{, io_list, ?}] |> IO.iodata_to_binary())) == true
+      assert encode_json(query, opts) == io_list
+
+      assert encode_json(query, opts) |> IO.iodata_to_binary() ==
+               "{\"df\":\"words_txt\",\"q\":\"loch\",\"q.op\":\"AND\",\"sow\":true}"
+
+      assert encode_json(query, opts) |> IO.iodata_to_binary() |> Jason.decode!() == %{
+               "df" => "words_txt",
+               "q" => "loch",
+               "q.op" => "AND",
+               "sow" => true
+             }
+    end
+
+    test "encode/2 update doc, with commitWithin, overwrite commands" do
+      x = [
+        commitWithin: 10,
+        overwrite: true,
+        doc: single_doc()
+      ]
+
+      opts = %Options{type: :json}
+      json = encode_json(x, opts) |> IO.iodata_to_binary()
+
+      assert json =~ "\"commitWithin\":10"
+      assert json =~ "\"overwrite\":true"
+      assert json =~ single_doc() |> Jason.encode!()
+      assert Jason.decode!(json) == %{"commitWithin" => 10, "doc" => single_doc(), "overwrite" => true}
     end
   end
 
   describe "encode (JSON)" do
-    test "update: doc, commitWithin, overwrite (JSON)" do
-      x = [
-        commitWithin: 10,
-        overwrite: true,
-        doc: %{
-          "actor_ss" => ["Harrison Ford", "Rutger Hauer", "Sean Young", "Edward James Olmos"],
-          "desc" =>
-            "A blade runner must pursue and terminate four replicants who stole a ship in space, and have returned to Earth to find their creator.",
-          "directed_by" => ["Ridley Scott"],
-          "genre" => ["Sci-Fi", "Thriller"],
-          "id" => "tt0083658",
-          "initial_release_date" => "1982-06-25",
-          "name" => "Blade Runner"
-        }
-      ]
-
-      expected =
-        "\"add\":{\"commitWithin\":10,\"overwrite\":true,\"doc\":{\"name\":\"Blade Runner\"," <>
-          "\"initial_release_date\":\"1982-06-25\",\"id\":\"tt0083658\",\"genre\":[\"Sci-Fi\",\"Thriller\"]," <>
-          "\"directed_by\":[\"Ridley Scott\"],\"desc\":\"A blade runner must pursue and terminate four replicants" <>
-          " who stole a ship in space, and have returned to Earth to find their creator.\",\"actor_ss\"" <>
-          ":[\"Harrison Ford\",\"Rutger Hauer\",\"Sean Young\",\"Edward James Olmos\"]}}"
-
-      opts = %Encode.Options{format: :json}
-      assert Encode.encode(x, opts) |> IO.iodata_to_binary() == expected
-    end
-
     test "update: commit, expungeDeletes, waitSearcher" do
       opts = %Encode.Options{format: :json}
 

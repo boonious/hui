@@ -24,7 +24,7 @@ defmodule Hui.Http.HttpoisonTest do
     end
 
     test "returns a map body for json response", %{bypass: bypass, bypass_url: url} do
-      json = %{"responseHeader" => "123", "response" => %{"numFound" => 47}} |> Poison.encode!()
+      json = %{"responseHeader" => "123", "response" => %{"numFound" => 47}} |> Jason.encode!()
 
       Bypass.expect(bypass, fn conn ->
         Plug.Conn.put_resp_header(conn, "content-type", "application/json;charset=utf-8")
@@ -33,7 +33,7 @@ defmodule Hui.Http.HttpoisonTest do
 
       {_, resp} = %Http{url: url} |> Httpoison.dispatch()
 
-      assert resp.body == json |> Poison.decode!()
+      assert resp.body == json |> Jason.decode!()
     end
 
     test "returns the unparsed binary body if json response is invalid", %{bypass: bypass, bypass_url: url} do

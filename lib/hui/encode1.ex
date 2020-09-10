@@ -33,10 +33,10 @@ defmodule Hui.EncodeNew do
   def encode(query, options)
 
   def encode([h | t], %{type: :url} = opts), do: transform({h, t}, opts, @url_delimiters)
-
-  # TODO: investigate feasibility of delegating more JSON k,v encoding to Jason or Poison
-  # hui currently uses Poison to encode data structs such as list
   def encode([h | t], %{type: :json} = opts), do: transform({h, t}, opts, @json_delimiters)
+
+  @doc false
+  def encode_json(query, %{type: :json} = opts), do: [?{, encode(query, opts), ?}]
 
   # expands and transforms fq: [x, y, z] => "fq=x&fq=&fq=z"
   defp transform({{k, v}, t}, %{type: :url} = opts, _delimiters) when is_list(v) do
@@ -71,7 +71,7 @@ defmodule Hui.EncodeNew do
   end
 
   defp value({_k, v}, %{type: :url}), do: URI.encode_www_form(to_string(v))
-  defp value({_k, v}, %{type: :json}), do: Poison.encode!(v)
+  defp value({_k, v}, %{type: :json}), do: Jason.encode_to_iodata!(v)
 
   @doc false
   @spec sanitise(list()) :: list()
