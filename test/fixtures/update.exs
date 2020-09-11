@@ -15,6 +15,23 @@ defmodule Fixtures.Update do
     }
   end
 
+  def single_doc_update_json(doc \\ single_doc(), opts \\ []), do: "{#{add_doc_update_json(doc, opts)}}"
+
+  defp add_doc_update_json(doc, opts) do
+    within =
+      unless is_nil(Keyword.get(opts, :commitWithin)),
+        do: "\"commitWithin\":#{Keyword.get(opts, :commitWithin)}",
+        else: ""
+
+    overwrite =
+      unless is_nil(Keyword.get(opts, :overwrite)), do: "\"overwrite\":#{Keyword.get(opts, :overwrite)}", else: ""
+
+    doc = "\"doc\":" <> (doc |> Jason.encode!())
+
+    clauses = [within, overwrite, doc] |> Enum.reject(&(&1 == ""))
+    "\"add\":{#{clauses |> Enum.join(",")}}"
+  end
+
   def multi_docs() do
     [
       %{
@@ -37,6 +54,11 @@ defmodule Fixtures.Update do
         "name" => "I Wish"
       }
     ]
+  end
+
+  def multi_docs_update_json(docs \\ multi_docs(), opts \\ []) do
+    json_fragment = Enum.map(docs, &add_doc_update_json(&1, opts)) |> Enum.join(",")
+    "{" <> json_fragment <> "}"
   end
 
   def update_json(doc, cmds), do: %Update{struct(Update, cmds) | doc: doc} |> Encoder.encode()

@@ -36,6 +36,7 @@ defmodule Hui.EncodeNew do
   def encode([h | t], %{type: :json} = opts), do: transform({h, t}, opts, @json_delimiters)
 
   @doc false
+  def encode_json([], %{type: :json}), do: [?{, ?}]
   def encode_json(query, %{type: :json} = opts), do: [?{, encode(query, opts), ?}]
 
   # expands and transforms fq: [x, y, z] => "fq=x&fq=&fq=z"

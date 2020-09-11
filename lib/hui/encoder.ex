@@ -108,19 +108,45 @@ end
 
 # TODO: implement iolist option
 defimpl Hui.Encoder, for: Query.Update do
-  def encode(query, _options) do
-    # TODO: rename :format option, :content_type
-    opts = %Options{format: :json}
-    transforms = Encode.transform(query, opts)
+  @fields_sequence_config [
+    doc: {"add", [:commitWithin, :overwrite, :doc]},
+    delete_id: {"delete", [:delete_id]},
+    delete_query: {"delete", [:delete_query]},
+    commit: {"commit", [:expungeDeletes, :waitSearcher]},
+    optimize: {"optimize", [:maxSegments, :waitSearcher]},
+    rollback: {"rollback", []}
+  ]
 
+  def encode(query, _options) do
     json_fragments =
-      for t <- transforms do
-        t
-        |> Encode.encode(opts)
-        |> IO.iodata_to_binary()
+      for {field, config} <- @fields_sequence_config, Map.get(query, field) != nil do
+        Map.get(query, field) |> encode(query, config)
       end
+      |> List.flatten()
 
     "{#{Enum.join(json_fragments, ",")}}"
+  end
+
+  def encode(value, query, config) when is_list(value) do
+    Enum.map(value, &encode(&1, query, config))
+  end
+
+  def encode(false, _query, _config), do: []
+
+  def encode(value, query, {key, subfields}) do
+    [?", key, ?", ?:, encode_json(value, query, subfields)] |> IO.iodata_to_binary()
+  end
+
+  defp encode_json(value, query, fields) do
+    for f <- fields, Map.get(query, f) != nil do
+      case f do
+        :doc -> {:doc, value}
+        :delete_id -> {:id, value}
+        :delete_query -> {:query, value}
+        _ -> {f, Map.get(query, f)}
+      end
+    end
+    |> EncodeNew.encode_json(%EncodeNew.Options{type: :json})
   end
 end
 

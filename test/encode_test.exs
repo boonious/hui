@@ -219,12 +219,12 @@ defmodule HuiEncodeTest do
       ]
 
       opts = %Options{type: :json}
-      json = encode_json(x, opts) |> IO.iodata_to_binary()
+      encoded = encode_json(x, opts) |> IO.iodata_to_binary()
 
-      assert json =~ "\"commitWithin\":10"
-      assert json =~ "\"overwrite\":true"
-      assert json =~ single_doc() |> Jason.encode!()
-      assert Jason.decode!(json) == %{"commitWithin" => 10, "doc" => single_doc(), "overwrite" => true}
+      assert encoded =~ "\"commitWithin\":10"
+      assert encoded =~ "\"overwrite\":true"
+      assert encoded =~ single_doc() |> Jason.encode!()
+      assert Jason.decode!(encoded) == %{"commitWithin" => 10, "doc" => single_doc(), "overwrite" => true}
     end
   end
 
