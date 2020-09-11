@@ -1,8 +1,6 @@
-alias Hui.Query
 alias Hui.Encode
 alias Hui.Encode.Options
-
-alias Hui.EncodeNew
+alias Hui.Query
 
 defprotocol Hui.Encoder do
   @moduledoc """
@@ -48,8 +46,8 @@ defimpl Hui.Encoder, for: [Query.Standard, Query.Common, Query.DisMax] do
   def encode(query) do
     query
     |> Map.to_list()
-    |> EncodeNew.sanitise()
-    |> EncodeNew.encode()
+    |> Encode.sanitise()
+    |> Encode.encode()
   end
 end
 
@@ -64,12 +62,12 @@ defimpl Hui.Encoder, for: [Query.Facet, Query.MoreLikeThis, Query.SpellCheck, Qu
 
   def encode(query) do
     {prefix, _} = Hui.URLPrefixField.prefix_field()[query.__struct__]
-    options = %EncodeNew.Options{prefix: prefix}
+    options = %Options{prefix: prefix}
 
     query
     |> Map.to_list()
-    |> EncodeNew.sanitise()
-    |> EncodeNew.encode(options)
+    |> Encode.sanitise()
+    |> Encode.encode(options)
   end
 end
 
@@ -94,15 +92,15 @@ defimpl Hui.Encoder,
     {prefix, field_key} = Hui.URLPrefixField.prefix_field()[query.__struct__]
     per_field_field = query |> Map.get(field_key)
 
-    options = %EncodeNew.Options{
+    options = %Options{
       prefix: prefix,
       per_field: if(query.per_field, do: per_field_field, else: nil)
     }
 
     query
     |> Map.to_list()
-    |> EncodeNew.sanitise()
-    |> EncodeNew.encode(options)
+    |> Encode.sanitise()
+    |> Encode.encode(options)
   end
 end
 
@@ -146,7 +144,7 @@ defimpl Hui.Encoder, for: Query.Update do
         _ -> {f, Map.get(query, f)}
       end
     end
-    |> EncodeNew.encode_json(%EncodeNew.Options{type: :json})
+    |> Encode.encode_json(%Options{type: :json})
   end
 end
 
@@ -161,7 +159,7 @@ defimpl Hui.Encoder, for: Map do
   def encode(query) do
     query
     |> Map.to_list()
-    |> EncodeNew.encode()
+    |> Encode.encode()
   end
 end
 
@@ -182,6 +180,6 @@ defimpl Hui.Encoder, for: List do
     end
   end
 
-  def encode([x | y]) when is_tuple(x), do: EncodeNew.encode([x | y])
+  def encode([x | y]) when is_tuple(x), do: Encode.encode([x | y])
   def encode([]), do: ""
 end

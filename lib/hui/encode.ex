@@ -1,4 +1,4 @@
-defmodule Hui.EncodeNew do
+defmodule Hui.Encode do
   @moduledoc """
   Utilities for encoding Solr query and update data structures.
   """

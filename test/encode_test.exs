@@ -2,13 +2,10 @@ defmodule HuiEncodeTest do
   use ExUnit.Case, async: true
 
   import Fixtures.Update
+  import Hui.Encode
 
+  alias Hui.Encode.Options
   alias Hui.Query
-
-  # new encoder being developed gradually
-  # for https://github.com/boonious/hui/issues/7
-  import Hui.EncodeNew
-  alias Hui.EncodeNew.Options
 
   describe "when encoding type is :url" do
     # encode/1 implies :url encoding type
@@ -224,13 +221,13 @@ defmodule HuiEncodeTest do
       assert encoded =~ single_doc() |> Jason.encode!()
       assert Jason.decode!(encoded) == %{"commitWithin" => 10, "doc" => single_doc(), "overwrite" => true}
     end
-    
+
     test "encode/2 keywords update commands" do
       opts = %Options{type: :json}
-      
+
       x = [expungeDeletes: true, waitSearcher: true]
       assert encode(x, opts) |> IO.iodata_to_binary() == "\"expungeDeletes\":true,\"waitSearcher\":true"
-      
+
       x = [commitWithin: 10, overwrite: true]
       assert encode(x, opts) |> IO.iodata_to_binary() == "\"commitWithin\":10,\"overwrite\":true"
     end
