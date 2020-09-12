@@ -39,7 +39,7 @@ defimpl Hui.Encoder, for: [Query.Standard, Query.Common, Query.DisMax] do
   def encode(query, %{format: format}) do
     case format do
       :iolist -> encode(query)
-      _ -> encode(query) |> IO.iodata_to_binary()
+      :binary -> encode(query) |> IO.iodata_to_binary()
     end
   end
 
@@ -56,7 +56,7 @@ defimpl Hui.Encoder, for: [Query.Facet, Query.MoreLikeThis, Query.SpellCheck, Qu
   def encode(query, %{format: format}) do
     case format do
       :iolist -> encode(query)
-      _ -> encode(query) |> IO.iodata_to_binary()
+      :binary -> encode(query) |> IO.iodata_to_binary()
     end
   end
 
@@ -84,7 +84,7 @@ defimpl Hui.Encoder,
   def encode(query, %{format: format}) do
     case format do
       :iolist -> encode(query)
-      _ -> encode(query) |> IO.iodata_to_binary()
+      :binary -> encode(query) |> IO.iodata_to_binary()
     end
   end
 
@@ -104,7 +104,6 @@ defimpl Hui.Encoder,
   end
 end
 
-# TODO: implement iolist option
 defimpl Hui.Encoder, for: Query.Update do
   @fields_sequence_config [
     doc: {"add", [:commitWithin, :overwrite, :doc]},
@@ -115,24 +114,35 @@ defimpl Hui.Encoder, for: Query.Update do
     rollback: {"rollback", []}
   ]
 
-  def encode(query, _options) do
+  def encode(query, %{format: format}) do
     json_fragments =
       for {field, config} <- @fields_sequence_config, Map.get(query, field) != nil do
-        Map.get(query, field) |> encode(query, config)
-      end
-      |> List.flatten()
+        encoded = Map.get(query, field) |> encode(query, config)
 
-    "{#{Enum.join(json_fragments, ",")}}"
+        cond do
+          encoded == [] -> []
+          is_list(hd(encoded)) -> encoded |> Enum.intersperse(?,)
+          true -> encoded
+        end
+      end
+      |> Enum.intersperse(?,)
+
+    case format do
+      :iolist -> [?{, json_fragments, ?}]
+      :binary -> "{#{to_string(json_fragments)}}"
+    end
   end
+
+  def encode(value, query, config)
+
+  def encode(false, _query, _config), do: []
 
   def encode(value, query, config) when is_list(value) do
     Enum.map(value, &encode(&1, query, config))
   end
 
-  def encode(false, _query, _config), do: []
-
   def encode(value, query, {key, subfields}) do
-    [?", key, ?", ?:, encode_json(value, query, subfields)] |> IO.iodata_to_binary()
+    [?", key, ?", ?:, encode_json(value, query, subfields)]
   end
 
   defp encode_json(value, query, fields) do
@@ -152,7 +162,7 @@ defimpl Hui.Encoder, for: Map do
   def encode(query, %{format: format}) do
     case format do
       :iolist -> encode(query)
-      _ -> encode(query) |> IO.iodata_to_binary()
+      :binary -> encode(query) |> IO.iodata_to_binary()
     end
   end
 
@@ -168,7 +178,7 @@ defimpl Hui.Encoder, for: List do
   def encode([x | y], %{format: format}) when is_map(x) do
     case format do
       :iolist -> [x | y] |> Enum.map(&Hui.Encoder.encode(&1))
-      _ -> [x | y] |> Enum.map_join("&", &Hui.Encoder.encode(&1))
+      :binary -> [x | y] |> Enum.map_join("&", &Hui.Encoder.encode(&1))
     end
   end
 
@@ -176,7 +186,7 @@ defimpl Hui.Encoder, for: List do
   def encode(query, %{format: format}) do
     case format do
       :iolist -> encode(query)
-      _ -> encode(query) |> IO.iodata_to_binary()
+      :binary -> encode(query) |> IO.iodata_to_binary()
     end
   end
 
