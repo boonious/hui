@@ -9,7 +9,7 @@ defmodule Hui.MixProject do
     [
       app: :hui,
       version: "0.10.2",
-      elixir: "~> 1.7",
+      elixir: "~> 1.8",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       test_coverage: [tool: ExCoveralls],
@@ -46,13 +46,13 @@ defmodule Hui.MixProject do
   defp deps do
     [
       {:httpoison, "~> 1.5.1"},
-      {:poison, "~> 4.0.1"},
       {:jason, "~> 1.2"},
       {:ex_doc, "~> 0.19", only: :dev, runtime: false},
       {:bypass, "~> 1.0", only: :test},
       {:dialyxir, "~> 1.0.0-rc.3", only: [:dev], runtime: false},
       {:excoveralls, "~> 0.12", only: :test},
-      {:cowboy, "~> 2.6"}
+      {:cowboy, "~> 2.6"},
+      {:cowlib, "~> 2.8.0"}
     ]
   end
 

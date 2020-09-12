@@ -28,7 +28,7 @@ defmodule Hui.Http.Httpoison do
   defp json?(_), do: false
 
   defp decode_json(body) do
-    case Poison.decode(body) do
+    case Jason.decode(body) do
       {:ok, map} -> map
       {:error, _} -> body
     end
