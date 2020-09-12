@@ -14,22 +14,40 @@ defprotocol Hui.Encoder do
   Encode various Solr query types - `t:Hui.Query.solr_query/0` into IO list or string.
 
   ## Example - encoding keyword list
+      iex> alias Hui.Encoder
 
-      iex> Hui.Encoder.encode(q: "loch", start: 10, rows: 10, fq: ["type:image", "year:[2001 TO 2007]"])
+      iex> Encoder.encode(q: "loch", start: 10, rows: 10, fq: ["type:image", "year:[2001 TO 2007]"])
       "q=loch&start=10&rows=10&fq=type%3Aimage&fq=year%3A%5B2001+TO+2007%5D"
 
-      iex> Hui.Encoder.encode(q: "loch", facet: true, "facet.field": ["type", "year"])
+      iex> Encoder.encode(q: "loch", facet: true, "facet.field": ["type", "year"])
       "q=loch&facet=true&facet.field=type&facet.field=year"
 
   ## Example - encoding query structs
+      iex> alias Hui.Query.{DisMax,Highlight}
 
-      iex> %Hui.Query.DisMax{q: "loch", qf: "description^2.3 title", mm: "2<-25% 9<-3"} |> Hui.Encoder.encode
+      iex> %DisMax{q: "loch", qf: "description^2.3 title", mm: "2<-25% 9<-3"} |> Encoder.encode
       "mm=2%3C-25%25+9%3C-3&q=loch&qf=description%5E2.3+title"
 
-      iex> %Hui.Query.Highlight{fl: "title,words", usePhraseHighlighter: true, fragsize: 250} |> Hui.Encoder.encode
+      iex> %Highlight{fl: "title,words", usePhraseHighlighter: true, fragsize: 250} |> Encoder.encode
       "hl.fl=title%2Cwords&hl.fragsize=250&hl=true&hl.usePhraseHighlighter=true"
 
   See `Hui.Query.Facet`, `Hui.Query.FacetRange`, `Hui.Query.FacetInterval` for more examples.
+
+  ## IO data encoding
+  Hui provides an option that enables the built-in structs encoder to return either
+  string (current default) or [IO list](https://hexdocs.pm/elixir/IO.html#module-io-data)
+  which can be sent directly to IO functions or over the socket, to leverage Erlang runtime and
+  some HTTP client features for lower memory usage and increased performance.
+
+  * `:format` - controls how query structs are encoded. Possible values are: `:binary` and `:iolist`.
+
+  The option should be provided via a Map:
+
+      iex> alias Hui.Query.Update
+      iex> %Update{delete_id: ["123", "456"]} |> Encoder.encode(%{format: :iolist})
+
+  **Note**: forthcoming update of Hui Encoder protocol would provide `encode` and `encode_to_iodata`
+  functions for String and IO data encoding respectively.
   """
   @spec encode(query, options) :: iodata
   def encode(query, options \\ %{format: :binary})

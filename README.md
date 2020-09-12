@@ -201,7 +201,7 @@ way, e.g. `gap` instead of the long-winded `f.[fieldname].facet.range.gap` (per 
 (single field). Per-field use case for a facet can be set via the `per_field` key - see below.
 
 Hui includes a [protocol](https://elixir-lang.org/getting-started/protocols.html) (with implementation):
-- `Hui.Encoder` for encoding the query structs into binary (JSON format forthcoming)
+- `Hui.Encoder` for encoding the query structs into binary and [IO data](#io-data-encoding).
 
 A custom query struct may be developed by implementing the Encoder protocol.
 
@@ -276,6 +276,12 @@ The structs and their associated type spec also provide binding to and introspec
     threads: nil
   }
 ```
+
+### IO data encoding
+Hui provides an option that enables the built-in query structs `Hui.Encoder` to return either
+string (current default) or [IO list](https://hexdocs.pm/elixir/IO.html#module-io-data)
+which can be sent directly to IO functions or over the socket, to leverage Erlang runtime and
+some HTTP client features for lower memory usage and increased performance.
 
 ### Parsing Solr results
 
