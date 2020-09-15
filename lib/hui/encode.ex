@@ -9,6 +9,8 @@ defmodule Hui.Encode do
   @json_delimiters {?:, ?,}
 
   defmodule Options do
+    @moduledoc false
+
     defstruct [:per_field, :prefix, type: :url]
 
     @type t :: %__MODULE__{

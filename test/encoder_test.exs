@@ -22,7 +22,7 @@ defmodule HuiEncoderTest do
     end
 
     test "in iolist format", %{query: query} do
-      assert Encoder.encode(query, %{format: :iolist}) == [
+      assert Encoder.encode_to_iodata(query) == [
                "fl",
                61,
                "id%2Cname",
@@ -44,7 +44,7 @@ defmodule HuiEncoderTest do
     end
 
     test "in iolist format" do
-      assert Encoder.encode([q: "harry", rows: 10, start: 100], %{format: :iolist}) == [
+      assert Encoder.encode_to_iodata(q: "harry", rows: 10, start: 100) == [
                "q",
                61,
                "harry",
