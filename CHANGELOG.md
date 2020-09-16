@@ -26,7 +26,7 @@
 
 * New `Hui.Query.Update` struct for indexing documents
 * `Hui.Encoder` encodes update query in JSON format
-* `Hui.Query.get/2` and `Hui.Query.post/2` functions (accept built-in data structs) for HTTP requests
+* Hui.Query.get/2 and Hui.Query.post/2 functions (accept built-in data structs) for HTTP requests
 
 ## 0.9.0 (2019-11-06)
 

@@ -1,17 +1,14 @@
 defmodule HuiEncodeTest do
   use ExUnit.Case, async: true
 
-  alias Hui.Encode
+  import Fixtures.Update
+  import Hui.Encode
+
   alias Hui.Encode.Options
   alias Hui.Query
 
-  # new encoder being developed gradually
-  # for https://github.com/boonious/hui/issues/7
-  import Hui.EncodeNew
-  alias Hui.EncodeNew.Options
-
-  describe "when encoding format is :url" do
-    # encode/1 implies :url encoding format
+  describe "when encoding type is :url" do
+    # encode/1 implies :url encoding type
     test "encode/1 keywords" do
       query = [q: "loch", "q.op": "AND", sow: true, rows: 61]
       io_list = ["q", 61, "loch", 38, ["q.op", 61, "AND", 38, ["sow", 61, "true", 38, ["rows", 61, "61"]]]]
@@ -93,12 +90,12 @@ defmodule HuiEncodeTest do
       assert encode(query) |> to_string == "fl=id%2Cname&fq=cat%3Abook&fq=price%3A%5B1.99+TO+9.99%5D&q=harry&rows=10"
     end
 
-    # explicit set encoding format to :url
+    # explicit set encoding type to :url
     test "encode/2 keywords" do
       query = [q: "loch", "q.op": "AND", sow: true, rows: 61]
       io_list = ["q", 61, "loch", 38, ["q.op", 61, "AND", 38, ["sow", 61, "true", 38, ["rows", 61, "61"]]]]
 
-      opts = %Options{format: :url}
+      opts = %Options{type: :url}
 
       assert encode(query, opts) == io_list
       assert encode(query, opts) |> to_string == "q=loch&q.op=AND&sow=true&rows=61"
@@ -172,220 +169,67 @@ defmodule HuiEncodeTest do
     end
   end
 
-  # next
-  describe "when encoding format is :json" do
+  describe "when encoding type is :json" do
     test "encode/2 keywords" do
-      x = [df: "words_txt", q: "loch", "q.op": "AND", sow: true]
-      opts = %Options{format: :json}
+      query = [df: "words_txt", q: "loch", "q.op": "AND", sow: true]
 
-      expected = [
-        ["\"", "df", "\"", ":", "\"words_txt\"", ","],
-        ["\"", "q", "\"", ":", "\"loch\"", ","],
-        ["\"", "q.op", "\"", ":", "\"AND\"", ","],
-        ["\"", "sow", "\"", ":", "true", ""]
+      io_list = [
+        123,
+        [
+          [34, "df", 34],
+          58,
+          [34, [[] | "words_txt"], 34],
+          44,
+          [
+            [34, "q", 34],
+            58,
+            [34, [[] | "loch"], 34],
+            44,
+            [[34, "q.op", 34], 58, [34, [[] | "AND"], 34], 44, [[34, "sow", 34], 58, "true"]]
+          ]
+        ],
+        125
       ]
 
-      assert Encode.encode(x, opts) == expected
+      opts = %Options{type: :json}
 
-      expected_json = "{" <> (expected |> IO.iodata_to_binary()) <> "}"
-      assert is_map(Poison.decode!(expected_json)) == true
+      assert encode_json(query, opts) == io_list
+
+      assert encode_json(query, opts) |> IO.iodata_to_binary() ==
+               "{\"df\":\"words_txt\",\"q\":\"loch\",\"q.op\":\"AND\",\"sow\":true}"
+
+      assert encode_json(query, opts) |> IO.iodata_to_binary() |> Jason.decode!() == %{
+               "df" => "words_txt",
+               "q" => "loch",
+               "q.op" => "AND",
+               "sow" => true
+             }
     end
-  end
 
-  describe "encode (JSON)" do
-    test "update: doc, commitWithin, overwrite (JSON)" do
+    test "encode/2 update doc, with commitWithin, overwrite commands" do
       x = [
         commitWithin: 10,
         overwrite: true,
-        doc: %{
-          "actor_ss" => ["Harrison Ford", "Rutger Hauer", "Sean Young", "Edward James Olmos"],
-          "desc" =>
-            "A blade runner must pursue and terminate four replicants who stole a ship in space, and have returned to Earth to find their creator.",
-          "directed_by" => ["Ridley Scott"],
-          "genre" => ["Sci-Fi", "Thriller"],
-          "id" => "tt0083658",
-          "initial_release_date" => "1982-06-25",
-          "name" => "Blade Runner"
-        }
+        doc: single_doc()
       ]
 
-      expected =
-        "\"add\":{\"commitWithin\":10,\"overwrite\":true,\"doc\":{\"name\":\"Blade Runner\"," <>
-          "\"initial_release_date\":\"1982-06-25\",\"id\":\"tt0083658\",\"genre\":[\"Sci-Fi\",\"Thriller\"]," <>
-          "\"directed_by\":[\"Ridley Scott\"],\"desc\":\"A blade runner must pursue and terminate four replicants" <>
-          " who stole a ship in space, and have returned to Earth to find their creator.\",\"actor_ss\"" <>
-          ":[\"Harrison Ford\",\"Rutger Hauer\",\"Sean Young\",\"Edward James Olmos\"]}}"
+      opts = %Options{type: :json}
+      encoded = encode_json(x, opts) |> IO.iodata_to_binary()
 
-      opts = %Encode.Options{format: :json}
-      assert Encode.encode(x, opts) |> IO.iodata_to_binary() == expected
+      assert encoded =~ "\"commitWithin\":10"
+      assert encoded =~ "\"overwrite\":true"
+      assert encoded =~ single_doc() |> Jason.encode!()
+      assert Jason.decode!(encoded) == %{"commitWithin" => 10, "doc" => single_doc(), "overwrite" => true}
     end
 
-    test "update: commit, expungeDeletes, waitSearcher" do
-      opts = %Encode.Options{format: :json}
+    test "encode/2 keywords update commands" do
+      opts = %Options{type: :json}
 
-      x = [commit: true, expungeDeletes: nil, waitSearcher: nil]
-      assert Encode.encode(x, opts) |> IO.iodata_to_binary() == "\"commit\":{}"
+      x = [expungeDeletes: true, waitSearcher: true]
+      assert encode(x, opts) |> IO.iodata_to_binary() == "\"expungeDeletes\":true,\"waitSearcher\":true"
 
-      x = [commit: true, expungeDeletes: nil, waitSearcher: true]
-      expected = "\"commit\":{\"waitSearcher\":true}"
-      assert Encode.encode(x, opts) |> IO.iodata_to_binary() == expected
-
-      x = [commit: true, expungeDeletes: false, waitSearcher: nil]
-      expected = "\"commit\":{\"expungeDeletes\":false}"
-      assert Encode.encode(x, opts) |> IO.iodata_to_binary() == expected
-
-      x = [commit: true, expungeDeletes: false, waitSearcher: false]
-      expected = "\"commit\":{\"expungeDeletes\":false,\"waitSearcher\":false}"
-      assert Encode.encode(x, opts) |> IO.iodata_to_binary() == expected
-
-      x = [commit: true, expungeDeletes: true, waitSearcher: true]
-      expected = "\"commit\":{\"expungeDeletes\":true,\"waitSearcher\":true}"
-      assert Encode.encode(x, opts) |> IO.iodata_to_binary() == expected
-    end
-
-    test "update: delete by ID" do
-      opts = %Encode.Options{format: :json}
-
-      x = [delete: {:id, "tt1650453"}]
-      expected = "\"delete\":{\"id\":\"tt1650453\"}"
-      assert Encode.encode(x, opts) |> IO.iodata_to_binary() == expected
-
-      x = [delete: [id: "tt1650453", id: "tt165045"]]
-      expected = "\"delete\":{\"id\":\"tt1650453\"},\"delete\":{\"id\":\"tt165045\"}"
-      assert Encode.encode(x, opts) |> IO.iodata_to_binary() == expected
-
-      x = [delete: "tt1650453"]
-      expected = "\"delete\":\"tt1650453\""
-      assert Encode.encode(x, opts) |> IO.iodata_to_binary() == expected
-
-      x = [delete: ["123", "456"]]
-      expected = "\"delete\":[\"123\",\"456\"]"
-      assert Encode.encode(x, opts) |> IO.iodata_to_binary() == expected
-    end
-
-    test "update: delete by query" do
-      opts = %Encode.Options{format: :json}
-
-      x = [delete: [query: "name:Persona", query: "genre:Drama"]]
-      expected = "\"delete\":{\"query\":\"name:Persona\"},\"delete\":{\"query\":\"genre:Drama\"}"
-      assert Encode.encode(x, opts) |> IO.iodata_to_binary() == expected
-
-      x = [delete: {:query, "name:Persona"}]
-      expected = "\"delete\":{\"query\":\"name:Persona\"}"
-      assert Encode.encode(x, opts) |> IO.iodata_to_binary() == expected
-    end
-
-    test "update: optimize" do
-      opts = %Encode.Options{format: :json}
-
-      x = [optimize: true, maxSegments: nil, waitSearcher: nil]
-      expected = "\"optimize\":{}"
-      assert Encode.encode(x, opts) |> IO.iodata_to_binary() == expected
-
-      x = [optimize: true, maxSegments: 10, waitSearcher: false]
-      expected = "\"optimize\":{\"maxSegments\":10,\"waitSearcher\":false}"
-      assert Encode.encode(x, opts) |> IO.iodata_to_binary() == expected
-    end
-
-    test "update: rollback" do
-      opts = %Encode.Options{format: :json}
-
-      x = [rollback: true]
-      expected = "\"rollback\":{}"
-      assert Encode.encode(x, opts) |> IO.iodata_to_binary() == expected
-    end
-  end
-
-  describe "transform" do
-    # test transformation of update structs into ordered keyword lists
-    test "update struct: doc, commitWithin, overwrite" do
-      x = %Query.Update{doc: Fixtures.Update.single_doc(), commitWithin: 10, overwrite: true}
-      opts = %Encode.Options{format: :json}
-
-      assert Encode.transform(x, opts) == [
-               [
-                 commitWithin: 10,
-                 overwrite: true,
-                 doc: Fixtures.Update.single_doc()
-               ]
-             ]
-    end
-
-    test "update struct: commit, expungeDeletes, waitSearcher" do
-      x = %Query.Update{doc: nil, commit: true, waitSearcher: true, expungeDeletes: false}
-      opts = %Encode.Options{format: :json}
-
-      expected = [[commit: true, expungeDeletes: false, waitSearcher: true]]
-      assert Encode.transform(x, opts) == expected
-    end
-
-    test "update struct: delete by ID" do
-      opts = %Encode.Options{format: :json}
-
-      x = %Query.Update{delete_id: "tt1650453"}
-      expected = [[delete: {:id, "tt1650453"}]]
-      assert Encode.transform(x, opts) == expected
-
-      x = %Query.Update{delete_id: ["tt1650453", "tt1650453"]}
-      expected = [[delete: [id: "tt1650453", id: "tt1650453"]]]
-      assert Encode.transform(x, opts) == expected
-
-      x = %Query.Update{commit: true, delete_id: ["tt1650453", "tt1650453"]}
-      expected1 = [delete: [id: "tt1650453", id: "tt1650453"]]
-      expected2 = [commit: true, expungeDeletes: nil, waitSearcher: nil]
-      assert Encode.transform(x, opts) == [expected1, expected2]
-    end
-
-    test "update struct: delete by query" do
-      opts = %Encode.Options{format: :json}
-      x = %Query.Update{delete_query: ["name:Persona", "genre:Drama"], commit: true}
-
-      expected = [
-        [delete: [query: "name:Persona", query: "genre:Drama"]],
-        [commit: true, expungeDeletes: nil, waitSearcher: nil]
-      ]
-
-      assert Encode.transform(x, opts) == expected
-
-      x = %Query.Update{delete_query: "name:Persona"}
-      expected = [[delete: {:query, "name:Persona"}]]
-      assert Encode.transform(x, opts) == expected
-    end
-
-    test "update struct: optimize" do
-      opts = %Encode.Options{format: :json}
-
-      x = %Query.Update{optimize: true}
-      expected = [[optimize: true, maxSegments: nil, waitSearcher: nil]]
-      assert Encode.transform(x, opts) == expected
-
-      x = %Query.Update{optimize: true, maxSegments: 10, waitSearcher: false}
-      expected = [[optimize: true, maxSegments: 10, waitSearcher: false]]
-      assert Encode.transform(x, opts) == expected
-    end
-
-    test "update struct: rollback" do
-      opts = %Encode.Options{format: :json}
-
-      x = %Query.Update{rollback: true}
-      expected = [[rollback: true]]
-      assert Encode.transform(x, opts) == expected
-
-      x = %Query.Update{rollback: false}
-      expected = []
-      assert Encode.transform(x, opts) == expected
-
-      x = %Query.Update{delete_query: "name:Persona", rollback: true}
-      expected = [[delete: {:query, "name:Persona"}], [rollback: true]]
-      assert Encode.transform(x, opts) == expected
-    end
-
-    test "raise exception for unsupported encoding format" do
-      x = %Query.Update{doc: %{id: "123"}, commitWithin: 10, overwrite: true}
-      opts = %Encode.Options{format: "blah"}
-
-      error = "blah format is not supported. Hui currently only encodes update message in JSON."
-      assert_raise RuntimeError, error, fn -> Encode.transform(x, opts) end
+      x = [commitWithin: 10, overwrite: true]
+      assert encode(x, opts) |> IO.iodata_to_binary() == "\"commitWithin\":10,\"overwrite\":true"
     end
   end
 end

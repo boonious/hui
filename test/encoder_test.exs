@@ -22,7 +22,7 @@ defmodule HuiEncoderTest do
     end
 
     test "in iolist format", %{query: query} do
-      assert Encoder.encode(query, %{format: :iolist}) == [
+      assert Encoder.encode_to_iodata(query) == [
                "fl",
                61,
                "id%2Cname",
@@ -44,7 +44,7 @@ defmodule HuiEncoderTest do
     end
 
     test "in iolist format" do
-      assert Encoder.encode([q: "harry", rows: 10, start: 100], %{format: :iolist}) == [
+      assert Encoder.encode_to_iodata(q: "harry", rows: 10, start: 100) == [
                "q",
                61,
                "harry",
@@ -290,27 +290,50 @@ defmodule HuiEncoderTest do
   end
 
   test "encodes Update struct - single doc" do
-    assert Encoder.encode(%Query.Update{doc: single_doc()}) == File.read!("test/fixtures/update_doc.json")
+    encoded = Encoder.encode(%Query.Update{doc: single_doc()})
+
+    assert encoded =~ single_doc() |> Jason.encode!()
+    assert encoded == single_doc_update_json()
   end
 
   test "encodes Update struct - multiple docs" do
-    assert Encoder.encode(%Query.Update{doc: multi_docs()}) == File.read!("test/fixtures/multi_docs_update.json")
+    encoded = Encoder.encode(%Query.Update{doc: multi_docs()})
+
+    for doc <- multi_docs() do
+      assert encoded =~ doc |> Jason.encode!()
+    end
+
+    assert encoded == multi_docs_update_json()
   end
 
-  test "encodes Update struct - commitWithin, overwrite" do
+  test "encodes Update struct - single doc with commitWithin, overwrite commands" do
     x = %Query.Update{doc: single_doc(), commitWithin: 5000}
-    assert Encoder.encode(x) == File.read!("test/fixtures/update_doc_with_commit_within.json")
+    assert Encoder.encode(x) == single_doc_update_json(single_doc(), commitWithin: 5000)
 
     x = %Query.Update{doc: single_doc(), commitWithin: 10, overwrite: true}
-    assert Encoder.encode(x) == File.read!("test/fixtures/update_doc_with_commit_within_overwrite.json")
+    assert Encoder.encode(x) == single_doc_update_json(single_doc(), commitWithin: 10, overwrite: true)
 
     x = %Query.Update{doc: single_doc(), overwrite: false}
-    assert Encoder.encode(x) == File.read!("test/fixtures/update_doc_with_overwrite.json")
+    assert Encoder.encode(x) == single_doc_update_json(single_doc(), overwrite: false)
   end
 
-  test "encodes Update struct - commit, waitSearcher, expungeDeletes" do
+  test "encodes Update struct - multiple docs with commitWithin, overwrite commands" do
+    x = %Query.Update{doc: multi_docs(), commitWithin: 1000}
+    assert Encoder.encode(x) == multi_docs_update_json(multi_docs(), commitWithin: 1000)
+
+    x = %Query.Update{doc: multi_docs(), commitWithin: 10, overwrite: true}
+    assert Encoder.encode(x) == multi_docs_update_json(multi_docs(), commitWithin: 10, overwrite: true)
+
+    x = %Query.Update{doc: multi_docs(), overwrite: false}
+    assert Encoder.encode(x) == multi_docs_update_json(multi_docs(), overwrite: false)
+  end
+
+  test "encodes Update struct with commit, waitSearcher, expungeDeletes commands" do
     x = %Query.Update{commit: true}
     assert x |> Encoder.encode() == "{\"commit\":{}}"
+
+    x = %Query.Update{commit: false}
+    assert x |> Encoder.encode() == "{}"
 
     x = %Query.Update{commit: true, waitSearcher: true}
     assert x |> Encoder.encode() == "{\"commit\":{\"waitSearcher\":true}}"
@@ -327,9 +350,12 @@ defmodule HuiEncoderTest do
              "{\"commit\":{\"expungeDeletes\":false,\"waitSearcher\":true}}"
   end
 
-  test "encodes Update struct - optimize, waitSearcher, maxSegment" do
+  test "encodes Update struct with optimize, waitSearcher, maxSegment commands" do
     x = %Query.Update{optimize: true}
     assert x |> Encoder.encode() == "{\"optimize\":{}}"
+
+    x = %Query.Update{optimize: false}
+    assert x |> Encoder.encode() == "{}"
 
     x = %Query.Update{optimize: true, waitSearcher: true}
     assert x |> Encoder.encode() == "{\"optimize\":{\"waitSearcher\":true}}"
@@ -344,7 +370,7 @@ defmodule HuiEncoderTest do
     assert x |> Encoder.encode() == "{\"optimize\":{\"maxSegments\":20,\"waitSearcher\":true}}"
   end
 
-  test "encodes Update struct - delete by ID" do
+  test "encodes Update struct with delete by ID command" do
     x = %Query.Update{delete_id: "tt1316540"}
     assert x |> Encoder.encode() == "{\"delete\":{\"id\":\"tt1316540\"}}"
 
@@ -354,7 +380,7 @@ defmodule HuiEncoderTest do
              "{\"delete\":{\"id\":\"tt1316540\"},\"delete\":{\"id\":\"tt1650453\"}}"
   end
 
-  test "encodes Update struct - delete by query" do
+  test "encodes Update struct with delete by query command" do
     x = %Query.Update{delete_query: "name:Persona"}
     assert x |> Encoder.encode() == "{\"delete\":{\"query\":\"name:Persona\"}}"
 
@@ -376,15 +402,26 @@ defmodule HuiEncoderTest do
       delete_id: ["tt1316540", "tt1650453"]
     ]
 
-    x = %Query.Update{struct(Query.Update, update_cmd) | doc: multi_docs()}
-    assert x |> Encoder.encode() == File.read!("test/fixtures/update_doc_multi_cmds.json")
+    encoded = Encoder.encode(%Query.Update{struct(Query.Update, update_cmd) | doc: multi_docs()})
+
+    for doc <- multi_docs() do
+      assert encoded =~ doc |> Jason.encode!()
+    end
+
+    assert encoded =~
+             multi_docs_update_json(multi_docs(), commitWithin: 50, overwrite: true) |> String.trim_trailing("}")
+
+    assert encoded =~ "\"commit\":{\"expungeDeletes\":false,\"waitSearcher\":true}"
+    assert encoded =~ "\"optimize\":{\"maxSegments\":20,\"waitSearcher\":true}"
+    assert encoded =~ "\"delete\":{\"id\":\"tt1316540\"},\"delete\":{\"id\":\"tt1650453\"}"
+    assert encoded == File.read!("test/fixtures/update_doc_multi_cmds.json")
   end
 
   test "encodes Update struct - rollback" do
     x = %Query.Update{rollback: true}
     assert x |> Encoder.encode() == "{\"rollback\":{}}"
 
-    x = %Query.Update{rollback: true, delete_query: "name:Persona"}
+    x = %Query.Update{rollback: true, delete_query: ["name:Persona"]}
     assert x |> Encoder.encode() == "{\"delete\":{\"query\":\"name:Persona\"},\"rollback\":{}}"
   end
 end

@@ -40,7 +40,7 @@ defmodule Hui do
   @doc """
   Issue a keyword list or structured query to the default Solr endpoint.
 
-  The query can either be a keyword list or a list of Hui structs - see `t:Hui.Query.solr_struct/0`. 
+  The query can either be a keyword list or a list of Hui structs - see `t:Hui.solr_struct/0`.
   This function is a shortcut for `search/2` with `:default` as URL key.
 
   ### Example
