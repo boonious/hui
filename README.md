@@ -12,44 +12,34 @@ a data collection in distributed server architecture (cloud).
 ### Example - searching
 
 ```elixir
-
-  Hui.q("scott") # keywords search
-  Hui.q(q: "loch", rows: 5) # arbitrary keyword list
+  import Hui
+  
+  # arbitrary keywords query against the default configured endpoint
+  q("scott")
+  q(q: "loch", rows: 5)
   
   # with query structs
   alias Hui.Query.{Standard,DisMax,Common,Facet,FacetRange,Suggest,MoreLikeThis,Highlight}
 
-  Hui.q([%Standard{q: "author:I*"}, %Facet{field: ["cat", "author_str"], mincount: 1}])
+  url = "http://localhost:8983/solr/gettingstarted"
+  search(url, [%Standard{q: "author:I*"}, %Facet{field: ["cat", "author_str"], mincount: 1}])
 
-  # `:library` is a URL reference key - see below
-  Hui.search(:library, [%Standard{q: "loch"}, %Common{fq: ["type:illustration", "format:image/jpeg"]}])
-
-  # Suggester query
+  # Suggester query, using `Hui.URL` struct
+  suggester_url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "suggest"}
   suggest_query = %Suggest{q: "ha", count: 10, dictionary: ["name_infix", "ln_prefix", "fn_prefix"]}
-  Hui.suggest(:library, suggest_query)
+  suggest(suggester_url, suggest_query)
 
-  # DisMax and SolrCloud query
+  # DisMax SolrCloud query
   x = %DisMax{q: "market", qf: "description^2.3 title", mm: "2<-25% 9<-3", pf: "title", ps: 1, qs: 3}
   y = %Common{collection: "library,commons", rows: 10, distrib: true, "shards.tolerant": true, "shards.info": true}
-  Hui.search(:library, [x, y])
-
-  # with MoreLikeThis
-  z = %MoreLikeThis{fl: "manu,cat", mindf: 10, mintf: 200, "match.include": true, count: 10}
-  Hui.search(:library, [x, y, z])
-
-  # with faceting
   z = %Facet{field: ["cat", "author_str"], mincount: 1}
-  Hui.search(:library, [x, y, z])
-
-  # with results highlighting
-  z = %Highlight{fl: "features", usePhraseHighlighter: true, fragsize: 250, snippets: 3 } 
-  Hui.search(:library, [x, y, z])
+  search(url, [x, y, z])
 
   # more elaborated faceting query
   range1 = %FacetRange{range: "price", start: 0, end: 100, gap: 10, per_field: true}
   range2 = %FacetRange{range: "popularity", start: 0, end: 5, gap: 1, per_field: true}
   z = %Facet{field: ["cat", "author_str"], mincount: 1, range: [range1, range2]}
-  Hui.search(:library, [x, y, z])
+  search(url, [x, y, z])
 
   # the above spawns a request with the following query string
   #
@@ -63,41 +53,46 @@ a data collection in distributed server architecture (cloud).
   # f.popularity.facet.range.start=0
 
   # convenience functions
-  Hui.search(:library, "apache documentation", 1, 5, "stream_content_type_str:text/html", ["subject"])
-  Hui.suggest(:autocomplete, "ha", 5, ["name_infix", "ln_prefix", "fn_prefix"], "1939")
-
+  search(url, "apache documentation", 1, 5, "stream_content_type_str:text/html", ["subject"])
+  suggest(suggester_url, "ha", 5, ["name_infix", "ln_prefix", "fn_prefix"], "1939")
 ```
 
 The `q` examples send requests to a `:default` configured endpoint (see `Configuration` below).
-Query parameters could be a string,
-a [Keyword list](https://elixir-lang.org/getting-started/keywords-and-maps.html#keyword-lists) or
-built-in query [Structs](https://elixir-lang.org/getting-started/structs.html)
-providing a structured way for invoking the comprehensive and powerful features of Solr.
+Query parameters could be a string, arbitrary keywords or
+built-in query [structs](https://hexdocs.pm/hui/Hui.html#t:solr_struct/0) that
+provide a structured way for invoking the comprehensive and powerful features of Solr.
 
-Queries may also be issued to other endpoints and request handlers:
+See the [API reference](https://hexdocs.pm/hui/api-reference.html#content)
+and [Solr reference guide](http://lucene.apache.org/solr/guide/searching.html)
+for more details on available search parameters.
+
+### Solr endpoints, HTTP headers and options
+Solr endpoints and request handlers may be specified in multiple ways:
 
 ```elixir
   # URL binary string
   Hui.search("http://localhost:8983/solr/collection", q: "loch")
 
   # URL key referring to an endpoint in configuration - see "Configuration"
-  url = :library
-  Hui.search(url, q: "edinburgh", rows: 10)
+  Hui.search(:library, q: "edinburgh", rows: 10)
 
   # URL in a struct
   url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "suggest"}
   Hui.search(url, %Hui.Query.Suggest{q: "el", dictionary: "mySuggester"})
-  # spawns => http://http://localhost:8983/solr/collection/suggest?suggest=true&suggest.dictionary=mySuggester&suggest.q=el
-
 ```
 
-See the [API reference](https://hexdocs.pm/hui/api-reference.html#content)
-and [Solr reference guide](http://lucene.apache.org/solr/guide/searching.html)
-for more details on available search parameters.
+HTTP headers and options can be specified via the `t:Hui.URL.t/0` struct.
+
+```elixir
+  # setting up a header and a 10s receiving connection timeout
+  url = %Hui.URL{url: "..", headers: [{"accept", "application/json"}], options: [recv_timeout: 10000]}
+```
+
+Headers and options for a specific endpoint may also be configured - see "Configuration".
 
 ### Example - updating
 
-Hui provides functions to add, update and delete Solr documents, as well as optimised search indexes.
+To add, update and delete Solr documents, as well as optimised search indexes:
 
 ```elixir
   # Specify an update handler endpoint for JSON-formatted update
@@ -133,10 +128,9 @@ Hui provides functions to add, update and delete Solr documents, as well as opti
   Hui.delete(url, "tt0077711") # delete one doc
   Hui.delete(url, ["tt0077711", "tt0060827"]) # delete a list of docs
   Hui.delete_by_query(url, ["genre:Drama", "name:Persona"]) # delete via filter queries
-
 ```
 
-More advanced update requests can be issued using the
+Advanced update requests may be issued using the
 [`Hui.Query.Update`](https://hexdocs.pm/hui/Hui.Query.Update.html) struct, as well as through
 any valid binary data encapsulating Solr documents and commands.
 
@@ -144,7 +138,7 @@ any valid binary data encapsulating Solr documents and commands.
   # url, doc1, doc2 from the above example
   ...
 
-  # Hui.Query.Update struct command for updating and committing the docs to Solr immediately
+  # Hui.Query.Update struct commands for updating and committing the docs to Solr immediately
 
   alias Hui.Query.Update
 
@@ -162,74 +156,44 @@ any valid binary data encapsulating Solr documents and commands.
   headers = [{"Content-type", "application/xml"}]
   url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "update", headers: headers}
   Hui.update(url, "<delete><id>9780141981727</id></delete>")
-
 ```
 
 See [Solr reference](http://lucene.apache.org/solr/guide/uploading-data-with-index-handlers.html)
 for more details on update commands, data types and formats.
 
-### HTTP headers and options
-HTTP headers and options can be specified via the `t:Hui.URL.t/0` struct.
-
-```elixir
-  # setting up a header and a 10s receiving connection timeout
-  url = %Hui.URL{url: "..", headers: [{"accept", "application/json"}], options: [recv_timeout: 10000]}
-  Hui.search(url, q: "solr rocks")
-```
-
-Headers and options for a specific endpoint may also be configured - see "Configuration".
-
 ### Software library
 
 Hui [modules and data structures](https://hexdocs.pm/hui/api-reference.html#content) can be used for building Solr
-application in Elixir and Phoenix.
-
-The following struct modules provide an **idiomatic** and **structured** way for
-creating and encoding Solr parameters:
-
-- Standard, DisMax, common query: `Hui.Query.Standard`, `Hui.Query.DisMax`, `Hui.Query.Common`
-- Faceting: `Hui.Query.Facet`, `Hui.Query.FacetRange`, `Hui.Query.FacetInterval`
-- Results Highlighting: `Hui.Query.Highlight`, `Hui.Query.HighlighterFastVector`, `Hui.Query.HighlighterOriginal`, `Hui.Query.HighlighterUnified`
-- Others: `Hui.Query.SpellCheck`, `Hui.Query.Suggest` `Hui.Query.MoreLikeThis`
-- Update (add/delete/commit/optimize data): `Hui.Query.Update`
-
-For example, multiple filters and facet fields can be specified using
+application in Elixir and Phoenix. The query struct modules provide idiomatic and structured ways for
+creating and encoding Solr parameters. For example, multiple filters and facet fields can be specified via list.
 `fq: ["field1", "field2"]`, `field: ["field1", "field2"]`, `gap: 10` Elixir codes.
 
-"Per-field" faceting for multiple ranges and intervals can be specified in a succinct and unified
+"Per-field" faceting can be specified in a succinct and unified
 way, e.g. `gap` instead of the long-winded `f.[fieldname].facet.range.gap` (per field) or `facet.range.gap`
-(single field). Per-field use case for a facet can be set via the `per_field` key - see below.
+(single field). Per-field usage for a particular facet can be set or unset via the `per_field` key (example below).
 
-Hui includes a [protocol](https://elixir-lang.org/getting-started/protocols.html) (with implementation):
-- `Hui.Encoder` for encoding the query structs into binary and [IO data](#io-data-encoding).
-
-A custom query struct may be developed by implementing the Encoder protocol.
+`Hui.Encoder` protocol and `Hui.Encode` utility provide support for encoding query structs into binary and [IO data](#io-data-encoding) formats. A custom query struct may be developed by implementing the Encoder protocol.
 
 ```elixir
-  alias Hui.Query.{DisMax,Common,Facet,FacetRange}
+  alias Hui.Query.{Facet,FacetRange}
 
-  x = %DisMax{q: "loch"}
-  y = %Common{fq: ["type:image/jpeg", "year:2001"], fl: "id,title", rows: 20}
-  [x,y] |> Hui.Encoder.encode
-  # -> "q=loch&fl=id%2Ctitle&fq=type%3Aimage%2Fjpeg&fq=year%3A2001&rows=20"
-
-  x = %Facet{field: ["type", "year", "subject"], query: "edited:true"}
-  x |> Hui.Encoder.encode
+  %Facet{field: ["type", "year", "subject"], query: "edited:true"}
+  |> Hui.Encoder.encode
   # -> "facet=true&facet.field=type&facet.field=year&facet.field=subject&facet.query=edited%3Atrue"
-  # there's no need to set "facet: true" as it is implied and a default setting in the struct
+  # facet=true, facet prefixes are generated implicitly
 
-  # a unified way to specify per-field or singe-field range
+  # a unified way to specify per-field or singe-field faceting
   x = %FacetRange{range: "age", gap: 10, start: 0, end: 100}
   x |> Hui.Encoder.encode
   # -> "facet.range.end=100&facet.range.gap=10&facet.range=age&facet.range.start=0"
 
-  x = %{x | per_field: true} # toggle per field faceting
-  x |> Hui.Encoder.encode
+ %{x | per_field: true} # toggle per field faceting
+  |> Hui.Encoder.encode
   # -> "f.age.facet.range.end=100&f.age.facet.range.gap=10&facet.range=age&f.age.facet.range.start=0"
 ```
 
-The [`Hui.Query.Update`](https://hexdocs.pm/hui/Hui.Query.Update.html) struct module enables
-various JSON-formatted update and grouped commands to be created.
+`Hui.Query.Update` struct enables
+various JSON-formatted update and grouped commands to be generated.
 
 ```elixir
   alias Hui.Query.Update
@@ -243,10 +207,9 @@ various JSON-formatted update and grouped commands to be created.
   # Delete the documents by ID
   %Update{delete_id: ["tt1316540", "tt1650453"]} |> Encoder.encode
   # -> "{\"delete\":{\"id\":\"tt1316540\"},\"delete\":{\"id\":\"tt1650453\"}}"
-
 ```
 
-The structs and their associated type spec also provide binding to and introspection of the available fields.
+The structs and their associated type spec also provide binding to and introspection of available Solr parameters.
 
 ```elixir
   iex> %Hui.Query.Facet{field: ["type", "year"], query: "year:[2000 TO NOW]"}
@@ -278,14 +241,14 @@ The structs and their associated type spec also provide binding to and introspec
 ```
 
 ### IO data encoding
-Hui provides an option that enables the built-in query structs `Hui.Encoder` to return either
-string (current default) or [IO list](https://hexdocs.pm/elixir/IO.html#module-io-data)
-which can be sent directly to IO functions or over the socket, to leverage Erlang runtime and
-some HTTP client features for lower memory usage and increased performance.
+To leverage Erlang runtime and some HTTP client features for lower memory
+usage and increased performance, `Hui.Encoder` provides functions to return either
+string or [IO data](https://hexdocs.pm/elixir/IO.html#module-io-data)
+which can be sent directly to IO functions or over the socket.
 
 ### Parsing Solr results
 
-Hui returns Solr results as `HTTP` response struct containing the Solr response.
+Solr results is returned encapsulated in `HTTP` response struct containing the Solr response.
 
 ```elixir
   {:ok,
@@ -303,8 +266,7 @@ Hui returns Solr results as `HTTP` response struct containing the Solr response.
   }
 ```
 
-JSON response is automatically parsed and decoded as
-[Map](https://elixir-lang.org/getting-started/keywords-and-maps.html#maps).
+JSON response is automatically parsed and decoded as map.
 It is accessible via the `body` key.
 
 ```elixir
@@ -325,7 +287,7 @@ by adding `hui` to your list of dependencies in `mix.exs`:
 ```elixir
   def deps do
     [
-      {:hui, "~> 0.10.2"}
+      {:hui, "~> 0.10.3"}
     ]
   end
 ```

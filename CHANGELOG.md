@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.3 (2020-09-17)
+* Rewrite `Hui.Encode.encode` utility with body-recursive functions for better performance
+* Provide a new `encode_to_iodata/1` function and implementations in `Hui.Encoder` protocol
+
 ## 0.10.2 (2020-08-06)
 * Extensive test refactoring
 
