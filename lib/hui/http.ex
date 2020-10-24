@@ -3,12 +3,12 @@ defmodule Hui.Http do
 
   @type response :: {:ok, t} | {:error, Hui.Error.t()}
   @type t :: %__MODULE__{
-          body: nil | binary | map,
-          headers: list,
+          body: nil | binary() | map(),
+          headers: list(),
           method: :get | :post,
-          options: keyword,
-          status: nil | integer,
-          url: iodata
+          options: keyword(),
+          status: nil | integer(),
+          url: iodata()
         }
 
   defstruct body: nil,
