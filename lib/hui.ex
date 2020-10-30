@@ -462,9 +462,12 @@ defmodule Hui do
     end
   end
 
-  defp fetch_url(%Hui.URL{} = url), do: {:ok, url}
+  defp fetch_url(%Hui.URL{url: "http" <> _rest} = url), do: {:ok, url}
+  defp fetch_url("http://" <> _rest = url) when is_binary(url), do: {:ok, %Hui.URL{url: url}}
+  defp fetch_url("https://" <> _rest = url) when is_binary(url), do: {:ok, %Hui.URL{url: url}}
+
   defp fetch_url(url) when is_atom(url), do: Hui.URL.configured_url(url)
 
   defp fetch_url(url) when is_nil_empty(url), do: {:error, %Error{reason: :nxdomain}}
-  defp fetch_url(url) when is_binary(url), do: {:ok, %Hui.URL{url: url}}
+  defp fetch_url(_url), do: {:error, %Error{reason: :nxdomain}}
 end

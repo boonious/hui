@@ -7,7 +7,7 @@ defmodule Hui.Http.Httpc do
   def dispatch(%{method: :get, options: options} = req) do
     {http_opts, opts} = handle_options(options, {[], []})
 
-    :httpc.request(:get, {req.url |> to_charlist(), req.headers}, http_opts, opts)
+    :httpc.request(:get, {handle_url(req.url), handle_req_headers(req.headers)}, http_opts, opts)
     |> handle_response(req)
   end
 
@@ -17,14 +17,28 @@ defmodule Hui.Http.Httpc do
 
     :httpc.request(
       :post,
-      {req.url |> to_charlist(), handle_req_headers(req.headers), content_type |> to_charlist(), req.body},
+      {handle_url(req.url), handle_req_headers(req.headers), content_type |> to_charlist(), req.body},
       http_opts,
       opts
     )
     |> handle_response(req)
   end
 
-  # TODO: handle non ok responses
+  defp handle_options([], {http_opts, opts}), do: {http_opts, opts}
+
+  defp handle_options([{k, v} | t], {http_opts, opts}) do
+    case k in @http_options do
+      true -> handle_options(t, {[{k, v} | http_opts], opts})
+      false -> handle_options(t, {http_opts, [{k, v} | opts]})
+    end
+  end
+
+  defp handle_url(url) when is_list(url), do: Enum.map(url, &handle_url(&1))
+  defp handle_url(url), do: url |> String.replace("%", "%25") |> to_charlist()
+
+  defp handle_req_headers(headers), do: Enum.map(headers, fn {k, v} -> {to_charlist(k), to_charlist(v)} end)
+  defp handle_resp_headers(headers), do: Enum.map(headers, fn {k, v} -> {to_string(k), to_string(v)} end)
+
   defp handle_response({:ok, {{'HTTP/1.1', status, 'OK'}, headers, body}}, req) do
     headers = handle_resp_headers(headers)
     {_, content_type} = List.keyfind(headers, "content-type", 0, {"content-type", ""})
@@ -35,17 +49,7 @@ defmodule Hui.Http.Httpc do
     end
   end
 
-  defp handle_resp_headers(headers), do: Enum.map(headers, fn {k, v} -> {to_string(k), to_string(v)} end)
-  defp handle_req_headers(headers), do: Enum.map(headers, fn {k, v} -> {to_charlist(k), to_charlist(v)} end)
-
-  defp handle_options([], {http_opts, opts}), do: {http_opts, opts}
-
-  defp handle_options([{k, v} | t], {http_opts, opts}) do
-    case k in @http_options do
-      true -> handle_options(t, {[{k, v} | http_opts], opts})
-      false -> handle_options(t, {http_opts, [{k, v} | opts]})
-    end
-  end
+  defp handle_response({:error, {reason, _details}}, _req), do: {:error, %Hui.Error{reason: reason}}
 
   defp decode_json(body) do
     case Jason.decode(body) do

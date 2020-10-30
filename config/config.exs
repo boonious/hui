@@ -9,7 +9,7 @@ config :hui, :default,
   # optional
   headers: [{"accept", "application/json"}],
   # optional
-  options: [recv_timeout: 10000]
+  options: [timeout: 10000]
 
 # Additional Solr endpoints may be configured using any config key, e.g. :suggester.
 # Use Hui.URL.config_url(:suggester) function to retrieve the corresponding URL struct
@@ -24,9 +24,9 @@ config :hui, :library,
 config :hui, :update_test,
   url: "http://localhost:8989/solr/articles",
   handler: "update",
-  headers: [{"Content-type", "application/xml"}]
+  headers: [{"content-type", "application/xml"}]
 
 config :hui, :update_struct_test,
   url: "http://localhost:9000/solr/articles",
   handler: "update",
-  headers: [{"Content-type", "application/json"}]
+  headers: [{"content-type", "application/json"}]

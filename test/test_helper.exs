@@ -14,7 +14,7 @@ defmodule TestHelpers do
       |> String.replace("+", "\\+")
       |> Regex.compile!()
 
-    assert String.match?(resp.url, regex)
+    assert String.match?(resp.url |> to_string(), regex)
   end
 
   def setup_bypass_for_update_query(bypass, expected_data, content_type \\ "application/json", resp \\ "") do
