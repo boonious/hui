@@ -37,22 +37,21 @@ defmodule Hui.MixProject do
 
   # Run "mix help compile.app" to learn about applications.
   def application do
-    [
-      extra_applications: [:logger, :inets]
-    ]
+    [applications: applications(Mix.env())]
   end
+
+  def applications(env) when env in [:dev, :test], do: [:logger, :inets, :ssl, :httpoison]
+  def applications(_), do: [:logger, :inets, :ssl]
 
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:httpoison, "~> 1.5.1"},
       {:jason, "~> 1.2"},
-      {:ex_doc, "~> 0.19", only: :dev, runtime: false},
+      {:httpoison, "~> 1.7", optional: true},
       {:bypass, "~> 1.0", only: :test},
-      {:dialyxir, "~> 1.0.0-rc.3", only: [:dev], runtime: false},
-      {:excoveralls, "~> 0.12", only: :test},
-      {:cowboy, "~> 2.6"},
-      {:cowlib, "~> 2.8.0"}
+      {:dialyxir, "~> 1.0.0", only: :dev, runtime: false},
+      {:ex_doc, "~> 0.23", only: :dev, runtime: false},
+      {:excoveralls, "~> 0.13", only: :test}
     ]
   end
 
