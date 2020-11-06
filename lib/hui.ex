@@ -19,6 +19,8 @@ defmodule Hui do
   alias Hui.Http
   alias Hui.Query
 
+  @http_client Application.get_env(:hui, :http_client, Hui.Http)
+
   @type url :: binary | atom | Hui.URL.t()
 
   @type querying_struct :: Query.Standard.t() | Query.Common.t() | Query.DisMax.t()
@@ -437,7 +439,7 @@ defmodule Hui do
         headers: url_struct.headers,
         options: url_struct.options
       }
-      |> dispatch()
+      |> dispatch(@http_client)
     else
       {:error, reason} -> {:error, reason}
     end
@@ -456,7 +458,7 @@ defmodule Hui do
         options: url_struct.options,
         body: if(is_binary(docs), do: docs, else: Encoder.encode(docs))
       }
-      |> dispatch()
+      |> dispatch(@http_client)
     else
       {:error, reason} -> {:error, reason}
     end
