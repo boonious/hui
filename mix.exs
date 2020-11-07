@@ -8,7 +8,7 @@ defmodule Hui.MixProject do
   def project do
     [
       app: :hui,
-      version: "0.10.3",
+      version: "0.10.4",
       elixir: "~> 1.8",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
@@ -43,6 +43,8 @@ defmodule Hui.MixProject do
     [
       {:jason, "~> 1.2"},
       {:httpoison, "~> 1.7", optional: true},
+      {:cowboy, "~> 2.7", optional: true},
+      {:cowlib, "~> 2.8.0", optional: true},
       {:bypass, "~> 1.0", only: :test},
       {:dialyxir, "~> 1.0.0", only: :dev, runtime: false},
       {:ex_doc, "~> 0.23", only: :dev, runtime: false},

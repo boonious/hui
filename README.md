@@ -287,7 +287,7 @@ by adding `hui` to your list of dependencies in `mix.exs`:
 ```elixir
   def deps do
     [
-      {:hui, "~> 0.10.3"}
+      {:hui, "~> 0.10.4"}
     ]
   end
 ```
