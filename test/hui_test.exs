@@ -149,15 +149,13 @@ defmodule HuiTest do
       Hui.search(url, q: "*")
     end
 
-    # test with the HTTPoison "timeout" for now
-    # TODO: add HTTP client implementation headers and options coverage
     test "accepts %Hui.URL{} endpoint with HTTP client options", %{bypass: bypass} do
       url = %Hui.URL{
         url: "http://localhost:#{bypass.port}/",
         options: [timeout: 0]
       }
 
-      assert {:error, %Hui.Error{reason: :checkout_timeout}} == Hui.search(url, q: "*")
+      assert {:error, %Hui.Error{reason: reason}} = Hui.search(url, q: "*")
     end
 
     # TODO: refactor, add app config in test and remove :library from configuration
@@ -173,7 +171,7 @@ defmodule HuiTest do
       experted_request_url = Hui.URL.to_string(url) <> "?" <> Hui.Encoder.encode(query)
 
       {_, resp} = Hui.search(:library, query)
-      assert experted_request_url == resp.url
+      assert experted_request_url == resp.url |> to_string()
     end
   end
 
@@ -249,7 +247,7 @@ defmodule HuiTest do
       url = %Hui.URL{
         url: "http://localhost:#{bypass.port}",
         handler: "update",
-        headers: [{"Content-type", "application/json"}]
+        headers: [{"content-type", "application/json"}]
       }
 
       setup_bypass_for_update_query(bypass, update_json(single_doc(), commit: true))
@@ -260,7 +258,7 @@ defmodule HuiTest do
       url = %Hui.URL{
         url: "http://localhost:#{bypass.port}",
         handler: "update",
-        headers: [{"Content-type", "application/json"}]
+        headers: [{"content-type", "application/json"}]
       }
 
       setup_bypass_for_update_query(bypass, update_json(single_doc(), commit: false))
@@ -271,7 +269,7 @@ defmodule HuiTest do
       url = %Hui.URL{
         url: "http://localhost:#{bypass.port}",
         handler: "update",
-        headers: [{"Content-type", "application/json"}]
+        headers: [{"content-type", "application/json"}]
       }
 
       setup_bypass_for_update_query(bypass, update_json(multi_docs(), commit: true))
@@ -282,7 +280,7 @@ defmodule HuiTest do
       url = %Hui.URL{
         url: "http://localhost:#{bypass.port}",
         handler: "update",
-        headers: [{"Content-type", "application/json"}]
+        headers: [{"content-type", "application/json"}]
       }
 
       setup_bypass_for_update_query(bypass, update_json(multi_docs(), commit: false))
@@ -293,7 +291,7 @@ defmodule HuiTest do
       url = %Hui.URL{
         url: "http://localhost:#{bypass.port}",
         handler: "update",
-        headers: [{"Content-type", "application/json"}]
+        headers: [{"content-type", "application/json"}]
       }
 
       setup_bypass_for_update_query(bypass, update_json(multi_docs()))
@@ -324,7 +322,7 @@ defmodule HuiTest do
       url = %Hui.URL{
         url: "http://localhost:#{bypass.port}",
         handler: "update",
-        headers: [{"Content-type", "application/json"}]
+        headers: [{"content-type", "application/json"}]
       }
 
       query_struct = %Query.Update{doc: single_doc(), commitWithin: 10, overwrite: true}
@@ -337,7 +335,7 @@ defmodule HuiTest do
       url = %Hui.URL{
         url: "http://localhost:#{bypass.port}",
         handler: "update",
-        headers: [{"Content-type", "application/json"}]
+        headers: [{"content-type", "application/json"}]
       }
 
       query_struct = %Query.Update{
@@ -357,7 +355,7 @@ defmodule HuiTest do
       url = %Hui.URL{
         url: "http://localhost:#{bypass.port}",
         handler: "update",
-        headers: [{"Content-type", "application/json"}]
+        headers: [{"content-type", "application/json"}]
       }
 
       setup_bypass_for_update_query(bypass, "{\"optimize\":{\"maxSegments\":10,\"waitSearcher\":false}}")
@@ -368,7 +366,7 @@ defmodule HuiTest do
       url = %Hui.URL{
         url: "http://localhost:#{bypass.port}",
         handler: "update",
-        headers: [{"Content-type", "application/json"}]
+        headers: [{"content-type", "application/json"}]
       }
 
       setup_bypass_for_update_query(bypass, "{\"delete\":{\"query\":\"name:Persona\"},\"rollback\":{}}")
@@ -380,7 +378,7 @@ defmodule HuiTest do
     url = %Hui.URL{
       url: "http://localhost:#{bypass.port}",
       handler: "update",
-      headers: [{"Content-type", "application/json"}]
+      headers: [{"content-type", "application/json"}]
     }
 
     delete_query = %Query.Update{delete_id: ["tt1650453", "tt1650453"], commit: true}
@@ -392,7 +390,7 @@ defmodule HuiTest do
     url = %Hui.URL{
       url: "http://localhost:#{bypass.port}",
       handler: "update",
-      headers: [{"Content-type", "application/json"}]
+      headers: [{"content-type", "application/json"}]
     }
 
     delete_query = %Query.Update{delete_query: ["name:Persona", "genre:Drama"], commit: true}
@@ -404,7 +402,7 @@ defmodule HuiTest do
     url = %Hui.URL{
       url: "http://localhost:#{bypass.port}",
       handler: "update",
-      headers: [{"Content-type", "application/json"}]
+      headers: [{"content-type", "application/json"}]
     }
 
     setup_bypass_for_update_query(bypass, %Query.Update{commit: true, waitSearcher: true} |> Hui.Encoder.encode())
@@ -602,7 +600,7 @@ defmodule HuiTest do
       url = %Hui.URL{
         url: "http://localhost:#{bypass.port}",
         handler: "update",
-        headers: [{"Content-type", "application/json"}]
+        headers: [{"content-type", "application/json"}]
       }
 
       setup_bypass_for_update_query(bypass, update_json(single_doc()))
@@ -613,7 +611,7 @@ defmodule HuiTest do
       url = %Hui.URL{
         url: "http://localhost:#{bypass.port}",
         handler: "update",
-        headers: [{"Content-type", "application/json"}]
+        headers: [{"content-type", "application/json"}]
       }
 
       setup_bypass_for_update_query(bypass, update_json(multi_docs()))
@@ -624,7 +622,7 @@ defmodule HuiTest do
       url = %Hui.URL{
         url: "http://localhost:#{bypass.port}",
         handler: "update",
-        headers: [{"Content-type", "application/json"}]
+        headers: [{"content-type", "application/json"}]
       }
 
       setup_bypass_for_update_query(bypass, update_json(multi_docs()))
@@ -635,7 +633,7 @@ defmodule HuiTest do
       url = %Hui.URL{
         url: "http://localhost:#{bypass.port}",
         handler: "update",
-        headers: [{"Content-type", "application/xml"}]
+        headers: [{"content-type", "application/xml"}]
       }
 
       update_doc = "<delete><id>9780141981727</id></delete>"

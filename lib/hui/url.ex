@@ -22,13 +22,14 @@ defmodule Hui.URL do
 
   ```
 
-  `t:Hui.URL.t/0` struct also enables HTTP headers and options, e.g. [HTTPoison options](https://hexdocs.pm/httpoison/HTTPoison.html#request/5)
-  to be specified in keyword lists. HTTPoison options provide further controls for a request, e.g. `timeout`, `recv_timeout`,
-  `max_redirect`, `params` etc.
+  `t:Hui.URL.t/0` struct also enables HTTP headers and options to be specified. 
+  HTTP options availability depends on the underpinning client used:
+  - built-in [Erlang httpc options](https://erlang.org/doc/man/httpc.html#request-4)
+  - if configured, [HTTPoison options](https://hexdocs.pm/httpoison/HTTPoison.Request.html)
 
   ```
-    # setting up a header and a 10s receiving connection timeout
-    url = %Hui.URL{url: "..", headers: [{"accept", "application/json"}], options: [recv_timeout: 10000]}
+    # setting up a header and a 10s timeout
+    url = %Hui.URL{url: "..", headers: [{"accept", "application/json"}], options: [timeout: 10000]}
     Hui.search(url, q: "solr rocks")
   ```
   """
@@ -50,7 +51,8 @@ defmodule Hui.URL do
   endpoint fronting several Solr upstreams.
   - `handler`: name of a Solr request handler that processes requests.
   - `headers`: HTTP headers.
-  - `options`: e.g. [HTTPoison options](https://hexdocs.pm/httpoison/HTTPoison.html#request/5).
+  - `options`: [Erlang httpc options](https://erlang.org/doc/man/httpc.html#request-4) 
+  or [HTTPoison options](https://hexdocs.pm/httpoison/HTTPoison.Request.html) if configured
 
   """
   @type t :: %__MODULE__{url: nil | binary, handler: nil | binary, headers: nil | headers, options: nil | options}
@@ -60,7 +62,7 @@ defmodule Hui.URL do
 
   ```
       Hui.URL.default_url!
-      %Hui.URL{handler: "select", url: "http://localhost:8983/solr/gettingstarted", headers: [{"accept", "application/json"}], options: [recv_timeout: 10000]}
+      %Hui.URL{handler: "select", url: "http://localhost:8983/solr/gettingstarted", headers: [{"accept", "application/json"}], options: [timeout: 10000]}
   ```
   The default endpoint can be specified in application configuration as below:
 
@@ -69,7 +71,7 @@ defmodule Hui.URL do
       url: "http://localhost:8983/solr/gettingstarted",
       handler: "select", # optional
       headers: [{"accept", "application/json"}],
-      options: [recv_timeout: 10000]
+      options: [timeout: 10000]
   ```
 
   """

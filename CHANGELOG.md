@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.4 (2020-11-07)
+* Default HTTP client behaviour implementation based on Erlang httpc
+* `HTTPoison` becomes optional dependency and a configurable HTTP client
+
 ## 0.10.3 (2020-09-17)
 * Rewrite `Hui.Encode.encode` utility with body-recursive functions for better performance
 * Provide a new `encode_to_iodata/1` function and implementations in `Hui.Encoder` protocol

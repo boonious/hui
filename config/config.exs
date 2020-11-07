@@ -1,5 +1,12 @@
 use Mix.Config
 
+# Could use another HTTP client that implements `Hui.Http` behaviour,
+# instead of using the built-in httpc client. e.g. Hui.Http.Httpoison
+# See: https://hexdocs.pm/hui/Hui.Http.html
+
+# config :hui,
+#   http_client: Hui.Http.Httpoison
+
 # A default Solr endpoint may be configured via the 'default' property
 config :hui, :default,
   # core or collection endpoint
@@ -9,7 +16,7 @@ config :hui, :default,
   # optional
   headers: [{"accept", "application/json"}],
   # optional
-  options: [recv_timeout: 10000]
+  options: [timeout: 10000]
 
 # Additional Solr endpoints may be configured using any config key, e.g. :suggester.
 # Use Hui.URL.config_url(:suggester) function to retrieve the corresponding URL struct
@@ -24,9 +31,9 @@ config :hui, :library,
 config :hui, :update_test,
   url: "http://localhost:8989/solr/articles",
   handler: "update",
-  headers: [{"Content-type", "application/xml"}]
+  headers: [{"content-type", "application/xml"}]
 
 config :hui, :update_struct_test,
   url: "http://localhost:9000/solr/articles",
   handler: "update",
-  headers: [{"Content-type", "application/json"}]
+  headers: [{"content-type", "application/json"}]

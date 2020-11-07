@@ -85,7 +85,7 @@ HTTP headers and options can be specified via the `t:Hui.URL.t/0` struct.
 
 ```elixir
   # setting up a header and a 10s receiving connection timeout
-  url = %Hui.URL{url: "..", headers: [{"accept", "application/json"}], options: [recv_timeout: 10000]}
+  url = %Hui.URL{url: "..", headers: [{"accept", "application/json"}], options: [timeout: 10000]}
 ```
 
 Headers and options for a specific endpoint may also be configured - see "Configuration".
@@ -96,7 +96,7 @@ To add, update and delete Solr documents, as well as optimised search indexes:
 
 ```elixir
   # Specify an update handler endpoint for JSON-formatted update
-  headers = [{"Content-type", "application/json"}]
+  headers = [{"content-type", "application/json"}]
   url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "update", headers: headers}
 
   # Solr documents
@@ -153,7 +153,7 @@ any valid binary data encapsulating Solr documents and commands.
   Hui.update(url, %Update{commit: true, waitSearcher: true, optimize: true, maxSegments: 10})
 
   # Binary mode, e.g. delete a document via XML binary
-  headers = [{"Content-type", "application/xml"}]
+  headers = [{"content-type", "application/xml"}]
   url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "update", headers: headers}
   Hui.update(url, "<delete><id>9780141981727</id></delete>")
 ```
@@ -287,7 +287,7 @@ by adding `hui` to your list of dependencies in `mix.exs`:
 ```elixir
   def deps do
     [
-      {:hui, "~> 0.10.3"}
+      {:hui, "~> 0.10.4"}
     ]
   end
 ```
@@ -298,19 +298,17 @@ Documentation can be found at [https://hexdocs.pm/hui](https://hexdocs.pm/hui).
 
 ## Configuration
 
-A default Solr endpoint may be specified in the application configuration as below:
+A default Solr endpoint may be specified in the application configuration. HTTP headers and options may also be configured.
 
 ```elixir
   config :hui, :default,
     url: "http://localhost:8983/solr/gettingstarted",
     handler: "select", # optional
-    headers: [{"accept", "application/json"}], # optional
-    options: [recv_timeout: 10000] # optional
+    headers: [{"accept", "application/json"}]
+    options: [timeout: 10000]
 ```
 
-HTTP headers and options may also be configured.
-
-See `Hui.URL.default_url!/0`.
+See `Hui.URL.default_url!/0` and `t:Hui.URL.t/0`.
 
 Solr provides [various request
 handlers](http://lucene.apache.org/solr/guide/7_4/overview-of-searching-in-solr.html#overview-of-searching-in-solr)
@@ -329,6 +327,12 @@ Additional endpoints and request handlers can be configured in Hui using arbitra
 
 Use the config key in functions such as `Hui.search/2`, `Hui.search/3` to send queries to the endpoint 
 or retrieve URL settings from configuration e.g. `Hui.URL.configured_url/1`.
+
+### Using other HTTP clients
+
+Hui relies on an existing client to facilitate HTTP requests - [Erlang httpc](https://erlang.org/doc/man/httpc.html).
+Instead of using the built-in client, other HTTP clients can be implemented and configured.
+See `Hui.Http` for further details.
 
 ## License
 
