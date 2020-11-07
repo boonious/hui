@@ -243,14 +243,14 @@ defmodule Hui do
   while the latter acepts text containing any valid Solr update data or commands.
 
   An index/update handler endpoint should be specified through a `t:Hui.URL.t/0` struct
-  or a URL config key. A content type header is required so that Solr knows the
+  or a URL config key. A "content-type" request header is required so that Solr knows the
   incoming data format (JSON, XML etc.) and can process data accordingly.
 
   ### Example - map, list and binary data
 
   ```
     # Index handler for JSON-formatted update
-    headers = [{"Content-type", "application/json"}]
+    headers = [{"content-type", "application/json"}]
     url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "update", headers: headers}
 
     # Solr docs in maps
@@ -287,7 +287,7 @@ defmodule Hui do
     Hui.update(url, "{\\\"add\\\":{\\\"doc\\\":{\\\"name\\\":\\\"Blade Runner\\\",\\\"id\\\":\\\"tt0083658\\\",..}},\\\"commit\\\":{}}")
 
     # Binary mode, delete a doc via XML
-    headers = [{"Content-type", "application/xml"}]
+    headers = [{"content-type", "application/xml"}]
     url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "update", headers: headers}
     Hui.update(url, "<delete><id>9780141981727</id></delete>")
 
@@ -332,13 +332,13 @@ defmodule Hui do
   documents from the Solr index (commit by default).
 
   An index/update handler endpoint should be specified through a `t:Hui.URL.t/0` struct
-  or a URL config key. A JSON content type header for the URL is required so that Solr knows the
+  or a URL config key. A JSON "content-type" request header is required so that Solr knows the
   incoming data format and can process data accordingly.
 
   ### Example
   ```
     # Index handler for JSON-formatted update
-    headers = [{"Content-type", "application/json"}]
+    headers = [{"content-type", "application/json"}]
     url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "update", headers: headers}
 
     Hui.delete(url, "tt2358891") # delete a single doc
@@ -359,13 +359,13 @@ defmodule Hui do
   documents from the Solr index (commit by default).
 
   An index/update handler endpoint should be specified through a `t:Hui.URL.t/0` struct
-  or a URL config key. A JSON content type header for the URL is required so that Solr knows the
+  or a URL config key. A JSON "content-type" request header is required so that Solr knows the
   incoming data format and can process data accordingly.
 
   ### Example
   ```
     # Index handler for JSON-formatted update
-    headers = [{"Content-type", "application/json"}]
+    headers = [{"content-type", "application/json"}]
     url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "update", headers: headers}
 
     Hui.delete_by_query(url, "name:Persona") # delete with a single filter
@@ -386,13 +386,13 @@ defmodule Hui do
   for search.
 
   An index/update handler endpoint should be specified through a `t:Hui.URL.t/0` struct
-  or a URL config key. A JSON content type header for the URL is required so that Solr knows the
+  or a URL config key. A JSON "content-type" request header is required so that Solr knows the
   incoming data format and can process data accordingly.
 
   ### Example
   ```
     # Index handler for JSON-formatted update
-    headers = [{"Content-type", "application/json"}]
+    headers = [{"content-type", "application/json"}]
     url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "update", headers: headers}
 
     Hui.commit(url) # commits, make new docs available for search
