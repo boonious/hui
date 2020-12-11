@@ -66,7 +66,8 @@ defmodule Hui.MixProject do
 
   defp docs do
     [
-      main: "Hui",
+      main: "readme",
+      extra_section: "guides",
       extras: ["README.md", "CHANGELOG.md"],
       groups_for_modules: [
         Queries: [
