@@ -131,14 +131,6 @@ defmodule HuiTest do
       Hui.search(url, q: "*")
     end
 
-    test "accepts HTTP client options", %{bypass: bypass} do
-      headers = []
-      options = [timeout: 0]
-      url = {"http://localhost:#{bypass.port}/select", headers, options}
-
-      assert {:error, %Hui.Error{reason: reason}} = Hui.search(url, q: "*")
-    end
-
     test "access configured atom URL key" do
       bypass = Bypass.open(port: 8984)
 
