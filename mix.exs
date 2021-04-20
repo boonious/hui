@@ -80,6 +80,7 @@ defmodule Hui.MixProject do
           Hui.Query.HighlighterFastVector,
           Hui.Query.HighlighterOriginal,
           Hui.Query.HighlighterUnified,
+          Hui.Query.Metrics,
           Hui.Query.MoreLikeThis,
           Hui.Query.SpellCheck,
           Hui.Query.Standard,

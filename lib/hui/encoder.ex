@@ -89,7 +89,7 @@ defprotocol Hui.Encoder do
   def encode_to_iodata(query)
 end
 
-defimpl Hui.Encoder, for: [Query.Standard, Query.Common, Query.DisMax] do
+defimpl Hui.Encoder, for: [Query.Standard, Query.Common, Query.DisMax, Query.Metrics] do
   def encode(query), do: encode_to_iodata(query) |> IO.iodata_to_binary()
 
   def encode_to_iodata(query) do
