@@ -4,50 +4,37 @@ defmodule HuiTest do
   import Fixtures.Update
 
   alias Hui.Query
-  alias Hui.URL
 
   @error_einval %Hui.Error{reason: :einval}
   @error_nxdomain %Hui.Error{reason: :nxdomain}
 
   doctest Hui
 
-  setup_all do
-    # set the default Solr endpoint globally
-    # for simple "ping" tests
-
-    default_config = Application.get_env(:hui, :default)
-
-    bypass = Bypass.open()
-
-    Bypass.expect(bypass, fn conn ->
-      Plug.Conn.resp(conn, 200, "")
-    end)
-
-    bypass_url = "http://localhost:#{bypass.port}"
-    config = default_config |> Enum.map(&if elem(&1, 0) == :url, do: {:url, bypass_url}, else: &1)
-    Application.put_env(:hui, :default, config)
-
-    on_exit(fn ->
-      Application.put_env(:hui, :default, default_config)
-    end)
-
-    :ok
-  end
-
   setup do
     %{bypass: Bypass.open()}
   end
 
-  describe "q functions (:default configured %Hui.URL)" do
-    # simple tests since `q` forward calls
-    # to `search` which is tested further below
-    test "call configured default URL" do
-      {_, resp} = Hui.q("a", 1, 5, "type:text", ["type", "year"])
-      assert resp.status == 200
+  # `q/1`, `q/6` forward queries to `search` functions. Various types
+  # of queries are tested in the `search` test blocks
+  test "q functions calls configured default URL" do
+    default_url = Application.get_env(:hui, :default)[:url] |> URI.parse()
+    bypass = Bypass.open(port: default_url.port)
 
-      {_, resp} = Hui.q(q: "test")
-      assert resp.status == 200
-    end
+    Bypass.expect(bypass, fn conn ->
+      Plug.Conn.resp(conn, 200, "hitting default endpoint")
+    end)
+
+    {_, resp} = Hui.q("test")
+    assert resp.status == 200
+    assert resp.body == "hitting default endpoint"
+
+    {_, resp} = Hui.q("a", 1, 5, "type:text", ["type", "year"])
+    assert resp.status == 200
+    assert resp.body == "hitting default endpoint"
+
+    {_, resp} = Hui.q(q: "test", start: 0, rows: 10)
+    assert resp.status == 200
+    assert resp.body == "hitting default endpoint"
   end
 
   describe "search/2" do
@@ -59,7 +46,7 @@ defmodule HuiTest do
         Plug.Conn.resp(conn, 200, "")
       end)
 
-      Hui.search("http://localhost:#{bypass.port}", query)
+      Hui.search("http://localhost:#{bypass.port}/select", query)
     end
 
     test "handles a Hui query struct", %{bypass: bypass} do
@@ -77,7 +64,7 @@ defmodule HuiTest do
         Plug.Conn.resp(conn, 200, "")
       end)
 
-      Hui.search("http://localhost:#{bypass.port}", query)
+      Hui.search("http://localhost:#{bypass.port}/select", query)
     end
 
     test "handles a list of Hui query structs", %{bypass: bypass} do
@@ -98,7 +85,7 @@ defmodule HuiTest do
         Plug.Conn.resp(conn, 200, "")
       end)
 
-      Hui.search("http://localhost:#{bypass.port}", [struct1, struct2, struct3])
+      Hui.search("http://localhost:#{bypass.port}/select", [struct1, struct2, struct3])
     end
 
     test "returns map response when HTTP client decodes response", %{bypass: bypass} do
@@ -107,7 +94,7 @@ defmodule HuiTest do
         |> Plug.Conn.resp(200, File.read!("./test/fixtures/search_response.json"))
       end)
 
-      {_, resp} = Hui.search("http://localhost:#{bypass.port}", q: "*")
+      {_, resp} = Hui.search("http://localhost:#{bypass.port}/select", q: "*")
       assert is_map(resp.body)
     end
 
@@ -116,15 +103,12 @@ defmodule HuiTest do
         Plug.Conn.resp(conn, 200, File.read!("./test/fixtures/search_response.xml"))
       end)
 
-      {_, resp} = Hui.search("http://localhost:#{bypass.port}", q: "*")
+      {_, resp} = Hui.search("http://localhost:#{bypass.port}/select", q: "*")
       assert is_binary(resp.body)
     end
 
-    test "accepts %Hui.URL{} endpoint", %{bypass: bypass} do
-      url = %Hui.URL{
-        url: "http://localhost:#{bypass.port}/solr/newspapers",
-        handler: "suggest"
-      }
+    test "handles binary URL endpoint", %{bypass: bypass} do
+      url = "http://localhost:#{bypass.port}/solr/newspapers/suggest"
 
       Bypass.expect(bypass, fn conn ->
         assert conn.port == bypass.port
@@ -135,11 +119,9 @@ defmodule HuiTest do
       Hui.search(url, suggest: true, "suggest.q": "el")
     end
 
-    test "accepts %Hui.URL{} endpoint with HTTP headers", %{bypass: bypass} do
-      url = %Hui.URL{
-        url: "http://localhost:#{bypass.port}",
-        headers: [{"accept", "application/json"}]
-      }
+    test "accepts HTTP headers", %{bypass: bypass} do
+      headers = [{"accept", "application/json"}]
+      url = {"http://localhost:#{bypass.port}/select?", headers}
 
       Bypass.expect(bypass, fn conn ->
         assert Enum.member?(conn.req_headers, {"accept", "application/json"})
@@ -149,16 +131,6 @@ defmodule HuiTest do
       Hui.search(url, q: "*")
     end
 
-    test "accepts %Hui.URL{} endpoint with HTTP client options", %{bypass: bypass} do
-      url = %Hui.URL{
-        url: "http://localhost:#{bypass.port}/",
-        options: [timeout: 0]
-      }
-
-      assert {:error, %Hui.Error{reason: reason}} = Hui.search(url, q: "*")
-    end
-
-    # TODO: refactor, add app config in test and remove :library from configuration
     test "access configured atom URL key" do
       bypass = Bypass.open(port: 8984)
 
@@ -167,8 +139,7 @@ defmodule HuiTest do
       end)
 
       query = [q: "edinburgh", rows: 10]
-      {_, url} = Hui.URL.configured_url(:library)
-      experted_request_url = Hui.URL.to_string(url) <> "?" <> Hui.Encoder.encode(query)
+      experted_request_url = Application.get_env(:hui, :library)[:url] <> "?" <> Hui.Encoder.encode(query)
 
       {_, resp} = Hui.search(:library, query)
       assert experted_request_url == resp.url |> to_string()
@@ -182,7 +153,7 @@ defmodule HuiTest do
         Plug.Conn.resp(conn, 200, "")
       end)
 
-      Hui.search("http://localhost:#{bypass.port}", "apache documentation")
+      Hui.search("http://localhost:#{bypass.port}/select", "apache documentation")
     end
 
     test "handles multiple query parameters", %{bypass: bypass} do
@@ -191,7 +162,7 @@ defmodule HuiTest do
         Plug.Conn.resp(conn, 200, "")
       end)
 
-      Hui.search("http://localhost:#{bypass.port}", "a", 1, 5, "type:text", ["type", "year"])
+      Hui.search("http://localhost:#{bypass.port}/select", "a", 1, 5, "type:text", ["type", "year"])
     end
   end
 
@@ -217,7 +188,7 @@ defmodule HuiTest do
     end)
 
     Hui.suggest(
-      %Hui.URL{url: "http://localhost:#{bypass.port}"},
+      "http://localhost:#{bypass.port}/suggest",
       %Hui.Query.Suggest{q: "ha", count: 10, dictionary: "name_infix"}
     )
   end
@@ -234,7 +205,7 @@ defmodule HuiTest do
     end)
 
     Hui.suggest(
-      %Hui.URL{url: "http://localhost:#{bypass.port}"},
+      "http://localhost:#{bypass.port}/suggest",
       "ha",
       5,
       ["name_infix", "ln_prefix", "fn_prefix"],
@@ -244,57 +215,37 @@ defmodule HuiTest do
 
   describe "update/3 ingests" do
     test "a single doc (map)", %{bypass: bypass} do
-      url = %Hui.URL{
-        url: "http://localhost:#{bypass.port}",
-        handler: "update",
-        headers: [{"content-type", "application/json"}]
-      }
-
+      url = {"http://localhost:#{bypass.port}/update", [{"content-type", "application/json"}]}
       setup_bypass_for_update_query(bypass, update_json(single_doc(), commit: true))
+
       Hui.update(url, single_doc(), true)
     end
 
     test "a single doc (map) without commit", %{bypass: bypass} do
-      url = %Hui.URL{
-        url: "http://localhost:#{bypass.port}",
-        handler: "update",
-        headers: [{"content-type", "application/json"}]
-      }
-
+      url = {"http://localhost:#{bypass.port}/update", [{"content-type", "application/json"}]}
       setup_bypass_for_update_query(bypass, update_json(single_doc(), commit: false))
+
       Hui.update(url, single_doc(), false)
     end
 
     test "multiple docs (map)", %{bypass: bypass} do
-      url = %Hui.URL{
-        url: "http://localhost:#{bypass.port}",
-        handler: "update",
-        headers: [{"content-type", "application/json"}]
-      }
-
+      url = {"http://localhost:#{bypass.port}/update", [{"content-type", "application/json"}]}
       setup_bypass_for_update_query(bypass, update_json(multi_docs(), commit: true))
+
       Hui.update(url, multi_docs(), true)
     end
 
     test "multiple docs (map) without commit", %{bypass: bypass} do
-      url = %Hui.URL{
-        url: "http://localhost:#{bypass.port}",
-        handler: "update",
-        headers: [{"content-type", "application/json"}]
-      }
-
+      url = {"http://localhost:#{bypass.port}/update", [{"content-type", "application/json"}]}
       setup_bypass_for_update_query(bypass, update_json(multi_docs(), commit: false))
+
       Hui.update(url, multi_docs(), false)
     end
 
     test "binary documents", %{bypass: bypass} do
-      url = %Hui.URL{
-        url: "http://localhost:#{bypass.port}",
-        handler: "update",
-        headers: [{"content-type", "application/json"}]
-      }
-
+      url = {"http://localhost:#{bypass.port}/update", [{"content-type", "application/json"}]}
       setup_bypass_for_update_query(bypass, update_json(multi_docs()))
+
       Hui.update(url, update_json(multi_docs()))
     end
 
@@ -314,29 +265,19 @@ defmodule HuiTest do
     assert {:error, @error_nxdomain} == Hui.update("", update_doc)
     assert {:error, @error_nxdomain} == Hui.update([], update_doc)
     assert {:error, @error_nxdomain} == Hui.update(:blahblah, update_doc)
-    assert {:error, @error_nxdomain} == Hui.update(%Hui.URL{url: "boo"}, "")
   end
 
   describe "update/3 handles Update struct" do
     test "with commitWithin, overwrite commands", %{bypass: bypass} do
-      url = %Hui.URL{
-        url: "http://localhost:#{bypass.port}",
-        handler: "update",
-        headers: [{"content-type", "application/json"}]
-      }
-
+      url = {"http://localhost:#{bypass.port}/update", [{"content-type", "application/json"}]}
       query_struct = %Query.Update{doc: single_doc(), commitWithin: 10, overwrite: true}
-
       setup_bypass_for_update_query(bypass, query_struct |> Hui.Encoder.encode())
+
       Hui.update(url, query_struct)
     end
 
     test "with multiple grouped update commands", %{bypass: bypass} do
-      url = %Hui.URL{
-        url: "http://localhost:#{bypass.port}",
-        handler: "update",
-        headers: [{"content-type", "application/json"}]
-      }
+      url = {"http://localhost:#{bypass.port}/update", [{"content-type", "application/json"}]}
 
       query_struct = %Query.Update{
         doc: multi_docs(),
@@ -352,60 +293,40 @@ defmodule HuiTest do
     end
 
     test "with optimize command", %{bypass: bypass} do
-      url = %Hui.URL{
-        url: "http://localhost:#{bypass.port}",
-        handler: "update",
-        headers: [{"content-type", "application/json"}]
-      }
-
+      url = {"http://localhost:#{bypass.port}/update", [{"content-type", "application/json"}]}
       setup_bypass_for_update_query(bypass, "{\"optimize\":{\"maxSegments\":10,\"waitSearcher\":false}}")
+
       Hui.update(url, %Query.Update{optimize: true, maxSegments: 10, waitSearcher: false})
     end
 
     test "with rollback command", %{bypass: bypass} do
-      url = %Hui.URL{
-        url: "http://localhost:#{bypass.port}",
-        handler: "update",
-        headers: [{"content-type", "application/json"}]
-      }
-
+      url = {"http://localhost:#{bypass.port}/update", [{"content-type", "application/json"}]}
       setup_bypass_for_update_query(bypass, "{\"delete\":{\"query\":\"name:Persona\"},\"rollback\":{}}")
+
       Hui.update(url, %Query.Update{delete_query: "name:Persona", rollback: true})
     end
   end
 
   test "delete/3 docs by ID", %{bypass: bypass} do
-    url = %Hui.URL{
-      url: "http://localhost:#{bypass.port}",
-      handler: "update",
-      headers: [{"content-type", "application/json"}]
-    }
-
+    url = {"http://localhost:#{bypass.port}/update", [{"content-type", "application/json"}]}
     delete_query = %Query.Update{delete_id: ["tt1650453", "tt1650453"], commit: true}
     setup_bypass_for_update_query(bypass, delete_query |> Hui.Encoder.encode())
+
     Hui.delete(url, ["tt1650453", "tt1650453"])
   end
 
   test "delete_by_query/3", %{bypass: bypass} do
-    url = %Hui.URL{
-      url: "http://localhost:#{bypass.port}",
-      handler: "update",
-      headers: [{"content-type", "application/json"}]
-    }
-
+    url = {"http://localhost:#{bypass.port}/update", [{"content-type", "application/json"}]}
     delete_query = %Query.Update{delete_query: ["name:Persona", "genre:Drama"], commit: true}
     setup_bypass_for_update_query(bypass, delete_query |> Hui.Encoder.encode())
+
     Hui.delete_by_query(url, ["name:Persona", "genre:Drama"])
   end
 
   test "commit/2", %{bypass: bypass} do
-    url = %Hui.URL{
-      url: "http://localhost:#{bypass.port}",
-      handler: "update",
-      headers: [{"content-type", "application/json"}]
-    }
-
+    url = {"http://localhost:#{bypass.port}/update", [{"content-type", "application/json"}]}
     setup_bypass_for_update_query(bypass, %Query.Update{commit: true, waitSearcher: true} |> Hui.Encoder.encode())
+
     Hui.commit(url)
   end
 
@@ -415,7 +336,7 @@ defmodule HuiTest do
         Plug.Conn.resp(conn, 200, "")
       end)
 
-      url = %URL{url: "http://localhost:#{context.bypass.port}"}
+      url = "http://localhost:#{context.bypass.port}/select"
       x = %Query.Common{rows: 5, fq: ["cat:book", "inStock:true", "price:[1.99 TO 9.99]"]}
       y = %Query.Standard{q: "{!q.op=OR df=series_t}black amber"}
 
@@ -427,7 +348,7 @@ defmodule HuiTest do
         Plug.Conn.resp(conn, 200, "")
       end)
 
-      url = %URL{url: "http://localhost:#{context.bypass.port}"}
+      url = "http://localhost:#{context.bypass.port}/select"
 
       x = %Query.DisMax{
         q: "edinburgh",
@@ -450,7 +371,7 @@ defmodule HuiTest do
         Plug.Conn.resp(conn, 200, "")
       end)
 
-      url = %URL{url: "http://localhost:#{context.bypass.port}"}
+      url = "http://localhost:#{context.bypass.port}/select"
 
       x = %Query.Common{
         distrib: true,
@@ -467,7 +388,7 @@ defmodule HuiTest do
         Plug.Conn.resp(conn, 200, "")
       end)
 
-      url = %URL{url: "http://localhost:#{context.bypass.port}"}
+      url = "http://localhost:#{context.bypass.port}/select"
       x = %Query.Standard{q: "*"}
       y = %Query.Common{cursorMark: "*", sort: "id asc"}
 
@@ -483,7 +404,7 @@ defmodule HuiTest do
       y = %Query.Common{rows: 5, echoParams: "explicit"}
       z = %Query.Facet{field: ["cat", "author_str"], mincount: 1}
 
-      url = %URL{url: "http://localhost:#{context.bypass.port}"}
+      url = "http://localhost:#{context.bypass.port}/select"
 
       test_get_req_url(url, [x, y, z])
     end
@@ -493,7 +414,7 @@ defmodule HuiTest do
         Plug.Conn.resp(conn, 200, "")
       end)
 
-      url = %URL{url: "http://localhost:#{context.bypass.port}"}
+      url = "http://localhost:#{context.bypass.port}/select"
       x = %Query.Standard{q: "features:photo"}
       y = %Query.Highlight{fl: "features", usePhraseHighlighter: true, fragsize: 250, snippets: 3}
 
@@ -505,7 +426,7 @@ defmodule HuiTest do
         Plug.Conn.resp(conn, 200, "")
       end)
 
-      url = %Hui.URL{url: "http://localhost:#{context.bypass.port}"}
+      url = "http://localhost:#{context.bypass.port}/select"
 
       x = %Query.Standard{q: "features:photo"}
       y = %Query.Highlight{fl: "features"}
@@ -540,7 +461,7 @@ defmodule HuiTest do
         Plug.Conn.resp(conn, 200, "")
       end)
 
-      url = %URL{url: "http://localhost:#{context.bypass.port}"}
+      url = "http://localhost:#{context.bypass.port}/suggester"
       x = %Query.Suggest{q: "ha", count: 10, dictionary: ["name_infix", "ln_prefix", "fn_prefix"]}
 
       test_get_req_url(url, x)
@@ -551,7 +472,7 @@ defmodule HuiTest do
         Plug.Conn.resp(conn, 200, "")
       end)
 
-      url = %URL{url: "http://localhost:#{context.bypass.port}"}
+      url = "http://localhost:#{context.bypass.port}/spellcheck"
 
       x = %Query.SpellCheck{
         q: "delll ultra sharp",
@@ -575,7 +496,7 @@ defmodule HuiTest do
         Plug.Conn.resp(conn, 200, "")
       end)
 
-      url = %URL{url: "http://localhost:#{context.bypass.port}"}
+      url = "http://localhost:#{context.bypass.port}/mlt"
 
       x = %Query.MoreLikeThis{
         fl: "manu,cat",
@@ -597,47 +518,31 @@ defmodule HuiTest do
 
   describe "post/2 handles" do
     test "Update struct", %{bypass: bypass} do
-      url = %Hui.URL{
-        url: "http://localhost:#{bypass.port}",
-        handler: "update",
-        headers: [{"content-type", "application/json"}]
-      }
-
+      url = {"http://localhost:#{bypass.port}/update", [{"content-type", "application/json"}]}
       setup_bypass_for_update_query(bypass, update_json(single_doc()))
+
       Hui.post(url, %Query.Update{doc: single_doc()})
     end
 
     test "Update struct - multiple docs", %{bypass: bypass} do
-      url = %Hui.URL{
-        url: "http://localhost:#{bypass.port}",
-        handler: "update",
-        headers: [{"content-type", "application/json"}]
-      }
-
+      url = {"http://localhost:#{bypass.port}/update", [{"content-type", "application/json"}]}
       setup_bypass_for_update_query(bypass, update_json(multi_docs()))
+
       Hui.post(url, %Query.Update{doc: multi_docs()})
     end
 
     test "update document in binary formant", %{bypass: bypass} do
-      url = %Hui.URL{
-        url: "http://localhost:#{bypass.port}",
-        handler: "update",
-        headers: [{"content-type", "application/json"}]
-      }
-
+      url = {"http://localhost:#{bypass.port}/update", [{"content-type", "application/json"}]}
       setup_bypass_for_update_query(bypass, update_json(multi_docs()))
+
       Hui.post(url, update_json(multi_docs()))
     end
 
     test "update document in XML binary data", %{bypass: bypass} do
-      url = %Hui.URL{
-        url: "http://localhost:#{bypass.port}",
-        handler: "update",
-        headers: [{"content-type", "application/xml"}]
-      }
-
+      url = {"http://localhost:#{bypass.port}/update", [{"content-type", "application/xml"}]}
       update_doc = "<delete><id>9780141981727</id></delete>"
       setup_bypass_for_update_query(bypass, update_doc, "application/xml")
+
       Hui.post(url, update_doc)
     end
   end

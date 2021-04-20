@@ -20,8 +20,11 @@ defmodule Hui do
   alias Hui.Query
 
   @http_client Application.get_env(:hui, :http_client, Hui.Http)
+  @configured_url Application.get_all_env(:hui)
+                  |> Enum.filter(fn {_k, v} -> is_list(v) and :url in Keyword.keys(v) end)
+                  |> Enum.into(%{})
 
-  @type url :: binary | atom | Hui.URL.t()
+  @type url :: binary | atom | {binary, list} | {binary, list, list}
 
   @type querying_struct :: Query.Standard.t() | Query.Common.t() | Query.DisMax.t()
   @type faceting_struct :: Query.Facet.t() | Query.FacetRange.t() | Query.FacetInterval.t()
@@ -242,8 +245,10 @@ defmodule Hui do
   the former uses the `t:Hui.Query.Update.t/0` struct
   while the latter acepts text containing any valid Solr update data or commands.
 
-  An index/update handler endpoint should be specified through a `t:Hui.URL.t/0` struct
-  or a URL config key. A "content-type" request header is required so that Solr knows the
+  An index/update handler endpoint should be specified through a URL string or 
+  {url, headers, options} tuple for headers and HTTP client options specification.
+
+  A "content-type" request header is required so that Solr knows the
   incoming data format (JSON, XML etc.) and can process data accordingly.
 
   ### Example - map, list and binary data
@@ -251,7 +256,7 @@ defmodule Hui do
   ```
     # Index handler for JSON-formatted update
     headers = [{"content-type", "application/json"}]
-    url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "update", headers: headers}
+    url = {"http://localhost:8983/solr/collection/update", headers}
 
     # Solr docs in maps
     doc1 = %{
@@ -288,7 +293,7 @@ defmodule Hui do
 
     # Binary mode, delete a doc via XML
     headers = [{"content-type", "application/xml"}]
-    url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "update", headers: headers}
+    url = {"http://localhost:8983/solr/collection/update", headers}
     Hui.update(url, "<delete><id>9780141981727</id></delete>")
 
   ```
@@ -331,15 +336,17 @@ defmodule Hui do
   This function accepts a single or list of IDs and immediately delete the corresponding
   documents from the Solr index (commit by default).
 
-  An index/update handler endpoint should be specified through a `t:Hui.URL.t/0` struct
-  or a URL config key. A JSON "content-type" request header is required so that Solr knows the
+  An index/update handler endpoint should be specified through a URL string
+  or {url, headers, options} tuple.
+
+  A JSON "content-type" request header is required so that Solr knows the
   incoming data format and can process data accordingly.
 
   ### Example
   ```
     # Index handler for JSON-formatted update
     headers = [{"content-type", "application/json"}]
-    url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "update", headers: headers}
+    url = {"http://localhost:8983/solr/collection/update", headers}
 
     Hui.delete(url, "tt2358891") # delete a single doc
     Hui.delete(url, ["tt2358891", "tt1602620"]) # delete a list of docs
@@ -358,15 +365,17 @@ defmodule Hui do
   This function accepts a single or list of filter queries and immediately delete the corresponding
   documents from the Solr index (commit by default).
 
-  An index/update handler endpoint should be specified through a `t:Hui.URL.t/0` struct
-  or a URL config key. A JSON "content-type" request header is required so that Solr knows the
+  An index/update handler endpoint should be specified through a URL string
+  or {url, headers, options} tuple.
+
+  A JSON "content-type" request header is required so that Solr knows the
   incoming data format and can process data accordingly.
 
   ### Example
   ```
     # Index handler for JSON-formatted update
     headers = [{"content-type", "application/json"}]
-    url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "update", headers: headers}
+    url = {"http://localhost:8983/solr/collection", headers}
 
     Hui.delete_by_query(url, "name:Persona") # delete with a single filter
     Hui.delete_by_query(url, ["genre:Drama", "name:Persona"]) # delete with a list of filters
@@ -385,15 +394,17 @@ defmodule Hui do
   waits for a new Solr searcher to be regenerated, so that the commit result is made available
   for search.
 
-  An index/update handler endpoint should be specified through a `t:Hui.URL.t/0` struct
-  or a URL config key. A JSON "content-type" request header is required so that Solr knows the
+  An index/update handler endpoint should be specified through a URL string
+  or {url, headers, options} tuple.
+
+  A JSON "content-type" request header is required so that Solr knows the
   incoming data format and can process data accordingly.
 
   ### Example
   ```
     # Index handler for JSON-formatted update
     headers = [{"content-type", "application/json"}]
-    url = %Hui.URL{url: "http://localhost:8983/solr/collection", handler: "update", headers: headers}
+    url = {"http://localhost:8983/solr/collection", headers}
 
     Hui.commit(url) # commits, make new docs available for search
     Hui.commit(url, false) # commits op only, new docs to be made available later
@@ -415,7 +426,7 @@ defmodule Hui do
   ## Example - parameters
 
   ```
-    url = %Hul.URL{url: "http://..."}
+    url = "http://..."
 
     # query via a list of keywords, which are unbound and sent to Solr directly
     Hui.get(url, q: "glen cova", facet: "true", "facet.field": ["type", "year"])
@@ -428,16 +439,27 @@ defmodule Hui do
 
   The use of structs is more idiomatic and succinct. It is bound to qualified Solr fields.
 
-  See `t:Hui.URL.t/0` struct about specifying HTTP headers and options
-  for a request, e.g. `timeout`, `recv_timeout`, `max_redirect` etc.
+  ## URLs, Headers, Options
+
+  HTTP headers and client options for a specific endpoint may also be
+  included in the a `{url, headers, options}` tuple where:
+
+  - `url` is a typical Solr endpoint that includes a request handler
+  - `headers`: a tuple list of [HTTP headers](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers)
+  - `options`: a keyword list of [Erlang httpc options](https://erlang.org/doc/man/httpc.html#request-4)
+  or [HTTPoison options](https://hexdocs.pm/httpoison/HTTPoison.Request.html) if configured, e.g.
+  `timeout`, `recv_timeout`, `max_redirect`
+
+  If `HTTPoison` is used, advanced HTTP options such as the use of connection pools
+  may also be specified via `options`.
   """
   @spec get(url, query) :: http_response
   def get(url, query) do
-    with {:ok, url_struct} <- fetch_url(url) do
+    with {:ok, {url, headers, options}} <- parse_url(url) do
       %Http{
-        url: [to_string(url_struct), "?", Encoder.encode(query)],
-        headers: url_struct.headers,
-        options: url_struct.options
+        url: [url, "?", Encoder.encode(query)],
+        headers: headers,
+        options: options
       }
       |> dispatch(@http_client)
     else
@@ -450,12 +472,12 @@ defmodule Hui do
   """
   @spec post(url, update_query) :: http_response
   def post(url, docs) do
-    with {:ok, url_struct} <- fetch_url(url) do
+    with {:ok, {url, headers, options}} <- parse_url(url) do
       %Http{
-        url: to_string(url_struct),
-        headers: url_struct.headers,
+        url: url,
+        headers: headers,
         method: :post,
-        options: url_struct.options,
+        options: options,
         body: if(is_binary(docs), do: docs, else: Encoder.encode(docs))
       }
       |> dispatch(@http_client)
@@ -464,12 +486,28 @@ defmodule Hui do
     end
   end
 
-  defp fetch_url(%Hui.URL{url: "http" <> _rest} = url), do: {:ok, url}
-  defp fetch_url("http://" <> _rest = url) when is_binary(url), do: {:ok, %Hui.URL{url: url}}
-  defp fetch_url("https://" <> _rest = url) when is_binary(url), do: {:ok, %Hui.URL{url: url}}
+  defp parse_url({url, headers}), do: parse_url({url, headers, []})
+  defp parse_url({url, headers, options}) when is_url(url, headers, options), do: {:ok, {url, headers, options}}
 
-  defp fetch_url(url) when is_atom(url), do: Hui.URL.configured_url(url)
+  defp parse_url("http://" <> _rest = url), do: {:ok, {url, [], []}}
+  defp parse_url("https://" <> _rest = url), do: {:ok, {url, [], []}}
 
-  defp fetch_url(url) when is_nil_empty(url), do: {:error, %Error{reason: :nxdomain}}
-  defp fetch_url(_url), do: {:error, %Error{reason: :nxdomain}}
+  defp parse_url(url_key) when is_atom(url_key) do
+    case @configured_url[url_key][:url] do
+      url when is_url(url) ->
+        {
+          :ok,
+          {
+            url,
+            Keyword.get(@configured_url[url_key], :headers, []),
+            Keyword.get(@configured_url[url_key], :options, [])
+          }
+        }
+
+      _ ->
+        {:error, %Error{reason: :nxdomain}}
+    end
+  end
+
+  defp parse_url(_url), do: {:error, %Error{reason: :nxdomain}}
 end
