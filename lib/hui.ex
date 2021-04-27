@@ -34,10 +34,10 @@ defmodule Hui do
           | Query.HighlighterOriginal.t()
           | Query.HighlighterFastVector.t()
 
-  @type misc_struct :: Query.MoreLikeThis.t() | Query.Suggest.t() | Query.SpellCheck.t()
+  @type misc_struct :: Query.MoreLikeThis.t() | Query.Suggest.t() | Query.SpellCheck.t() | Query.Metrics.t()
   @type solr_struct :: querying_struct | faceting_struct | highlighting_struct | misc_struct
 
-  @type query :: Keyword.t() | map | solr_struct | [solr_struct]
+  @type query :: keyword | map | solr_struct | [solr_struct]
   @type update_query :: binary | map | list(map) | Query.Update.t()
 
   @type http_response :: Http.response()
@@ -76,9 +76,7 @@ defmodule Hui do
 
   ```
     Hui.q("scott")
-    # keywords
-    Hui.q("loch", 10, 20)
-    # .. with paging parameters
+    Hui.q("loch", 10, 20) # .. with paging parameters
     Hui.q("\\\"apache documentation\\\"~5", 1, 0, "stream_content_type_str:text/html", ["subject"])
     # .. plus filter(s) and facet fields
   ```
@@ -417,6 +415,18 @@ defmodule Hui do
   def commit(url, wait_searcher \\ true) do
     post(url, %Query.Update{commit: true, waitSearcher: wait_searcher})
   end
+
+  @doc """
+  Retrieves metrics data from the Solr admin API.
+
+  ### Example
+  ```
+    url = {"http://localhost:8983/solr/admin/metrics", [{"content-type", "application/json"}]}
+    Hui.metrics(url, group: "core", type: "timer", property: ["mean_ms", "max_ms", "p99_ms"])
+  ```
+  """
+  @spec commit(url, keyword) :: http_response
+  defdelegate metrics(url, options), to: Hui.Metrics
 
   @doc """
   Issues a get request of Solr query to a specific endpoint.

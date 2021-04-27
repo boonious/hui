@@ -5,7 +5,7 @@ defmodule Hui.URL do
   @deprecated "Use {url, headers, options} tuple instead - see README"
   defstruct [:url, handler: "select", headers: [], options: []]
   @type headers :: [{binary(), binary()}]
-  @type options :: Keyword.t()
+  @type options :: keyword()
   @type t :: %__MODULE__{url: nil | binary, handler: nil | binary, headers: nil | headers, options: nil | options}
 
   @deprecated "Use see README to find out more about setting up default SOLR endpoints"

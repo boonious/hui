@@ -330,6 +330,21 @@ defmodule HuiTest do
     Hui.commit(url)
   end
 
+  # more test coverage in the Hui.MetricsTest test module
+  test "metrics/2", %{bypass: bypass} do
+    url = {"http://localhost:#{bypass.port}/solr/admin/metrics", [{"content-type", "application/json"}]}
+
+    Bypass.expect(bypass, fn conn ->
+      assert conn.port == bypass.port
+      assert conn.path_info == ["solr", "admin", "metrics"]
+      assert conn.query_string == "group=core&type=timer"
+
+      Plug.Conn.resp(conn, 200, "")
+    end)
+
+    Hui.metrics(url, group: "core", type: "timer")
+  end
+
   describe "get/2 handles" do
     test "a list of structs", context do
       Bypass.expect(context.bypass, fn conn ->
