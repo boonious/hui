@@ -18,13 +18,11 @@ defmodule Hui do
   alias Hui.Error
   alias Hui.Http
   alias Hui.Query
+  alias Hui.Utils
 
   @http_client Application.get_env(:hui, :http_client, Hui.Http)
-  @configured_url Application.get_all_env(:hui)
-                  |> Enum.filter(fn {_k, v} -> is_list(v) and :url in Keyword.keys(v) end)
-                  |> Enum.into(%{})
 
-  @type url :: binary | atom | {binary, list} | {binary, list, list}
+  @type endpoint :: binary | atom | {binary, list} | {binary, list, list}
 
   @type querying_struct :: Query.Standard.t() | Query.Common.t() | Query.DisMax.t()
   @type faceting_struct :: Query.Facet.t() | Query.FacetRange.t() | Query.FacetInterval.t()
@@ -46,7 +44,7 @@ defmodule Hui do
   Issue a keyword list or structured query to the default Solr endpoint.
 
   The query can either be a keyword list or a list of Hui structs - see `t:Hui.solr_struct/0`.
-  This function is a shortcut for `search/2` with `:default` as URL key.
+  This function is a shortcut for `search/2` with `:default` as the configured endpoint key.
 
   ### Example
 
@@ -122,7 +120,7 @@ defmodule Hui do
 
     # With results highlighting (snippets)
     x = %Query.Standard{q: "features:photo"}
-    y = %Query.Highlight{fl: "features", usePhraseHighlighter: true, fragsize: 250, snippets: 3 }
+    y = %Query.Highlight{fl: "features", usePhraseHighlighter: true, fragsize: 250, snippets: 3}
     Hui.search(url, [x, y])
   ```
 
@@ -164,8 +162,8 @@ defmodule Hui do
   }
   ```
   """
-  @spec search(url, query) :: http_response
-  def search(url, query) when is_list(query) or is_map(query), do: get(url, query)
+  @spec search(endpoint, query) :: http_response
+  def search(endpoint, query) when is_list(query) or is_map(query), do: get(endpoint, query)
 
   @doc """
   Convenience function for issuing various typical queries to a specified Solr endpoint.
@@ -173,7 +171,7 @@ defmodule Hui do
   See `q/6`.
   """
   @spec search(
-          url,
+          endpoint,
           binary,
           nil | integer,
           nil | integer,
@@ -181,18 +179,18 @@ defmodule Hui do
           nil | binary | list(binary),
           nil | binary
         ) :: http_response
-  def search(url, keywords, rows \\ nil, start \\ nil, filters \\ nil, facet_fields \\ nil, sort \\ nil)
+  def search(endpoint, keywords, rows \\ nil, start \\ nil, filters \\ nil, facet_fields \\ nil, sort \\ nil)
 
-  def search(url, keywords, _, _, _, _, _) when is_nil_empty(keywords) or is_nil_empty(url),
+  def search(endpoint, keywords, _, _, _, _, _) when is_nil_empty(keywords) or is_nil_empty(endpoint),
     do: {:error, %Error{reason: :einval}}
 
-  def search(url, keywords, nil, nil, nil, nil, nil) do
-    get(url, %Query.Standard{q: keywords})
+  def search(endpoint, keywords, nil, nil, nil, nil, nil) do
+    get(endpoint, %Query.Standard{q: keywords})
   end
 
-  def search(url, keywords, rows, start, filters, facet_fields, sort) do
+  def search(endpoint, keywords, rows, start, filters, facet_fields, sort) do
     get(
-      url,
+      endpoint,
       [
         %Query.Standard{q: keywords},
         %Query.Common{rows: rows, start: start, fq: filters, sort: sort},
@@ -207,12 +205,13 @@ defmodule Hui do
   ### Example
 
   ```
+    # :library is a configured endpoint
     suggest_query = %Hui.Query.Suggest{q: "ha", count: 10, dictionary: "name_infix"}
     Hui.suggest(:library, suggest_query)
   ```
   """
-  @spec suggest(url, Query.Suggest.t()) :: http_response
-  def suggest(url, %Query.Suggest{} = query), do: get(url, query)
+  @spec suggest(endpoint, Query.Suggest.t()) :: http_response
+  def suggest(endpoint, %Query.Suggest{} = query), do: get(endpoint, query)
 
   @doc """
   Convenience function for issuing a suggester query to a specified Solr endpoint.
@@ -220,16 +219,20 @@ defmodule Hui do
   ### Example
 
   ```
+    # :autocomplete is a configured endpoint
     Hui.suggest(:autocomplete, "t")
     Hui.suggest(:autocomplete, "bo", 5, ["name_infix", "ln_prefix", "fn_prefix"], "1939")
   ```
   """
-  @spec suggest(url, binary, nil | integer, nil | binary | list(binary), nil | binary) :: http_response
-  def suggest(url, q, count \\ nil, dictionaries \\ nil, context \\ nil)
-  def suggest(url, q, _, _, _) when is_nil_empty(q) or is_nil_empty(url), do: {:error, %Error{reason: :einval}}
+  @spec suggest(endpoint, binary, nil | integer, nil | binary | list(binary), nil | binary) :: http_response
+  def suggest(endpoint, q, count \\ nil, dictionaries \\ nil, context \\ nil)
 
-  def suggest(url, q, count, dictionaries, context) do
-    get(url, %Query.Suggest{q: q, count: count, dictionary: dictionaries, cfq: context})
+  def suggest(endpoint, q, _, _, _) when is_nil_empty(q) or is_nil_empty(endpoint) do
+    {:error, %Error{reason: :einval}}
+  end
+
+  def suggest(endpoint, q, count, dictionaries, context) do
+    get(endpoint, %Query.Suggest{q: q, count: count, dictionary: dictionaries, cfq: context})
   end
 
   @doc """
@@ -254,7 +257,7 @@ defmodule Hui do
   ```
     # Index handler for JSON-formatted update
     headers = [{"content-type", "application/json"}]
-    url = {"http://localhost:8983/solr/collection/update", headers}
+    endpoint = {"http://localhost:8983/solr/collection/update", headers}
 
     # Solr docs in maps
     doc1 = %{
@@ -277,29 +280,29 @@ defmodule Hui do
       "name" => "Persona"
     }
 
-    Hui.update(url, doc1) # add a single doc
-    Hui.update(url, [doc1, doc2]) # add a list of docs
+    Hui.update(endpoint, doc1) # add a single doc
+    Hui.update(endpoint, [doc1, doc2]) # add a list of docs
 
     # Don't commit the docs e.g. mass ingestion when index handler is setup for autocommit. 
-    Hui.update(url, [doc1, doc2], false)
+    Hui.update(endpoint, [doc1, doc2], false)
 
     # Send to a configured endpoint
     Hui.update(:updater, [doc1, doc2])
 
     # Binary mode, add and commit a doc
-    Hui.update(url, "{\\\"add\\\":{\\\"doc\\\":{\\\"name\\\":\\\"Blade Runner\\\",\\\"id\\\":\\\"tt0083658\\\",..}},\\\"commit\\\":{}}")
+    Hui.update(endpoint, "{\\\"add\\\":{\\\"doc\\\":{\\\"name\\\":\\\"Blade Runner\\\",\\\"id\\\":\\\"tt0083658\\\",..}},\\\"commit\\\":{}}")
 
     # Binary mode, delete a doc via XML
     headers = [{"content-type", "application/xml"}]
-    url = {"http://localhost:8983/solr/collection/update", headers}
-    Hui.update(url, "<delete><id>9780141981727</id></delete>")
+    endpoint = {"http://localhost:8983/solr/collection/update", headers}
+    Hui.update(endpoint, "<delete><id>9780141981727</id></delete>")
 
   ```
 
   ### Example - `t:Hui.Query.Update.t/0` and other update options
   ```
 
-    # url, doc1, doc2 from the above example
+    # endpoint, doc1, doc2 from the above example
     ...
 
     # Hui.Query.Update struct command for updating and committing the docs to Solr within 5 seconds
@@ -307,25 +310,25 @@ defmodule Hui do
     alias Hui.Query
 
     x = %Query.Update{doc: [doc1, doc2], commitWithin: 5000, overwrite: true}
-    {status, resp} = Hui.update(url, x)
+    {status, resp} = Hui.update(endpoint, x)
 
     # Delete the docs by IDs, with a URL key from configuration
     {status, resp} = Hui.update(:library_update, %Query.Update{delete_id: ["tt1316540", "tt1650453"]})
 
     # Commit and optimise index, keep max index segments at 10
-    {status, resp} = Hui.update(url, %Query.Update{commit: true, waitSearcher: true, optimize: true, maxSegments: 10})
+    {status, resp} = Hui.update(endpoint, %Query.Update{commit: true, waitSearcher: true, optimize: true, maxSegments: 10})
 
     # Commit index, expunge deleted docs
-    {status, resp} = Hui.update(url, %Query.Update{commit: true, expungeDeletes: true})
+    {status, resp} = Hui.update(endpoint, %Query.Update{commit: true, expungeDeletes: true})
   ```
   """
-  @spec update(url, update_query, boolean) :: http_response
-  def update(url, docs, commit \\ true)
-  def update(url, docs, _commit) when is_binary(docs), do: post(url, docs)
-  def update(url, %Query.Update{} = docs, _commit), do: post(url, docs)
+  @spec update(endpoint, update_query, boolean) :: http_response
+  def update(endpoint, docs, commit \\ true)
+  def update(endpoint, docs, _commit) when is_binary(docs), do: post(endpoint, docs)
+  def update(endpoint, %Query.Update{} = docs, _commit), do: post(endpoint, docs)
 
-  def update(url, docs, commit) when is_map(docs) or is_list(docs) do
-    post(url, %Query.Update{doc: docs, commit: commit})
+  def update(endpoint, docs, commit) when is_map(docs) or is_list(docs) do
+    post(endpoint, %Query.Update{doc: docs, commit: commit})
   end
 
   @doc """
@@ -344,17 +347,17 @@ defmodule Hui do
   ```
     # Index handler for JSON-formatted update
     headers = [{"content-type", "application/json"}]
-    url = {"http://localhost:8983/solr/collection/update", headers}
+    endpoint = {"http://localhost:8983/solr/collection/update", headers}
 
-    Hui.delete(url, "tt2358891") # delete a single doc
-    Hui.delete(url, ["tt2358891", "tt1602620"]) # delete a list of docs
+    Hui.delete(endpoint, "tt2358891") # delete a single doc
+    Hui.delete(endpoint, ["tt2358891", "tt1602620"]) # delete a list of docs
 
-    Hui.delete(url, ["tt2358891", "tt1602620"], false) # delete without immediate commit
+    Hui.delete(endpoint, ["tt2358891", "tt1602620"], false) # delete without immediate commit
   ```
   """
-  @spec delete(url, binary | list(binary), boolean) :: http_response
-  def delete(url, ids, commit \\ true) when is_binary(ids) or is_list(ids) do
-    post(url, %Query.Update{delete_id: ids, commit: commit})
+  @spec delete(endpoint, binary | list(binary), boolean) :: http_response
+  def delete(endpoint, ids, commit \\ true) when is_binary(ids) or is_list(ids) do
+    post(endpoint, %Query.Update{delete_id: ids, commit: commit})
   end
 
   @doc """
@@ -373,15 +376,15 @@ defmodule Hui do
   ```
     # Index handler for JSON-formatted update
     headers = [{"content-type", "application/json"}]
-    url = {"http://localhost:8983/solr/collection", headers}
+    endpoint = {"http://localhost:8983/solr/collection", headers}
 
-    Hui.delete_by_query(url, "name:Persona") # delete with a single filter
-    Hui.delete_by_query(url, ["genre:Drama", "name:Persona"]) # delete with a list of filters
+    Hui.delete_by_query(endpoint, "name:Persona") # delete with a single filter
+    Hui.delete_by_query(endpoint, ["genre:Drama", "name:Persona"]) # delete with a list of filters
   ```
   """
-  @spec delete_by_query(url, binary | list(binary), boolean) :: http_response
-  def delete_by_query(url, q, commit \\ true) when is_binary(q) or is_list(q) do
-    post(url, %Query.Update{delete_query: q, commit: commit})
+  @spec delete_by_query(endpoint, binary | list(binary), boolean) :: http_response
+  def delete_by_query(endpoint, q, commit \\ true) when is_binary(q) or is_list(q) do
+    post(endpoint, %Query.Update{delete_query: q, commit: commit})
   end
 
   @doc """
@@ -402,18 +405,18 @@ defmodule Hui do
   ```
     # Index handler for JSON-formatted update
     headers = [{"content-type", "application/json"}]
-    url = {"http://localhost:8983/solr/collection", headers}
+    endpoint = {"http://localhost:8983/solr/collection", headers}
 
-    Hui.commit(url) # commits, make new docs available for search
-    Hui.commit(url, false) # commits op only, new docs to be made available later
+    Hui.commit(endpoint) # commits, make new docs available for search
+    Hui.commit(endpoint, false) # commits op only, new docs to be made available later
   ```
 
   Use `t:Hui.Query.Update.t/0` struct for other types of commit and index optimisation, e.g. expunge deleted docs to
   physically remove docs from the index, which could be a system-intensive operation.
   """
-  @spec commit(url, boolean) :: http_response
-  def commit(url, wait_searcher \\ true) do
-    post(url, %Query.Update{commit: true, waitSearcher: wait_searcher})
+  @spec commit(endpoint, boolean) :: http_response
+  def commit(endpoint, wait_searcher \\ true) do
+    post(endpoint, %Query.Update{commit: true, waitSearcher: wait_searcher})
   end
 
   @doc """
@@ -421,12 +424,12 @@ defmodule Hui do
 
   ### Example
   ```
-    url = {"http://localhost:8983/solr/admin/metrics", [{"content-type", "application/json"}]}
-    Hui.metrics(url, group: "core", type: "timer", property: ["mean_ms", "max_ms", "p99_ms"])
+    endpoint = {"http://localhost:8983/solr/admin/metrics", [{"content-type", "application/json"}]}
+    Hui.metrics(endpoint, group: "core", type: "timer", property: ["mean_ms", "max_ms", "p99_ms"])
   ```
   """
-  @spec commit(url, keyword) :: http_response
-  defdelegate metrics(url, options), to: Hui.Metrics
+  @spec commit(endpoint, keyword) :: http_response
+  defdelegate metrics(endpoint, options), to: Hui.Metrics
 
   @doc """
   Issues a get request of Solr query to a specific endpoint.
@@ -436,15 +439,15 @@ defmodule Hui do
   ## Example - parameters
 
   ```
-    url = "http://..."
+    endpoint = "http://..."
 
     # query via a list of keywords, which are unbound and sent to Solr directly
-    Hui.get(url, q: "glen cova", facet: "true", "facet.field": ["type", "year"])
+    Hui.get(endpoint, q: "glen cova", facet: "true", "facet.field": ["type", "year"])
 
     # query via Hui structs
     alias Hui.Query
-    Hui.get(url, %Query.DisMax{q: "glen cova"})
-    Hui.get(url, [%Query.DisMax{q: "glen"}, %Query.Facet{field: ["type", "year"]}])
+    Hui.get(endpoint, %Query.DisMax{q: "glen cova"})
+    Hui.get(endpoint, [%Query.DisMax{q: "glen"}, %Query.Facet{field: ["type", "year"]}])
   ```
 
   The use of structs is more idiomatic and succinct. It is bound to qualified Solr fields.
@@ -463,9 +466,9 @@ defmodule Hui do
   If `HTTPoison` is used, advanced HTTP options such as the use of connection pools
   may also be specified via `options`.
   """
-  @spec get(url, query) :: http_response
-  def get(url, query) do
-    with {:ok, {url, headers, options}} <- parse_url(url) do
+  @spec get(endpoint, query) :: http_response
+  def get(endpoint, query) do
+    with {:ok, {url, headers, options}} <- Utils.parse_endpoint(endpoint) do
       %Http{
         url: [url, "?", Encoder.encode(query)],
         headers: headers,
@@ -478,11 +481,11 @@ defmodule Hui do
   end
 
   @doc """
-  Issues a POST update request to a specific Solr endpoint, for data indexing and deletion.
+  Issues a POST request to a specific Solr endpoint, e.g. for data indexing and deletion.
   """
-  @spec post(url, update_query) :: http_response
-  def post(url, docs) do
-    with {:ok, {url, headers, options}} <- parse_url(url) do
+  @spec post(endpoint, update_query) :: http_response
+  def post(endpoint, docs) do
+    with {:ok, {url, headers, options}} <- Utils.parse_endpoint(endpoint) do
       %Http{
         url: url,
         headers: headers,
@@ -495,29 +498,4 @@ defmodule Hui do
       {:error, reason} -> {:error, reason}
     end
   end
-
-  defp parse_url({url, headers}), do: parse_url({url, headers, []})
-  defp parse_url({url, headers, options}) when is_url(url, headers, options), do: {:ok, {url, headers, options}}
-
-  defp parse_url("http://" <> _rest = url), do: {:ok, {url, [], []}}
-  defp parse_url("https://" <> _rest = url), do: {:ok, {url, [], []}}
-
-  defp parse_url(url_key) when is_atom(url_key) do
-    case @configured_url[url_key][:url] do
-      url when is_url(url) ->
-        {
-          :ok,
-          {
-            url,
-            Keyword.get(@configured_url[url_key], :headers, []),
-            Keyword.get(@configured_url[url_key], :options, [])
-          }
-        }
-
-      _ ->
-        {:error, %Error{reason: :nxdomain}}
-    end
-  end
-
-  defp parse_url(_url), do: {:error, %Error{reason: :nxdomain}}
 end
