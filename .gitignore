@@ -23,3 +23,6 @@ erl_crash.dump
 hui-*.tar
 
 /.elixir_ls
+
+.tool-versions
+.DS_Store

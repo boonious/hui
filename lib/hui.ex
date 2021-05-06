@@ -18,11 +18,9 @@ defmodule Hui do
   alias Hui.Error
   alias Hui.Http
   alias Hui.Query
+  alias Hui.Utils
 
   @http_client Application.get_env(:hui, :http_client, Hui.Http)
-  @configured_url Application.get_all_env(:hui)
-                  |> Enum.filter(fn {_k, v} -> is_list(v) and :url in Keyword.keys(v) end)
-                  |> Enum.into(%{})
 
   @type url :: binary | atom | {binary, list} | {binary, list, list}
 
@@ -122,7 +120,7 @@ defmodule Hui do
 
     # With results highlighting (snippets)
     x = %Query.Standard{q: "features:photo"}
-    y = %Query.Highlight{fl: "features", usePhraseHighlighter: true, fragsize: 250, snippets: 3 }
+    y = %Query.Highlight{fl: "features", usePhraseHighlighter: true, fragsize: 250, snippets: 3}
     Hui.search(url, [x, y])
   ```
 
@@ -465,7 +463,7 @@ defmodule Hui do
   """
   @spec get(url, query) :: http_response
   def get(url, query) do
-    with {:ok, {url, headers, options}} <- parse_url(url) do
+    with {:ok, {url, headers, options}} <- Utils.parse_endpoint(url) do
       %Http{
         url: [url, "?", Encoder.encode(query)],
         headers: headers,
@@ -478,11 +476,11 @@ defmodule Hui do
   end
 
   @doc """
-  Issues a POST update request to a specific Solr endpoint, for data indexing and deletion.
+  Issues a POST request to a specific Solr endpoint, e.g. for data indexing and deletion.
   """
   @spec post(url, update_query) :: http_response
   def post(url, docs) do
-    with {:ok, {url, headers, options}} <- parse_url(url) do
+    with {:ok, {url, headers, options}} <- Utils.parse_endpoint(url) do
       %Http{
         url: url,
         headers: headers,
@@ -495,29 +493,4 @@ defmodule Hui do
       {:error, reason} -> {:error, reason}
     end
   end
-
-  defp parse_url({url, headers}), do: parse_url({url, headers, []})
-  defp parse_url({url, headers, options}) when is_url(url, headers, options), do: {:ok, {url, headers, options}}
-
-  defp parse_url("http://" <> _rest = url), do: {:ok, {url, [], []}}
-  defp parse_url("https://" <> _rest = url), do: {:ok, {url, [], []}}
-
-  defp parse_url(url_key) when is_atom(url_key) do
-    case @configured_url[url_key][:url] do
-      url when is_url(url) ->
-        {
-          :ok,
-          {
-            url,
-            Keyword.get(@configured_url[url_key], :headers, []),
-            Keyword.get(@configured_url[url_key], :options, [])
-          }
-        }
-
-      _ ->
-        {:error, %Error{reason: :nxdomain}}
-    end
-  end
-
-  defp parse_url(_url), do: {:error, %Error{reason: :nxdomain}}
 end
