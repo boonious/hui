@@ -429,7 +429,7 @@ defmodule Hui do
   ```
   """
   @spec commit(endpoint, keyword) :: http_response
-  defdelegate metrics(endpoint, options), to: Hui.Metrics
+  defdelegate metrics(endpoint, options), to: Hui.Admin
 
   @doc """
   Issues a get request of Solr query to a specific endpoint.

@@ -1,4 +1,4 @@
-defmodule Hui.Metrics do
+defmodule Hui.Admin do
   @moduledoc false
 
   alias Hui.Query.Metrics
