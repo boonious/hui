@@ -330,7 +330,7 @@ defmodule HuiTest do
     Hui.commit(url)
   end
 
-  # more test coverage in the Hui.MetricsTest test module
+  # more test coverage in the Hui.AdminTest test module
   test "metrics/2", %{bypass: bypass} do
     url = {"http://localhost:#{bypass.port}/solr/admin/metrics", [{"content-type", "application/json"}]}
 
@@ -343,6 +343,22 @@ defmodule HuiTest do
     end)
 
     Hui.metrics(url, group: "core", type: "timer")
+  end
+
+  # more test coverage in the Hui.AdminTest test module
+  test "ping/2", %{bypass: bypass} do
+    url = "http://localhost:#{bypass.port}/solr/collection/admin/ping"
+
+    Bypass.expect(bypass, fn conn ->
+      assert conn.port == bypass.port
+      assert conn.path_info == ["solr", "collection", "admin", "ping"]
+
+      Plug.Conn.resp(conn, 200, "")
+    end)
+
+    Hui.ping()
+    Hui.ping(url)
+    Hui.ping(url, wt: "xml")
   end
 
   describe "get/2 handles" do
