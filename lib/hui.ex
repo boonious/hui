@@ -8,6 +8,7 @@ defmodule Hui do
   - Searching Solr: `q/1`, `q/6`, `search/2`, `search/7`
   - Updating: `update/3`, `delete/3`, `delete_by_query/3`, `commit/2`
   - Other: `suggest/2`, `suggest/5`
+  - Admin: `metrics/2`, `ping/1`
   - [README](https://hexdocs.pm/hui/readme.html#usage)
   """
 
@@ -428,8 +429,45 @@ defmodule Hui do
     Hui.metrics(endpoint, group: "core", type: "timer", property: ["mean_ms", "max_ms", "p99_ms"])
   ```
   """
-  @spec commit(endpoint, keyword) :: http_response
-  defdelegate metrics(endpoint, options), to: Hui.Metrics
+  @spec metrics(endpoint, keyword) :: http_response
+  defdelegate metrics(endpoint, options), to: Hui.Admin
+
+  @doc """
+  Ping the default configured endpoint.
+
+  Successful ping returns a `{:pong, qtime}` tuple, whereas failure gets a `:pang` response.
+  """
+  @spec ping() :: {:pong, integer} | :pang
+  defdelegate ping(), to: Hui.Admin
+
+  @doc """
+  Ping a given endpoint.
+
+  ### Example
+  ```
+    # ping a configured atomic endpoint
+    Hui.ping(:gettingstarted)
+
+    # directly ping a binary URL
+    Hui.ping("http://localhost:8983/solr/gettingstarted/admin/ping")
+  ```
+
+  Successful ping returns a `{:pong, qtime}` tuple, whereas failure gets a `:pang` response.
+  """
+  @spec ping(binary() | atom()) :: {:pong, integer} | :pang
+  defdelegate ping(endpoint), to: Hui.Admin
+
+  @doc """
+  Ping a given endpoint with options.
+
+  Raw HTTP response is returned when options such as `wt`, `distrib` is provided:
+  ```
+    Hui.ping(:gettingstarted, wt: "xml", distrib: false)
+    # -> returns {:ok, %Hui.HTTP{body: "raw HTTP response", status: 200, ..}}
+  ```
+  """
+  @spec ping(binary() | atom(), keyword) :: http_response
+  defdelegate ping(endpoint, options), to: Hui.Admin
 
   @doc """
   Issues a get request of Solr query to a specific endpoint.

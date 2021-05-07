@@ -1,3 +1,4 @@
+Code.require_file("fixtures/admin.exs", __DIR__)
 Code.require_file("fixtures/update.exs", __DIR__)
 
 ExUnit.start()

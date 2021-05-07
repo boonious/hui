@@ -4,10 +4,6 @@ defmodule Hui.Utils do
   import Hui.Guards
   alias Hui.Error
 
-  @configured_url Application.get_all_env(:hui)
-                  |> Enum.filter(fn {_k, v} -> is_list(v) and :url in Keyword.keys(v) end)
-                  |> Enum.into(%{}, fn {k, v} -> {k, Enum.into(v, %{})} end)
-
   @type url :: Hui.url()
   @type http_headers :: list
   @type http_options :: list
@@ -24,14 +20,18 @@ defmodule Hui.Utils do
   def parse_endpoint({url, headers, options}) when is_url(url, headers, options), do: {:ok, {url, headers, options}}
 
   def parse_endpoint(config_key) when is_atom(config_key) do
-    case @configured_url[config_key][:url] do
+    config = Application.get_env(:hui, config_key) || []
+
+    case config[:url] do
       url when is_url(url) ->
+        config_map = Enum.into(config, %{})
+
         {
           :ok,
           {
-            build_url(@configured_url[config_key]),
-            Map.get(@configured_url[config_key], :headers, []),
-            Map.get(@configured_url[config_key], :options, [])
+            build_url(config_map),
+            Map.get(config_map, :headers, []),
+            Map.get(config_map, :options, [])
           }
         }
 
@@ -48,5 +48,8 @@ defmodule Hui.Utils do
   defp build_url(%{url: url}), do: url
 
   @spec config_url(atom) :: binary
-  def config_url(key) when is_atom(key), do: @configured_url[key][:url]
+  def config_url(key) when is_atom(key) do
+    config = Application.get_env(:hui, key)
+    if config, do: config[:url], else: ""
+  end
 end
