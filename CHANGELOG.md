@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.10.5 (2021-05-07)
+* support Solr metrics API querying
+* implement ping functions
+* use {url, headers, options} tuple to represent endpoints, mark URL module for deprecation
+* additional `handler`, `collection` fields for endpoints configuration
+
 ## 0.10.4 (2020-11-07)
 * Default HTTP client behaviour implementation based on Erlang httpc
 * `HTTPoison` becomes optional dependency and a configurable HTTP client
