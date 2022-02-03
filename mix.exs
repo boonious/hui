@@ -1,9 +1,8 @@
 defmodule Hui.MixProject do
   use Mix.Project
 
-  @description """
-    Hui 辉 is a Solr client and library for Elixir
-  """
+  @source_url "https://github.com/boonious/hui"
+  @version "0.10.5"
 
   def project do
     [
@@ -22,10 +21,7 @@ defmodule Hui.MixProject do
 
       # Docs
       name: "Hui",
-      description: @description,
       package: package(),
-      source_url: "https://github.com/boonious/hui",
-      homepage_url: "https://github.com/boonious/hui",
       docs: docs()
     ]
   end
@@ -47,7 +43,7 @@ defmodule Hui.MixProject do
       {:cowlib, "~> 2.8.0", optional: true},
       {:bypass, "~> 1.0", only: :test},
       {:dialyxir, "~> 1.0.0", only: :dev, runtime: false},
-      {:ex_doc, "~> 0.23", only: :dev, runtime: false},
+      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
       {:excoveralls, "~> 0.13", only: :test}
     ]
   end
@@ -55,20 +51,29 @@ defmodule Hui.MixProject do
   defp package do
     [
       name: "hui",
+      description: "Hui 辉 is a Solr client and library for Elixir",
       maintainers: ["Boon Low"],
-      licenses: ["Apache 2.0"],
+      licenses: ["Apache-2.0"],
       links: %{
-        Changelog: "https://github.com/boonious/hui/blob/master/CHANGELOG.md",
-        GitHub: "https://github.com/boonious/hui"
+        Changelog: "https://hexdocs.pm/hui/changelog.html",
+        GitHub: @source_url
       }
     ]
   end
 
   defp docs do
     [
+      extras: [
+        "CHANGELOG.md": [],
+        "LICENSE": [title: "License"],
+        "README.md": [title: "Overview"]
+      ],
       main: "readme",
       extra_section: "guides",
-      extras: ["README.md", "CHANGELOG.md"],
+      source_url: @source_url,
+      source_ref: "v#{@version}",
+      homepage_url: @source_url,
+      formatters: ["html"],
       groups_for_modules: [
         Queries: [
           Hui.Query.Common,

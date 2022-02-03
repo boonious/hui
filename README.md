@@ -1,4 +1,4 @@
-# Hui 辉 [![Build Status](https://api.travis-ci.com/boonious/hui.svg?branch=master)](https://travis-ci.com/github/boonious/hui) [![Hex pm](http://img.shields.io/hexpm/v/hui.svg?style=flat)](https://hex.pm/packages/hui) [![Coverage Status](https://coveralls.io/repos/github/boonious/hui/badge.svg?branch=master)](https://coveralls.io/github/boonious/hui?branch=master)
+# Hui 辉 [![Build Status](https://api.travis-ci.com/boonious/hui.svg?branch=master)](https://travis-ci.com/github/boonious/hui) [![Hex pm](http://img.shields.io/hexpm/v/hui.svg?style=flat)](https://hex.pm/packages/hui) [![Coverage Status](https://coveralls.io/repos/github/boonious/hui/badge.svg?branch=master)](https://coveralls.io/github/boonious/hui?branch=master) [![Hex Docs](https://img.shields.io/badge/hex-docs-lightgreen.svg)](https://hexdocs.pm/hui/) [![Total Download](https://img.shields.io/hexpm/dt/hui.svg)](https://hex.pm/packages/hui) [![License](https://img.shields.io/hexpm/l/hui.svg)](https://github.com/boonious/hui/blob/master/LICENSE) [![Last Updated](https://img.shields.io/github/last-commit/boonious/hui.svg)](https://github.com/boonious/hui/commits/master)
 
 Hui 辉 ("shine" in Chinese) is a [Solr](http://lucene.apache.org/solr/) client and library for Elixir.
 
@@ -6,18 +6,18 @@ Hui 辉 ("shine" in Chinese) is a [Solr](http://lucene.apache.org/solr/) client 
 
 Hui enables [Solr](http://lucene.apache.org/solr/) querying, updating and other forms of interaction
 in [Elixir](https://elixir-lang.org) or [Phoenix](https://phoenixframework.org) applications.
-Typical Solr data can be contained within a core (index) held on a single server or 
+Typical Solr data can be contained within a core (index) held on a single server or
 a data collection in distributed server architecture (cloud).
 
 ### Example - searching
 
 ```elixir
   import Hui
-  
+
   # arbitrary keywords query against the default configured endpoint
   q("scott")
   q(q: "loch", rows: 5)
-  
+
   # with query structs
   alias Hui.Query.{Standard,DisMax,Common,Facet,FacetRange,Suggest,MoreLikeThis,Highlight}
 
@@ -138,7 +138,7 @@ Solr results is returned encapsulated in `HTTP` response struct containing the S
 ```elixir
   {:ok,
    %Hui.Http{
-    body: "...[Solr reponse]..",
+    body: "...[Solr response]..",
     headers: [
       {"Content-Type", "application/json;charset=utf-8"},
       {"Content-Length", "4005"}
@@ -332,6 +332,16 @@ Hui relies on an existing client to facilitate HTTP requests - [Erlang httpc](ht
 Instead of using the built-in client, other HTTP clients can be implemented and configured.
 See `Hui.Http` for further details.
 
-## License
+## Copyright and License
 
-Hui is released under Apache 2 License. Check the [LICENSE](https://github.com/boonious/hui/blob/master/LICENSE) file for more information.
+Copyright (c) 2018 Boon Low
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at [https://www.apache.org/licenses/LICENSE-2.0](https://www.apache.org/licenses/LICENSE-2.0)
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
