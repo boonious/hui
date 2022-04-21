@@ -11,19 +11,6 @@ defmodule Hui.AdminTest do
   end
 
   describe "metrics/2" do
-    test "reaches the configured default endpoint" do
-      default_url = Application.get_env(:hui, :default)[:url] |> URI.parse()
-      bypass = Bypass.open(port: default_url.port)
-
-      Bypass.expect(bypass, fn conn ->
-        Plug.Conn.resp(conn, 200, "hitting default endpoint")
-      end)
-
-      {:ok, resp} = metrics(group: "core")
-      assert resp.status == 200
-      assert resp.body == "hitting default endpoint"
-    end
-
     test "reaches atomic endpoint" do
       metrics_url = Application.get_env(:hui, :metrics)[:url] |> URI.parse()
       bypass = Bypass.open(port: metrics_url.port)
@@ -115,14 +102,6 @@ defmodule Hui.AdminTest do
       assert resp.body == metrics_xml_response()
       assert {"content-type", "application/xml; charset=UTF-8"} in resp.headers
     end
-  end
-
-  test "ping/0 reaches the configured default URL" do
-    default_url = Application.get_env(:hui, :default)[:url] |> URI.parse()
-    bypass = Bypass.open(port: default_url.port)
-
-    Bypass.expect(bypass, fn conn -> Plug.Conn.resp(conn, 200, "") end)
-    ping()
   end
 
   describe "ping/1" do

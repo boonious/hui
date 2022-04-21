@@ -5,7 +5,7 @@ defmodule Hui do
 
   ### Usage
 
-  - Searching Solr: `q/1`, `q/6`, `search/2`, `search/7`
+  - Searching Solr: `search/2`
   - Updating: `update/3`, `delete/3`, `delete_by_query/3`, `commit/2`
   - Other: `suggest/2`, `suggest/5`
   - Admin: `metrics/2`, `ping/1`
@@ -40,60 +40,6 @@ defmodule Hui do
   @type update_query :: binary | map | list(map) | Query.Update.t()
 
   @type http_response :: Http.response()
-
-  @doc """
-  Issue a keyword list or structured query to the default Solr endpoint.
-
-  The query can either be a keyword list or a list of Hui structs - see `t:Hui.solr_struct/0`.
-  This function is a shortcut for `search/2` with `:default` as the configured endpoint key.
-
-  ### Example
-
-  ```
-    Hui.q(q: "loch", rows: 5, facet: true, "facet.field": ["year", "subject"])
-
-    # supply a list of Hui structs for more complex query, e.g. faceting
-    alias Hui.Query
-
-    Hui.q([%Query.Standard{q: "author:I*"}, %Query.Facet{field: ["cat", "author"], mincount: 1}])
-
-    # DisMax
-    x = %Query.Dismax{q: "run", qf: "description^2.3 title", mm: "2<-25% 9<-3"}
-    y = %Query.Common{rows: 10, start: 10, fq: ["edited:true"]}
-    z = %Query.Facet{field: ["cat", "author"], mincount: 1}
-
-    Hui.q([x, y, z])
-  ```
-  """
-  @spec q(query) :: http_response
-  def q(query) when is_list(query), do: get(:default, query)
-
-  @doc """
-  Convenience function for issuing various typical queries to the default Solr endpoint.
-
-  ### Example
-
-  ```
-    Hui.q("scott")
-    Hui.q("loch", 10, 20) # .. with paging parameters
-    Hui.q("\\\"apache documentation\\\"~5", 1, 0, "stream_content_type_str:text/html", ["subject"])
-    # .. plus filter(s) and facet fields
-  ```
-  """
-  @spec q(
-          binary,
-          nil | integer,
-          nil | integer,
-          nil | binary | list(binary),
-          nil | binary | list(binary),
-          nil | binary
-        ) :: http_response
-  def q(keywords, rows \\ nil, start \\ nil, filters \\ nil, facet_fields \\ nil, sort \\ nil)
-  def q(keywords, _, _, _, _, _) when is_nil_empty(keywords), do: {:error, %Error{reason: :einval}}
-
-  def q(keywords, rows, start, filters, facet_fields, sort) do
-    search(:default, keywords, rows, start, filters, facet_fields, sort)
-  end
 
   @doc """
   Issue a keyword list or structured query to a specified Solr endpoint.
@@ -165,40 +111,7 @@ defmodule Hui do
   """
   @spec search(endpoint, query) :: http_response
   def search(endpoint, query) when is_list(query) or is_map(query), do: get(endpoint, query)
-
-  @doc """
-  Convenience function for issuing various typical queries to a specified Solr endpoint.
-
-  See `q/6`.
-  """
-  @spec search(
-          endpoint,
-          binary,
-          nil | integer,
-          nil | integer,
-          nil | binary | list(binary),
-          nil | binary | list(binary),
-          nil | binary
-        ) :: http_response
-  def search(endpoint, keywords, rows \\ nil, start \\ nil, filters \\ nil, facet_fields \\ nil, sort \\ nil)
-
-  def search(endpoint, keywords, _, _, _, _, _) when is_nil_empty(keywords) or is_nil_empty(endpoint),
-    do: {:error, %Error{reason: :einval}}
-
-  def search(endpoint, keywords, nil, nil, nil, nil, nil) do
-    get(endpoint, %Query.Standard{q: keywords})
-  end
-
-  def search(endpoint, keywords, rows, start, filters, facet_fields, sort) do
-    get(
-      endpoint,
-      [
-        %Query.Standard{q: keywords},
-        %Query.Common{rows: rows, start: start, fq: filters, sort: sort},
-        %Query.Facet{field: facet_fields}
-      ]
-    )
-  end
+  def search(_endpoint, _query), do: {:error, %Error{reason: :einval}}
 
   @doc """
   Issue a structured suggest query to a specified Solr endpoint.
@@ -431,14 +344,6 @@ defmodule Hui do
   """
   @spec metrics(endpoint, keyword) :: http_response
   defdelegate metrics(endpoint, options), to: Hui.Admin
-
-  @doc """
-  Ping the default configured endpoint.
-
-  Successful ping returns a `{:pong, qtime}` tuple, whereas failure gets a `:pang` response.
-  """
-  @spec ping() :: {:pong, integer} | :pang
-  defdelegate ping(), to: Hui.Admin
 
   @doc """
   Ping a given endpoint.

@@ -5,12 +5,12 @@ defmodule Hui.Admin do
   alias Hui.Utils
 
   @spec metrics(Hui.url(), keyword) :: Http.response()
-  def metrics(endpoint \\ :default, options) do
+  def metrics(endpoint, options) do
     Hui.get(endpoint, struct(Metrics, options))
   end
 
   @spec ping(Hui.url()) :: {:pong, integer} | :pang | Http.response()
-  def ping(endpoint \\ :default, options \\ [])
+  def ping(endpoint, options \\ [])
 
   def ping(endpoint, opts) when is_atom(endpoint) do
     [Utils.config_url(endpoint), "/admin/ping"]

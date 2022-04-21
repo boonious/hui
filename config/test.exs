@@ -1,6 +1,6 @@
 use Mix.Config
 
-# A default Solr endpoint may be configured via the 'default' property
+# variouns Solr endpoints may be configured with any atomic key
 config :hui, :default,
   url: "http://localhost:8983/solr/gettingstarted/select",
   headers: [{"accept", "application/json"}],
@@ -10,7 +10,6 @@ config :hui, :metrics,
   url: "http://localhost:8983/solr/admin/metrics",
   headers: [{"accept", "application/json"}]
 
-# Additional Solr endpoints may be configured with any atomic key, e.g. :suggester.
 config :hui, :suggester, url: "http://localhost:8983/solr/collection/suggest"
 config :hui, :library, url: "http://localhost:8984/solr/articles/dismax"
 
