@@ -6,10 +6,6 @@ config :hui, :default,
   headers: [{"accept", "application/json"}],
   options: [timeout: 10000]
 
-config :hui, :metrics,
-  url: "http://localhost:8983/solr/admin/metrics",
-  headers: [{"accept", "application/json"}]
-
 config :hui, :suggester, url: "http://localhost:8983/solr/collection/suggest"
 config :hui, :library, url: "http://localhost:8984/solr/articles/dismax"
 
@@ -37,11 +33,5 @@ config :hui, :url_collection_handler,
   url: "http://localhost:8983/solr",
   collection: "gettingstarted",
   handler: "update",
-  headers: [{"accept", "application/json"}],
-  options: [timeout: 10000]
-
-config :hui, :gettingstarted,
-  url: "http://localhost:8983/solr/gettingstarted",
-  handler: "select",
   headers: [{"accept", "application/json"}],
   options: [timeout: 10000]

@@ -6,27 +6,44 @@ defmodule Hui.AdminTest do
 
   alias Hui.Query.Metrics
 
+  setup_all context do
+    bypass = Bypass.open()
+
+    Application.put_env(:hui, :admin_test_metric_endpoint,
+      url: "http://localhost:#{bypass.port}/solr/admin/metrics",
+      headers: [{"accept", "application/json"}]
+    )
+
+    bypass = Bypass.open()
+    Application.put_env(:hui, :admin_test_ping_endpoint,
+      url: "http://localhost:#{bypass.port}/solr/ping_test",
+      headers: [{"accept", "application/json"}]
+    )
+
+    Map.merge(context, %{metric_endpoint: :admin_test_metric_endpoint, ping_endpoint: :admin_test_ping_endpoint})
+  end
+
   setup do
     %{bypass: Bypass.open()}
   end
 
   describe "metrics/2" do
-    test "reaches atomic endpoint" do
-      metrics_url = Application.get_env(:hui, :metrics)[:url] |> URI.parse()
+    test "from configured endpoint", %{metric_endpoint: endpoint} do
+      metrics_url = Application.get_env(:hui, endpoint)[:url] |> URI.parse()
       bypass = Bypass.open(port: metrics_url.port)
 
-      Bypass.expect(bypass, fn conn ->
+      Bypass.expect_once(bypass, fn conn ->
         Plug.Conn.resp(conn, 200, "hitting endpoint")
       end)
 
-      {:ok, resp} = metrics(:metrics, group: "core")
+      {:ok, resp} = metrics(endpoint, group: "core")
       assert resp.status == 200
     end
 
-    test "reaches binary endpoint", %{bypass: bypass} do
+    test "from binary endpoint", %{bypass: bypass} do
       metrics_url = "http://localhost:#{bypass.port}/solr/admin/metrics"
 
-      Bypass.expect(bypass, fn conn ->
+      Bypass.expect_once(bypass, fn conn ->
         Plug.Conn.resp(conn, 200, "hitting default endpoint")
       end)
 
@@ -34,12 +51,12 @@ defmodule Hui.AdminTest do
       assert resp.status == 200
     end
 
-    test "makes the correct request given metrics options", %{bypass: bypass} do
+    test "sends correct request query given metrics options", %{bypass: bypass} do
       metrics_url = "http://localhost:#{bypass.port}/solr/admin/metrics"
       options = [group: "core", type: "timer", property: ["mean_ms", "max_ms", "p99_ms"], wt: "xml"]
       metrics_struct = struct(Metrics, options)
 
-      Bypass.expect(bypass, fn conn ->
+      Bypass.expect_once(bypass, fn conn ->
         assert conn.path_info == ["solr", "admin", "metrics"]
         assert conn.query_string == Hui.Encoder.encode(metrics_struct)
         Plug.Conn.resp(conn, 200, "solr metrics")
@@ -48,7 +65,7 @@ defmodule Hui.AdminTest do
       metrics(metrics_url, options)
     end
 
-    test "parses JSON response", %{bypass: bypass} do
+    test "returns parsed JSON response", %{bypass: bypass} do
       metrics_url = "http://localhost:#{bypass.port}/solr/admin/metrics"
 
       options = [
@@ -61,7 +78,7 @@ defmodule Hui.AdminTest do
         wt: "json"
       ]
 
-      Bypass.expect(bypass, fn conn ->
+      Bypass.expect_once(bypass, fn conn ->
         Plug.Conn.put_resp_header(conn, "content-type", "application/json")
         |> Plug.Conn.resp(200, metrics_json_response())
       end)
@@ -79,7 +96,7 @@ defmodule Hui.AdminTest do
       assert {"content-type", "application/json"} in resp.headers
     end
 
-    test "parses non-JSON response as raw text", %{bypass: bypass} do
+    test "returns raw non-JSON response", %{bypass: bypass} do
       metrics_url = "http://localhost:#{bypass.port}/solr/admin/metrics"
 
       options = [
@@ -92,7 +109,7 @@ defmodule Hui.AdminTest do
         wt: "xml"
       ]
 
-      Bypass.expect(bypass, fn conn ->
+      Bypass.expect_once(bypass, fn conn ->
         Plug.Conn.put_resp_header(conn, "content-type", "application/xml; charset=UTF-8")
         |> Plug.Conn.resp(200, metrics_xml_response())
       end)
@@ -105,37 +122,37 @@ defmodule Hui.AdminTest do
   end
 
   describe "ping/1" do
-    test "reaches atomic endpoint" do
-      url = Application.get_env(:hui, :gettingstarted)[:url] |> URI.parse()
+    test "configured endpoint", %{ping_endpoint: endpoint} do
+      url = Application.get_env(:hui, endpoint)[:url] |> URI.parse()
       bypass = Bypass.open(port: url.port)
 
-      Bypass.expect(bypass, fn conn -> Plug.Conn.resp(conn, 200, "") end)
-      ping(:gettingstarted)
+      Bypass.expect_once(bypass, fn conn -> Plug.Conn.resp(conn, 200, "") end)
+      ping(endpoint)
     end
 
-    test "reaches binary endpoint", %{bypass: bypass} do
+    test "binary endpoint", %{bypass: bypass} do
       url = "http://localhost:#{bypass.port}/solr/collection/admin/ping"
-      Bypass.expect(bypass, fn conn -> Plug.Conn.resp(conn, 200, "") end)
+      Bypass.expect_once(bypass, fn conn -> Plug.Conn.resp(conn, 200, "") end)
       ping(url)
     end
 
-    test "makes the correct request" do
-      url = Application.get_env(:hui, :gettingstarted)[:url] |> URI.parse()
+    test "sends the correct request", %{ping_endpoint: endpoint} do
+      url = Application.get_env(:hui, endpoint)[:url] |> URI.parse()
       bypass = Bypass.open(port: url.port)
 
-      Bypass.expect(bypass, fn conn ->
-        assert conn.path_info == ["solr", "gettingstarted", "admin", "ping"]
+      Bypass.expect_once(bypass, fn conn ->
+        assert conn.path_info == ["solr", "ping_test", "admin", "ping"]
         assert conn.query_string == ""
         Plug.Conn.resp(conn, 200, "")
       end)
 
-      ping(:gettingstarted)
+      ping(endpoint)
     end
 
     test "responds with :pong and request time tuple when successful", %{bypass: bypass} do
-      url = "http://localhost:#{bypass.port}/solr/gettingstarted/admin/ping"
+      url = "http://localhost:#{bypass.port}/solr/ping_test/admin/ping"
 
-      Bypass.expect(bypass, fn conn ->
+      Bypass.expect_once(bypass, fn conn ->
         Plug.Conn.put_resp_header(conn, "content-type", "application/json")
         |> Plug.Conn.resp(200, successful_ping_json_response())
       end)
@@ -144,7 +161,7 @@ defmodule Hui.AdminTest do
     end
 
     test "returns :pang when site is down", %{bypass: bypass} do
-      url = "http://localhost:#{bypass.port}/solr/gettingstarted/admin/ping"
+      url = "http://localhost:#{bypass.port}/solr/ping_test/admin/ping"
       Bypass.down(bypass)
       assert :pang = ping(url)
     end
@@ -152,7 +169,7 @@ defmodule Hui.AdminTest do
     test "returns :pang on non-200 response", %{bypass: bypass} do
       url = "http://localhost:#{bypass.port}/solr/does_not_exists/admin/ping"
 
-      Bypass.expect(bypass, fn conn ->
+      Bypass.expect_once(bypass, fn conn ->
         Plug.Conn.put_resp_header(conn, "content-type", "text/html;charset=iso-8859-1")
         |> Plug.Conn.resp(404, "not found")
       end)
@@ -166,11 +183,11 @@ defmodule Hui.AdminTest do
   end
 
   describe "ping/2" do
-    test "makes the correct request given ping options", %{bypass: bypass} do
+    test "sends correct request given ping options", %{bypass: bypass} do
       url = "http://localhost:#{bypass.port}/solr/collection/admin/ping"
       options = [wt: "xml", distrib: true]
 
-      Bypass.expect(bypass, fn conn ->
+      Bypass.expect_once(bypass, fn conn ->
         assert conn.path_info == ["solr", "collection", "admin", "ping"]
         assert conn.query_string == "wt=xml&distrib=true"
         Plug.Conn.resp(conn, 200, "")
@@ -190,7 +207,7 @@ defmodule Hui.AdminTest do
     test "returns raw HTTP response on non-200 response", %{bypass: bypass} do
       url = "http://localhost:#{bypass.port}/not_avaiable/admin/ping"
 
-      Bypass.expect(bypass, fn conn -> Plug.Conn.resp(conn, 404, "not found") end)
+      Bypass.expect_once(bypass, fn conn -> Plug.Conn.resp(conn, 404, "not found") end)
       assert {:ok, %Hui.Http{body: "not found", status: 404}} = ping(url, wt: "xml", distrib: true)
     end
 

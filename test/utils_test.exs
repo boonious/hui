@@ -20,24 +20,39 @@ defmodule Hui.UtilsTest do
     assert url == Utils.config_url(:url_handler)
   end
 
-  # see `:hui, :url_collection` test configuration
   test "parse_url/1 handles config endpoint with url, collection fields" do
-    url = "http://localhost:8983/solr"
+    bypass = Bypass.open()
+    solr_url = "http://localhost:#{bypass.port}/solr"
     collection = "gettingstarted"
-    parsed_url = [url, "/", collection]
+    headers = [{"accept", "application/json"}]
+    options = [timeout: 10000]
+    parsed_url = [solr_url, "/", collection]
 
-    assert {:ok, {^parsed_url, _headers, _options}} = Utils.parse_endpoint(:url_collection)
-    assert url == Utils.config_url(:url_collection)
+    Application.put_env(:hui, :utils_test_collection_endpoint,
+      url: solr_url,
+      collection: collection,
+      headers: headers,
+      options: options
+    )
+
+    assert {:ok, {^parsed_url, ^headers, ^options}} = Utils.parse_endpoint(:utils_test_collection_endpoint)
+    assert solr_url == Utils.config_url(:utils_test_collection_endpoint)
   end
 
-  # see `:hui, :url_collection_handler` test configuration
   test "parse_url/1 handles config endpoint with url, collection, handler fields" do
-    url = "http://localhost:8983/solr"
+    bypass = Bypass.open()
+    solr_url = "http://localhost:#{bypass.port}/solr"
     collection = "gettingstarted"
     handler = "update"
-    parsed_url = [url, "/", collection, "/", handler]
+    parsed_url = [solr_url, "/", collection, "/", handler]
 
-    assert {:ok, {^parsed_url, _headers, _options}} = Utils.parse_endpoint(:url_collection_handler)
-    assert url == Utils.config_url(:url_collection_handler)
+    Application.put_env(:hui, :utils_test_collection_with_handler_endpoint,
+      url: solr_url,
+      collection: collection,
+      handler: handler
+    )
+
+    assert {:ok, {^parsed_url, _headers, _options}} = Utils.parse_endpoint(:utils_test_collection_with_handler_endpoint)
+    assert solr_url == Utils.config_url(:utils_test_collection_with_handler_endpoint)
   end
 end
