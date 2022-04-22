@@ -14,11 +14,7 @@ a data collection in distributed server architecture (cloud).
 ```elixir
   import Hui
 
-  # arbitrary keywords query against the default configured endpoint
-  q("scott")
-  q(q: "loch", rows: 5)
-
-  # with query structs
+  # query structs
   alias Hui.Query.{Standard,DisMax,Common,Facet,FacetRange,Suggest,MoreLikeThis,Highlight}
 
   url = "http://localhost:8983/solr/gettingstarted/select"
@@ -52,12 +48,10 @@ a data collection in distributed server architecture (cloud).
   # f.popularity.facet.range.start=0
 
   # convenience functions
-  search(url, "apache documentation", 1, 5, "stream_content_type_str:text/html", ["subject"])
   suggest(suggester_url, "ha", 5, ["name_infix", "ln_prefix", "fn_prefix"], "1939")
 ```
 
-The `q` examples send requests to a `:default` configured endpoint (see `Configuration` below).
-Query parameters could be a string, arbitrary keywords or
+Query parameters could be arbitrary keywords or
 built-in query [structs](https://hexdocs.pm/hui/Hui.html#t:solr_struct/0) that
 provide a structured way for invoking the comprehensive and powerful features of Solr.
 

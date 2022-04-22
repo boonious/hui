@@ -39,10 +39,10 @@ defmodule Hui.MixProject do
     [
       {:jason, "~> 1.3"},
       {:httpoison, "~> 1.7", optional: true},
-      {:bypass, "~> 1.0", only: :test},
-      {:dialyxir, "~> 1.0.0", only: :dev, runtime: false},
-      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
-      {:excoveralls, "~> 0.13", only: :test}
+      {:bypass, "~> 2.1", only: :test},
+      {:dialyxir, "~> 1.1", only: :dev, runtime: false},
+      {:ex_doc, "~> 0.28.3", only: :dev, runtime: false},
+      {:excoveralls, "~> 0.14.4", only: :test}
     ]
   end
 
@@ -63,7 +63,7 @@ defmodule Hui.MixProject do
     [
       extras: [
         "CHANGELOG.md": [],
-        "LICENSE": [title: "License"],
+        LICENSE: [title: "License"],
         "README.md": [title: "Overview"]
       ],
       main: "readme",

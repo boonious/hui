@@ -14,34 +14,11 @@ defmodule HuiTest do
     %{bypass: Bypass.open()}
   end
 
-  # `q/1`, `q/6` forward queries to `search` functions. Various types
-  # of queries are tested in the `search` test blocks
-  test "q functions calls configured default URL" do
-    default_url = Application.get_env(:hui, :default)[:url] |> URI.parse()
-    bypass = Bypass.open(port: default_url.port)
-
-    Bypass.expect(bypass, fn conn ->
-      Plug.Conn.resp(conn, 200, "hitting default endpoint")
-    end)
-
-    {_, resp} = Hui.q("test")
-    assert resp.status == 200
-    assert resp.body == "hitting default endpoint"
-
-    {_, resp} = Hui.q("a", 1, 5, "type:text", ["type", "year"])
-    assert resp.status == 200
-    assert resp.body == "hitting default endpoint"
-
-    {_, resp} = Hui.q(q: "test", start: 0, rows: 10)
-    assert resp.status == 200
-    assert resp.body == "hitting default endpoint"
-  end
-
   describe "search/2" do
     test "handles keyword list query", %{bypass: bypass} do
       query = [q: "*", rows: 10, fq: ["cat:electronic", "popularity:[0 TO *]"]]
 
-      Bypass.expect(bypass, fn conn ->
+      Bypass.expect_once(bypass, fn conn ->
         assert conn.query_string == query |> Hui.Encoder.encode()
         Plug.Conn.resp(conn, 200, "")
       end)
@@ -59,7 +36,7 @@ defmodule HuiTest do
         qs: 3
       }
 
-      Bypass.expect(bypass, fn conn ->
+      Bypass.expect_once(bypass, fn conn ->
         assert conn.query_string == query |> Hui.Encoder.encode()
         Plug.Conn.resp(conn, 200, "")
       end)
@@ -80,7 +57,7 @@ defmodule HuiTest do
       struct2 = %Hui.Query.Common{rows: 10, start: 10, fq: ["edited:true"]}
       struct3 = %Hui.Query.Facet{field: ["cat", "author_str"], mincount: 1}
 
-      Bypass.expect(bypass, fn conn ->
+      Bypass.expect_once(bypass, fn conn ->
         assert conn.query_string == [struct1, struct2, struct3] |> Hui.Encoder.encode()
         Plug.Conn.resp(conn, 200, "")
       end)
@@ -89,7 +66,7 @@ defmodule HuiTest do
     end
 
     test "returns map response when HTTP client decodes response", %{bypass: bypass} do
-      Bypass.expect(bypass, fn conn ->
+      Bypass.expect_once(bypass, fn conn ->
         Plug.Conn.put_resp_header(conn, "content-type", "application/json")
         |> Plug.Conn.resp(200, File.read!("./test/fixtures/search_response.json"))
       end)
@@ -99,7 +76,7 @@ defmodule HuiTest do
     end
 
     test "returns binary response when HTTP client does not decodes response", %{bypass: bypass} do
-      Bypass.expect(bypass, fn conn ->
+      Bypass.expect_once(bypass, fn conn ->
         Plug.Conn.resp(conn, 200, File.read!("./test/fixtures/search_response.xml"))
       end)
 
@@ -110,7 +87,7 @@ defmodule HuiTest do
     test "handles binary URL endpoint", %{bypass: bypass} do
       url = "http://localhost:#{bypass.port}/solr/newspapers/suggest"
 
-      Bypass.expect(bypass, fn conn ->
+      Bypass.expect_once(bypass, fn conn ->
         assert conn.port == bypass.port
         assert conn.request_path == "/solr/newspapers/suggest"
         Plug.Conn.resp(conn, 200, "")
@@ -123,7 +100,7 @@ defmodule HuiTest do
       headers = [{"accept", "application/json"}]
       url = {"http://localhost:#{bypass.port}/select?", headers}
 
-      Bypass.expect(bypass, fn conn ->
+      Bypass.expect_once(bypass, fn conn ->
         assert Enum.member?(conn.req_headers, {"accept", "application/json"})
         Plug.Conn.resp(conn, 200, "")
       end)
@@ -134,7 +111,7 @@ defmodule HuiTest do
     test "access configured atom URL key" do
       bypass = Bypass.open(port: 8984)
 
-      Bypass.expect(bypass, fn conn ->
+      Bypass.expect_once(bypass, fn conn ->
         Plug.Conn.resp(conn, 200, "")
       end)
 
@@ -146,29 +123,8 @@ defmodule HuiTest do
     end
   end
 
-  describe "search/7" do
-    test "handles single search query string", %{bypass: bypass} do
-      Bypass.expect(bypass, fn conn ->
-        assert conn.query_string == "q=apache\+documentation"
-        Plug.Conn.resp(conn, 200, "")
-      end)
-
-      Hui.search("http://localhost:#{bypass.port}/select", "apache documentation")
-    end
-
-    test "handles multiple query parameters", %{bypass: bypass} do
-      Bypass.expect(bypass, fn conn ->
-        assert conn.query_string == "q=a&fq=type%3Atext&rows=1&start=5&facet=true&facet.field=type&facet.field=year"
-        Plug.Conn.resp(conn, 200, "")
-      end)
-
-      Hui.search("http://localhost:#{bypass.port}/select", "a", 1, 5, "type:text", ["type", "year"])
-    end
-  end
-
   # TODO: consolidating other malformed query/url tests into a single describe
   test "when query is malformed, Hui should return error tuple" do
-    assert {:error, @error_einval} == Hui.q(nil)
     assert {:error, @error_einval} == Hui.search(nil, nil)
     assert {:error, @error_einval} == Hui.suggest(nil, nil)
     assert {:error, @error_einval} == Hui.suggest(:default, "")
@@ -182,7 +138,7 @@ defmodule HuiTest do
   end
 
   test "suggest/2", %{bypass: bypass} do
-    Bypass.expect(bypass, fn conn ->
+    Bypass.expect_once(bypass, fn conn ->
       assert conn.query_string == "suggest.count=10&suggest.dictionary=name_infix&suggest.q=ha&suggest=true"
       Plug.Conn.resp(conn, 200, "")
     end)
@@ -199,7 +155,7 @@ defmodule HuiTest do
         "suggest.dictionary=name_infix&suggest.dictionary=ln_prefix&suggest.dictionary=fn_prefix&" <>
         "suggest.q=ha&suggest=true"
 
-    Bypass.expect(bypass, fn conn ->
+    Bypass.expect_once(bypass, fn conn ->
       assert conn.query_string == expected
       Plug.Conn.resp(conn, 200, "")
     end)
@@ -334,7 +290,7 @@ defmodule HuiTest do
   test "metrics/2", %{bypass: bypass} do
     url = {"http://localhost:#{bypass.port}/solr/admin/metrics", [{"content-type", "application/json"}]}
 
-    Bypass.expect(bypass, fn conn ->
+    Bypass.expect_once(bypass, fn conn ->
       assert conn.port == bypass.port
       assert conn.path_info == ["solr", "admin", "metrics"]
       assert conn.query_string == "group=core&type=timer"
@@ -356,14 +312,13 @@ defmodule HuiTest do
       Plug.Conn.resp(conn, 200, "")
     end)
 
-    Hui.ping()
     Hui.ping(url)
     Hui.ping(url, wt: "xml")
   end
 
   describe "get/2 handles" do
     test "a list of structs", context do
-      Bypass.expect(context.bypass, fn conn ->
+      Bypass.expect_once(context.bypass, fn conn ->
         Plug.Conn.resp(conn, 200, "")
       end)
 
@@ -398,7 +353,7 @@ defmodule HuiTest do
     end
 
     test "SolrCloud struct", context do
-      Bypass.expect(context.bypass, fn conn ->
+      Bypass.expect_once(context.bypass, fn conn ->
         Plug.Conn.resp(conn, 200, "")
       end)
 
@@ -415,7 +370,7 @@ defmodule HuiTest do
     end
 
     test "paging struct", context do
-      Bypass.expect(context.bypass, fn conn ->
+      Bypass.expect_once(context.bypass, fn conn ->
         Plug.Conn.resp(conn, 200, "")
       end)
 
@@ -427,7 +382,7 @@ defmodule HuiTest do
     end
 
     test "faceting structs", context do
-      Bypass.expect(context.bypass, fn conn ->
+      Bypass.expect_once(context.bypass, fn conn ->
         Plug.Conn.resp(conn, 200, "")
       end)
 
@@ -441,7 +396,7 @@ defmodule HuiTest do
     end
 
     test "highlighting struct", context do
-      Bypass.expect(context.bypass, fn conn ->
+      Bypass.expect_once(context.bypass, fn conn ->
         Plug.Conn.resp(conn, 200, "")
       end)
 
@@ -488,7 +443,7 @@ defmodule HuiTest do
     end
 
     test "suggester struct", context do
-      Bypass.expect(context.bypass, fn conn ->
+      Bypass.expect_once(context.bypass, fn conn ->
         Plug.Conn.resp(conn, 200, "")
       end)
 
@@ -499,7 +454,7 @@ defmodule HuiTest do
     end
 
     test "spellchecking struct", context do
-      Bypass.expect(context.bypass, fn conn ->
+      Bypass.expect_once(context.bypass, fn conn ->
         Plug.Conn.resp(conn, 200, "")
       end)
 
@@ -523,7 +478,7 @@ defmodule HuiTest do
     end
 
     test "more-like-this struct", context do
-      Bypass.expect(context.bypass, fn conn ->
+      Bypass.expect_once(context.bypass, fn conn ->
         Plug.Conn.resp(conn, 200, "")
       end)
 
