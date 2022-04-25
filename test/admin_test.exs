@@ -15,6 +15,7 @@ defmodule Hui.AdminTest do
     )
 
     bypass = Bypass.open()
+
     Application.put_env(:hui, :admin_test_ping_endpoint,
       url: "http://localhost:#{bypass.port}/solr/ping_test",
       headers: [{"accept", "application/json"}]
