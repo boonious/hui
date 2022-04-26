@@ -25,7 +25,7 @@ defmodule Hui.UtilsTest do
     solr_url = "http://localhost:#{bypass.port}/solr"
     collection = "gettingstarted"
     headers = [{"accept", "application/json"}]
-    options = [timeout: 10000]
+    options = [timeout: 10_000]
     parsed_url = [solr_url, "/", collection]
 
     Application.put_env(:hui, :utils_test_collection_endpoint,

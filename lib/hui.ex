@@ -21,7 +21,7 @@ defmodule Hui do
   alias Hui.Query
   alias Hui.Utils
 
-  @http_client Application.get_env(:hui, :http_client, Hui.Http)
+  @http_client Application.compile_env(:hui, :http_client, Hui.Http)
 
   @type endpoint :: binary | atom | {binary, list} | {binary, list, list}
 
@@ -411,15 +411,17 @@ defmodule Hui do
   """
   @spec get(endpoint, query) :: http_response
   def get(endpoint, query) do
-    with {:ok, {url, headers, options}} <- Utils.parse_endpoint(endpoint) do
-      %Http{
-        url: [url, "?", Encoder.encode(query)],
-        headers: headers,
-        options: options
-      }
-      |> dispatch(@http_client)
-    else
-      {:error, reason} -> {:error, reason}
+    case Utils.parse_endpoint(endpoint) do
+      {:ok, {url, headers, options}} ->
+        %Http{
+          url: [url, "?", Encoder.encode(query)],
+          headers: headers,
+          options: options
+        }
+        |> dispatch(@http_client)
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
@@ -428,17 +430,21 @@ defmodule Hui do
   """
   @spec post(endpoint, update_query) :: http_response
   def post(endpoint, docs) do
-    with {:ok, {url, headers, options}} <- Utils.parse_endpoint(endpoint) do
+    with {:ok, {url, headers, options}} <- Utils.parse_endpoint(endpoint),
+         docs <- maybe_encode_docs(docs) do
       %Http{
         url: url,
         headers: headers,
         method: :post,
         options: options,
-        body: if(is_binary(docs), do: docs, else: Encoder.encode(docs))
+        body: docs
       }
       |> dispatch(@http_client)
     else
       {:error, reason} -> {:error, reason}
     end
   end
+
+  defp maybe_encode_docs(docs) when is_binary(docs), do: docs
+  defp maybe_encode_docs(docs), do: Encoder.encode(docs)
 end

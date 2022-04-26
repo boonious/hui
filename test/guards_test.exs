@@ -22,6 +22,6 @@ defmodule Hui.GuardsTest do
 
   test "is_url/3 guard" do
     refute is_url("", nil, []) == true
-    assert is_url("http://localhost", [{"accept", "application/json"}], timeout: 10000) == true
+    assert is_url("http://localhost", [{"accept", "application/json"}], timeout: 10_000) == true
   end
 end

@@ -17,7 +17,6 @@ defmodule HuiEncodeTest do
       assert encode(query) |> to_string == "q=loch&q.op=AND&sow=true&rows=61"
     end
 
-    # TODO: more tests for specific Solr query syntax
     test "encode/1 keywords with Solr local params" do
       assert encode(q: "series_t:(blac? OR ambe*)") == ["q", 61, "series_t%3A%28blac%3F+OR+ambe%2A%29"]
     end
