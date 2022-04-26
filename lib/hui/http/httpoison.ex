@@ -1,5 +1,7 @@
 if Code.ensure_compiled?(HTTPoison) and Code.ensure_loaded?(:hackney) do
   defmodule Hui.Http.Httpoison do
+    @moduledoc false
+
     alias Hui.Http
 
     @behaviour Hui.Http

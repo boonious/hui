@@ -123,7 +123,6 @@ defmodule HuiTest do
     end
   end
 
-  # TODO: consolidating other malformed query/url tests into a single describe
   test "when query is malformed, Hui should return error tuple" do
     assert {:error, @error_einval} == Hui.search(nil, nil)
     assert {:error, @error_einval} == Hui.suggest(nil, nil)
