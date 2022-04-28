@@ -1,4 +1,4 @@
-if Code.ensure_compiled?(HTTPoison) and Code.ensure_loaded?(:hackney) do
+if Code.ensure_compiled(HTTPoison) == {:module, HTTPoison} and Code.ensure_loaded?(:hackney) do
   defmodule Hui.Http.Httpoison do
     alias Hui.Http
 
@@ -13,9 +13,9 @@ if Code.ensure_compiled?(HTTPoison) and Code.ensure_loaded?(:hackney) do
     end
 
     defp handle_response({:ok, %{body: body, headers: headers, request_url: url, status_code: status}}) do
-      case headers_map(headers) |> json?() do
+      case json?(headers) do
         true -> {:ok, %Http{body: decode_json(body), headers: headers, status: status, url: url}}
-        _ -> {:ok, %Http{body: body, headers: headers, status: status, url: url}}
+        false -> {:ok, %Http{body: body, headers: headers, status: status, url: url}}
       end
     end
 
@@ -23,15 +23,14 @@ if Code.ensure_compiled?(HTTPoison) and Code.ensure_loaded?(:hackney) do
       {:error, %Hui.Error{reason: reason}}
     end
 
-    defp headers_map(headers), do: Enum.into(headers, %{}, fn {k, v} -> {String.downcase(k), String.downcase(v)} end)
-
-    defp json?(%{"content-type" => "application/json" <> _}), do: true
-    defp json?(_), do: false
+    defp json?(headers) do
+      {"content-type", "application/json;charset=utf-8"} in headers
+    end
 
     defp decode_json(body) do
       case Jason.decode(body) do
         {:ok, map} -> map
-        {:error, _} -> body
+        {:error, %Jason.DecodeError{}} -> body
       end
     end
   end
