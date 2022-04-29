@@ -6,7 +6,7 @@ defmodule Hui.Query.MoreLikeThisTest do
     x = Query.MoreLikeThis.new()
     assert x.__struct__ == Query.MoreLikeThis
 
-    {fl, count, min_tf, min_df, max_df} = {"words", 3, 10, 10, 10000}
+    {fl, count, min_tf, min_df, max_df} = {"words", 3, 10, 10, 10_000}
 
     x = Query.MoreLikeThis.new(fl)
     assert x.fl == fl

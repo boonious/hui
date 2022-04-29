@@ -19,12 +19,16 @@ defmodule Fixtures.Update do
 
   defp add_doc_update_json(doc, opts) do
     within =
-      unless is_nil(Keyword.get(opts, :commitWithin)),
-        do: "\"commitWithin\":#{Keyword.get(opts, :commitWithin)}",
-        else: ""
+      case Keyword.get(opts, :commitWithin) do
+        nil -> ""
+        _ -> "\"commitWithin\":#{Keyword.get(opts, :commitWithin)}"
+      end
 
     overwrite =
-      unless is_nil(Keyword.get(opts, :overwrite)), do: "\"overwrite\":#{Keyword.get(opts, :overwrite)}", else: ""
+      case Keyword.get(opts, :overwrite) do
+        nil -> ""
+        _ -> "\"overwrite\":#{Keyword.get(opts, :overwrite)}"
+      end
 
     doc = "\"doc\":" <> (doc |> Jason.encode!())
 
@@ -57,8 +61,7 @@ defmodule Fixtures.Update do
   end
 
   def multi_docs_update_json(docs \\ multi_docs(), opts \\ []) do
-    json_fragment = Enum.map(docs, &add_doc_update_json(&1, opts)) |> Enum.join(",")
-    "{" <> json_fragment <> "}"
+    "{" <> Enum.map_join(docs, ",", &add_doc_update_json(&1, opts)) <> "}"
   end
 
   def update_json(doc, cmds), do: %Update{struct(Update, cmds) | doc: doc} |> Encoder.encode()
