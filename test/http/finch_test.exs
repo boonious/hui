@@ -1,0 +1,81 @@
+defmodule Hui.Http.FinchTest do
+  use ExUnit.Case, async: true
+
+  alias Hui.Http
+
+  setup_all do
+    finch = Application.get_env(:hui, :finch)[:name]
+    Finch.start_link(name: finch)
+
+    :ok
+  end
+
+  setup do
+    bypass = Bypass.open()
+    bypass_url = "http://localhost:#{bypass.port}"
+
+    %{bypass: bypass, bypass_url: bypass_url}
+  end
+
+  describe "get/1" do
+    test "response status and body", %{bypass: bypass, bypass_url: url} do
+      Bypass.expect(bypass, fn conn ->
+        Plug.Conn.resp(conn, 200, "getting a response")
+      end)
+
+      {_, resp} = %Http{url: url} |> Http.Finch.dispatch()
+
+      assert resp.status == 200
+      assert resp.body == "getting a response"
+    end
+
+    test "returns a map body for json response", %{bypass: bypass, bypass_url: url} do
+      json = %{"responseHeader" => "123", "response" => %{"numFound" => 47}} |> Jason.encode!()
+
+      Bypass.expect(bypass, fn conn ->
+        Plug.Conn.put_resp_header(conn, "content-type", "application/json;charset=utf-8")
+        |> Plug.Conn.resp(200, json)
+      end)
+
+      {_, resp} = %Http{url: url} |> Http.Finch.dispatch()
+
+      assert resp.body == json |> Jason.decode!()
+    end
+
+    test "returns the raw binary body if json response is invalid", %{bypass: bypass, bypass_url: url} do
+      Bypass.expect(bypass, fn conn ->
+        Plug.Conn.put_resp_header(conn, "content-type", "application/json;charset=utf-8")
+        |> Plug.Conn.resp(200, "non json response")
+      end)
+
+      {_, resp} = %Http{url: url} |> Http.Finch.dispatch()
+      assert resp.body == "non json response"
+    end
+  end
+
+  test "post/1", %{bypass: bypass, bypass_url: bypass_url} do
+    Bypass.expect(bypass, fn conn ->
+      assert {:ok, "request body", conn} = Plug.Conn.read_body(conn)
+      assert conn.method == "POST"
+
+      Plug.Conn.resp(conn, 200, "")
+    end)
+
+    {_, resp} = %Http{method: :post, url: bypass_url, body: "request body"} |> Http.Finch.dispatch()
+    assert 200 = resp.status
+  end
+
+  test "handle 404", %{bypass: bypass, bypass_url: bypass_url} do
+    Bypass.expect(bypass, fn conn ->
+      Plug.Conn.resp(conn, 404, "")
+    end)
+
+    {_, resp} = %Http{url: bypass_url} |> Http.Finch.dispatch()
+    assert 404 = resp.status
+  end
+
+  test "handle unreachable host", %{bypass: bypass, bypass_url: bypass_url} do
+    Bypass.down(bypass)
+    assert {:error, %Hui.Error{reason: :econnrefused}} == %Http{url: bypass_url} |> Http.Finch.dispatch()
+  end
+end
