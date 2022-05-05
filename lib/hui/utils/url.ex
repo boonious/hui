@@ -1,4 +1,4 @@
-defmodule Hui.Utils do
+defmodule Hui.Utils.Url do
   @moduledoc false
 
   import Hui.Guards

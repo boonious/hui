@@ -1,13 +1,12 @@
 defmodule Hui.UtilsTest do
   use ExUnit.Case, async: true
-  alias Hui.Utils
+  alias Hui.Utils.Url, as: UrlUtils
 
   # see `:hui, :default` test configuration
   test "parse_url/1 handles config endpoint with only url field" do
     url = "http://localhost:8983/solr/gettingstarted/select"
-
-    assert {:ok, {^url, _headers, _options}} = Utils.parse_endpoint(:default)
-    assert url == Utils.config_url(:default)
+    assert {:ok, {^url, _headers, _options}} = UrlUtils.parse_endpoint(:default)
+    assert url == UrlUtils.config_url(:default)
   end
 
   # see `:hui, :url_handler` test configuration
@@ -16,8 +15,8 @@ defmodule Hui.UtilsTest do
     handler = "select"
     parsed_url = [url, "/", handler]
 
-    assert {:ok, {^parsed_url, _headers, _options}} = Utils.parse_endpoint(:url_handler)
-    assert url == Utils.config_url(:url_handler)
+    assert {:ok, {^parsed_url, _headers, _options}} = UrlUtils.parse_endpoint(:url_handler)
+    assert url == UrlUtils.config_url(:url_handler)
   end
 
   test "parse_url/1 handles config endpoint with url, collection fields" do
@@ -35,8 +34,8 @@ defmodule Hui.UtilsTest do
       options: options
     )
 
-    assert {:ok, {^parsed_url, ^headers, ^options}} = Utils.parse_endpoint(:utils_test_collection_endpoint)
-    assert solr_url == Utils.config_url(:utils_test_collection_endpoint)
+    assert {:ok, {^parsed_url, ^headers, ^options}} = UrlUtils.parse_endpoint(:utils_test_collection_endpoint)
+    assert solr_url == UrlUtils.config_url(:utils_test_collection_endpoint)
   end
 
   test "parse_url/1 handles config endpoint with url, collection, handler fields" do
@@ -52,7 +51,9 @@ defmodule Hui.UtilsTest do
       handler: handler
     )
 
-    assert {:ok, {^parsed_url, _headers, _options}} = Utils.parse_endpoint(:utils_test_collection_with_handler_endpoint)
-    assert solr_url == Utils.config_url(:utils_test_collection_with_handler_endpoint)
+    assert {:ok, {^parsed_url, _headers, _options}} =
+             UrlUtils.parse_endpoint(:utils_test_collection_with_handler_endpoint)
+
+    assert solr_url == UrlUtils.config_url(:utils_test_collection_with_handler_endpoint)
   end
 end

@@ -19,7 +19,7 @@ defmodule Hui do
   alias Hui.Error
   alias Hui.Http
   alias Hui.Query
-  alias Hui.Utils
+  alias Hui.Utils.Url, as: UrlUtils
 
   @http_client Application.compile_env(:hui, :http_client, Hui.Http)
 
@@ -411,7 +411,7 @@ defmodule Hui do
   """
   @spec get(endpoint, query) :: http_response
   def get(endpoint, query) do
-    case Utils.parse_endpoint(endpoint) do
+    case UrlUtils.parse_endpoint(endpoint) do
       {:ok, {url, headers, options}} ->
         %Http{
           url: [url, "?", Encoder.encode(query)],
@@ -430,7 +430,7 @@ defmodule Hui do
   """
   @spec post(endpoint, update_query) :: http_response
   def post(endpoint, docs) do
-    with {:ok, {url, headers, options}} <- Utils.parse_endpoint(endpoint),
+    with {:ok, {url, headers, options}} <- UrlUtils.parse_endpoint(endpoint),
          docs <- maybe_encode_docs(docs) do
       %Http{
         url: url,
