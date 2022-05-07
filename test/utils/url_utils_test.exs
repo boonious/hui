@@ -1,4 +1,4 @@
-defmodule Hui.UtilsTest do
+defmodule Hui.Utils.UrlTest do
   use ExUnit.Case, async: true
   alias Hui.Utils.Url, as: UrlUtils
 
