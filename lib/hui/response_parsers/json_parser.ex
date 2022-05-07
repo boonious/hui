@@ -6,7 +6,7 @@ defmodule Hui.ResponseParsers.JsonParser do
   @type http_response :: Http.response()
 
   @spec parse(http_response) :: http_response
-  def parse({:ok, %Http{body: body} = response}), do: %{response | body: decode_json(body)}
+  def parse({:ok, %Http{body: body} = response}), do: {:ok, %{response | body: decode_json(body)}}
 
   defp decode_json(body) do
     case Jason.decode(body) do

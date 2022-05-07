@@ -19,6 +19,7 @@ defmodule Hui do
   alias Hui.Error
   alias Hui.Http
   alias Hui.Query
+  alias Hui.Utils.ParserType
   alias Hui.Utils.Url, as: UrlUtils
 
   @http_client Application.compile_env(:hui, :http_client, Hui.Http)
@@ -411,17 +412,17 @@ defmodule Hui do
   """
   @spec get(endpoint, query) :: http_response
   def get(endpoint, query) do
-    case UrlUtils.parse_endpoint(endpoint) do
-      {:ok, {url, headers, options}} ->
-        %Http{
-          url: [url, "?", Encoder.encode(query)],
-          headers: headers,
-          options: options
-        }
-        |> dispatch(@http_client)
-
-      {:error, reason} ->
-        {:error, reason}
+    with {:ok, {url, headers, options}} <- UrlUtils.parse_endpoint(endpoint),
+         parser <- ParserType.infer(query) do
+      %Http{
+        url: [url, "?", Encoder.encode(query)],
+        headers: headers,
+        options: options
+      }
+      |> dispatch(@http_client)
+      |> parse_response(parser)
+    else
+      {:error, reason} -> {:error, reason}
     end
   end
 
@@ -440,6 +441,7 @@ defmodule Hui do
         body: docs
       }
       |> dispatch(@http_client)
+      |> parse_response(Hui.ResponseParsers.JsonParser)
     else
       {:error, reason} -> {:error, reason}
     end
@@ -447,4 +449,12 @@ defmodule Hui do
 
   defp maybe_encode_docs(docs) when is_binary(docs), do: docs
   defp maybe_encode_docs(docs), do: Encoder.encode(docs)
+
+  # no parser
+  defp parse_response(response, nil), do: response
+  defp parse_response({:error, _error} = response, _parser), do: response
+
+  defp parse_response(response, parser) do
+    apply(parser, :parse, [response])
+  end
 end
