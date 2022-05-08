@@ -7,7 +7,6 @@ defmodule Hui.Utils.UrlTest do
     test " fetches url from config" do
       url = Application.get_env(:hui, :default)[:url]
       assert {:ok, {^url, _headers, _options, _parser}} = UrlUtils.parse_endpoint(:default)
-      assert url == UrlUtils.config_url(:default)
     end
 
     # see `:hui, :url_handler` test configuration
@@ -17,7 +16,6 @@ defmodule Hui.Utils.UrlTest do
       parsed_url = [url, "/", handler]
 
       assert {:ok, {^parsed_url, _headers, _options, _parser}} = UrlUtils.parse_endpoint(:url_handler)
-      assert url == UrlUtils.config_url(:url_handler)
     end
 
     test "builds url, collection fields" do
@@ -37,8 +35,6 @@ defmodule Hui.Utils.UrlTest do
 
       assert {:ok, {^parsed_url, ^headers, ^options, _parser}} =
                UrlUtils.parse_endpoint(:utils_test_collection_endpoint)
-
-      assert solr_url == UrlUtils.config_url(:utils_test_collection_endpoint)
     end
 
     test "builds url with collection, handler fields" do
@@ -56,8 +52,6 @@ defmodule Hui.Utils.UrlTest do
 
       assert {:ok, {^parsed_url, _headers, _options, _parser}} =
                UrlUtils.parse_endpoint(:utils_test_collection_with_handler_endpoint)
-
-      assert solr_url == UrlUtils.config_url(:utils_test_collection_with_handler_endpoint)
     end
   end
 end

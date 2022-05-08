@@ -10,7 +10,7 @@ defmodule Hui.Utils.Url do
   @type url :: Hui.url()
   @type http_headers :: list
   @type http_options :: list
-  @type parser :: ParserType.not_configured() :: module
+  @type parser :: ParserType.not_configured() | module
 
   @doc """
   Parses Solr endpoint in various formats into {url, headers, options} tuple
@@ -62,10 +62,4 @@ defmodule Hui.Utils.Url do
   defp build_url(%{url: url, collection: collection}), do: [url, "/", collection]
   defp build_url(%{url: url, handler: handler}), do: [url, "/", handler]
   defp build_url(%{url: url}), do: url
-
-  @spec config_url(atom) :: binary
-  def config_url(key) when is_atom(key) do
-    config = Application.get_env(:hui, key)
-    if config, do: config[:url], else: ""
-  end
 end
