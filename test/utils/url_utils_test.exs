@@ -1,5 +1,8 @@
 defmodule Hui.Utils.UrlTest do
   use ExUnit.Case, async: true
+
+  alias Hui.ResponseParsers.JsonParser
+  alias Hui.Utils.ParserType
   alias Hui.Utils.Url, as: UrlUtils
 
   describe "parse_url/1" do
@@ -22,19 +25,16 @@ defmodule Hui.Utils.UrlTest do
       bypass = Bypass.open()
       solr_url = "http://localhost:#{bypass.port}/solr"
       collection = "gettingstarted"
-      headers = [{"accept", "application/json"}]
-      options = [timeout: 10_000]
       parsed_url = [solr_url, "/", collection]
 
-      Application.put_env(:hui, :utils_test_collection_endpoint,
+      endpoint_atom = "utils_test_endpoint#{bypass.port}" |> String.to_atom()
+
+      Application.put_env(:hui, endpoint_atom,
         url: solr_url,
-        collection: collection,
-        headers: headers,
-        options: options
+        collection: collection
       )
 
-      assert {:ok, {^parsed_url, ^headers, ^options, _parser}} =
-               UrlUtils.parse_endpoint(:utils_test_collection_endpoint)
+      assert {:ok, {^parsed_url, _headers, _options, _parser}} = UrlUtils.parse_endpoint(endpoint_atom)
     end
 
     test "builds url with collection, handler fields" do
@@ -52,6 +52,43 @@ defmodule Hui.Utils.UrlTest do
 
       assert {:ok, {^parsed_url, _headers, _options, _parser}} =
                UrlUtils.parse_endpoint(:utils_test_collection_with_handler_endpoint)
+    end
+
+    test "fetches headers, options from config" do
+      bypass = Bypass.open()
+      headers = [{"accept", "application/json"}]
+      options = [timeout: 10_000]
+      endpoint_atom = "utils_test_endpoint#{bypass.port}" |> String.to_atom()
+
+      Application.put_env(:hui, endpoint_atom,
+        url: "http://localhost:#{bypass.port}/solr",
+        headers: headers,
+        options: options
+      )
+
+      assert {:ok, {_url, ^headers, ^options, _parser}} = UrlUtils.parse_endpoint(endpoint_atom)
+    end
+
+    test "sets parser as not configured when non set in config" do
+      bypass = Bypass.open()
+      endpoint_atom = "utils_test_endpoint#{bypass.port}" |> String.to_atom()
+
+      Application.put_env(:hui, endpoint_atom, url: "http://localhost:#{bypass.port}/solr")
+
+      assert {:ok, {_url, _headers, _options, parser}} = UrlUtils.parse_endpoint(endpoint_atom)
+      assert parser == ParserType.not_configured()
+    end
+
+    test "fetches configured parser option" do
+      bypass = Bypass.open()
+      endpoint_atom = "utils_test_endpoint#{bypass.port}" |> String.to_atom()
+
+      Application.put_env(:hui, endpoint_atom,
+        url: "http://localhost:#{bypass.port}/solr",
+        options: [timeout: 10_000, response_parser: JsonParser]
+      )
+
+      assert {:ok, {_url, _headers, _options, JsonParser}} = UrlUtils.parse_endpoint(endpoint_atom)
     end
   end
 end

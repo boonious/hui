@@ -22,8 +22,9 @@ defmodule Hui do
   alias Hui.Utils.ParserType
   alias Hui.Utils.Url, as: UrlUtils
 
-  @default_parser Hui.ResponseParsers.JsonParser
   @http_client Application.compile_env(:hui, :http_client, Hui.Http)
+  @json_parser Application.compile_env(:hui, :json_parser)
+  @parser_not_configured ParserType.not_configured()
 
   @type endpoint :: binary | atom | {binary, list} | {binary, list, list}
 
@@ -413,8 +414,8 @@ defmodule Hui do
   """
   @spec get(endpoint, query) :: http_response
   def get(endpoint, query) do
-    with {:ok, {url, headers, options, _parser}} <- UrlUtils.parse_endpoint(endpoint),
-         parser <- ParserType.infer(query) do
+    with {:ok, {url, headers, options, opted_parser}} <- UrlUtils.parse_endpoint(endpoint),
+         parser <- maybe_infer_parser(query, opted_parser) do
       %Http{
         url: [url, "?", Encoder.encode(query)],
         headers: headers,
@@ -434,7 +435,7 @@ defmodule Hui do
   def post(endpoint, docs) do
     with {:ok, {url, headers, options, parser}} <- UrlUtils.parse_endpoint(endpoint),
          docs <- maybe_encode_docs(docs) do
-      parser = if parser == :not_configured, do: @default_parser, else: parser
+      parser = if parser == :not_configured, do: @json_parser, else: parser
 
       %Http{
         url: url,
@@ -452,6 +453,13 @@ defmodule Hui do
 
   defp maybe_encode_docs(docs) when is_binary(docs), do: docs
   defp maybe_encode_docs(docs), do: Encoder.encode(docs)
+
+  defp maybe_infer_parser(query, opted_parser) do
+    case opted_parser do
+      parser when parser == @parser_not_configured -> ParserType.infer(query)
+      opted_parser -> opted_parser
+    end
+  end
 
   # no parser
   defp parse_response(response, nil), do: response

@@ -1,14 +1,16 @@
 use Mix.Config
 
-# http client configuration
+config :hui,
+  json_parser: Hui.ResponseParsers.JsonParserMock
 
+# http client configuration
 config :hui, :finch, name: TestFinch
 
 # variouns Solr endpoints may be configured with any atomic key
 config :hui, :default,
   url: "http://localhost:8983/solr/gettingstarted/select",
   headers: [{"accept", "application/json"}],
-  options: [timeout: 10000]
+  options: [timeout: 10000, response_parser: Hui.ResponseParsers.JsonParser]
 
 config :hui, :suggester, url: "http://localhost:8983/solr/collection/suggest"
 config :hui, :library, url: "http://localhost:8984/solr/articles/dismax"

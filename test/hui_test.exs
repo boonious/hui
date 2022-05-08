@@ -1,16 +1,25 @@
 defmodule HuiTest do
   use ExUnit.Case, async: true
+  use Hammox.Protect, module: Hui.ResponseParsers.JsonParser, behaviour: Hui.ResponseParsers.Parser
+
+  import Mox
   import TestHelpers
   import Fixtures.Update
 
+  alias Hui.Http
   alias Hui.Query
+  alias Hui.ResponseParsers.JsonParserMock
 
   @error_einval %Hui.Error{reason: :einval}
   @error_nxdomain %Hui.Error{reason: :nxdomain}
+  @json_parser Application.compile_env(:hui, :json_parser)
 
   doctest Hui
 
+  setup :verify_on_exit!
+
   setup do
+    stub_with(JsonParserMock, Hui.ResponseParsers.JsonParser)
     %{bypass: Bypass.open()}
   end
 
@@ -65,7 +74,7 @@ defmodule HuiTest do
       Hui.search("http://localhost:#{bypass.port}/select", [struct1, struct2, struct3])
     end
 
-    test "returns map response when HTTP client decodes response", %{bypass: bypass} do
+    test "returns map from JSON response", %{bypass: bypass} do
       Bypass.expect_once(bypass, fn conn ->
         Plug.Conn.put_resp_header(conn, "content-type", "application/json")
         |> Plug.Conn.resp(200, File.read!("./test/fixtures/search_response.json"))
@@ -75,7 +84,7 @@ defmodule HuiTest do
       assert is_map(resp.body)
     end
 
-    test "returns binary response when HTTP client does not decodes response", %{bypass: bypass} do
+    test "returns binary response from non-JSON response", %{bypass: bypass} do
       Bypass.expect_once(bypass, fn conn ->
         Plug.Conn.resp(conn, 200, File.read!("./test/fixtures/search_response.xml"))
       end)
@@ -499,6 +508,43 @@ defmodule HuiTest do
       # {_status, resp} = Hui.mlt(url, solr_params_q, solr_params)
       # assert String.match?(resp.request_url, ~r/#{experted_url}/)
     end
+  end
+
+  test "get/2 parses JSON response with configured parser", %{bypass: bypass} do
+    query = [q: "*", rows: 10]
+
+    response = %{
+      "response" => %{
+        "docs" => [
+          %{
+            "id" => "TWINX2048-3200PRO",
+            "name" => [
+              "CORSAIR XMS 2GB"
+            ]
+          }
+        ]
+      }
+    }
+
+    endpoint_atom = "hui_test#{bypass.port}" |> String.to_atom()
+    json_response = response |> Jason.encode!()
+
+    Bypass.expect_once(bypass, fn conn ->
+      Plug.Conn.put_resp_header(conn, "content-type", "application/json")
+      |> Plug.Conn.resp(200, json_response)
+    end)
+
+    Application.put_env(:hui, endpoint_atom,
+      url: "http://localhost:#{bypass.port}/solr",
+      options: [timeout: 10_000, response_parser: @json_parser]
+    )
+
+    expect(@json_parser, :parse, 1, fn {:ok, %{body: body} = response} ->
+      assert body == json_response
+      {:ok, %{response | body: Jason.decode!(body)}}
+    end)
+
+    assert {:ok, %Http{body: ^response}} = Hui.search(endpoint_atom, query)
   end
 
   describe "post/2 handles" do

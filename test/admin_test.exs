@@ -1,12 +1,15 @@
 defmodule Hui.AdminTest do
   use ExUnit.Case, async: true
 
+  import Hammox
   import Hui.Admin
   import Fixtures.Admin
 
   alias Hui.Query.Metrics
+  alias Hui.ResponseParsers.JsonParserMock
 
   setup do
+    stub_with(JsonParserMock, Hui.ResponseParsers.JsonParser)
     %{bypass: Bypass.open()}
   end
 
