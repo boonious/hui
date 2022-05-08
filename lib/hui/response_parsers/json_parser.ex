@@ -1,11 +1,11 @@
 defmodule Hui.ResponseParsers.JsonParser do
   @moduledoc false
 
+  @behaviour Hui.ResponseParsers.Parser
+
   alias Hui.Http
 
-  @type http_response :: Http.response()
-
-  @spec parse(http_response) :: http_response
+  @impl true
   def parse({:ok, %Http{body: body} = response}), do: {:ok, %{response | body: decode_json(body)}}
 
   defp decode_json(body) do

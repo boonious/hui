@@ -5,6 +5,10 @@ defmodule Hui.Utils.ParserType do
 
   @type query :: Hui.query()
 
+  @spec not_configured() :: :not_configuredå
+  def not_configured(), do: :not_configured
+
+  @spec infer(query) :: {:ok, module}
   def infer(%Common{wt: response_writer}), do: parser_for(response_writer)
   def infer(query) when is_map(query), do: Map.get(query, :wt) |> parser_for()
 
