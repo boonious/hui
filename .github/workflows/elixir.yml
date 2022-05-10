@@ -1,31 +1,37 @@
 name: Elixir CI
 
 on:
-  push:
-    branches: [ master ]
   pull_request:
+  push:
     branches: [ master ]
 
 jobs:
-  build:
-
-    name: Build and test
+  test:
+    name: build and test
     runs-on: ubuntu-latest
-
+    env:
+      MIX_ENV: test
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Elixir
-      uses: erlef/setup-elixir@885971a72ed1f9240973bd92ab57af8c1aa68f24
+    - name: checkout repo
+      uses: actions/checkout@v2
+  
+    - name: setup Elixir
+      uses: erlef/setup-beam@v1
       with:
-        elixir-version: '1.10.3' # Define the elixir version [required]
-        otp-version: '22.3' # Define the OTP version [required]
-    - name: Restore dependencies cache
-      uses: actions/cache@v2
-      with:
-        path: deps
-        key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
-        restore-keys: ${{ runner.os }}-mix-
-    - name: Install dependencies
+        otp-version: '21.3'
+        elixir-version: '1.10.4'
+
+    - name: install dependencies
       run: mix deps.get
-    - name: Run tests
+
+    - name: check formatting
+      run: mix format --check-formatted
+
+    - name: check code
+      run: mix credo
+  
+    - name: compile test env
+      run: mix compile
+
+    - name: run tests
       run: mix test
