@@ -1,5 +1,9 @@
 use Mix.Config
 
+# http client configuration
+
+config :hui, :finch, name: TestFinch
+
 # variouns Solr endpoints may be configured with any atomic key
 config :hui, :default,
   url: "http://localhost:8983/solr/gettingstarted/select",

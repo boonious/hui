@@ -38,6 +38,7 @@ defmodule Hui.MixProject do
   defp deps do
     [
       {:jason, "~> 1.3"},
+      {:finch, "~> 0.12", optional: true},
       {:httpoison, "~> 1.7", optional: true},
       {:bypass, "~> 2.1", only: :test},
       {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
