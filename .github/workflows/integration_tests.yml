@@ -1,0 +1,49 @@
+name: Integration Tests
+
+on:
+  pull_request:
+  push:
+    branches: [ master ]
+
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    env:
+      MIX_ENV: test
+    steps:
+    - name: checkout repo
+      uses: actions/checkout@v2
+  
+    - name: setup Elixir
+      uses: erlef/setup-beam@v1
+      with:
+        otp-version: '21.3'
+        elixir-version: '1.10.4'
+
+    - name: install dependencies
+      run: mix deps.get
+  
+    - name: compile test env
+      run: mix compile
+  
+  integration_tests:
+      name: test
+      needs: build
+      runs-on: ubuntu-latest
+
+      services:
+        solr:
+          image: solr:8.8.2
+          ports:
+            - 8983:8983
+          options: >-
+            --health-cmd "curl --fail http://localhost:8983/v2/cores || exit 1"
+            --health-interval 10s
+            --health-timeout 5s
+            --health-retries 5
+      steps:
+      - name: run integration tests
+        run: |
+          echo "Checking on the solr instance"
+          curl http://localhost:8983/v2/cores
