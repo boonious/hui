@@ -4,6 +4,7 @@ on:
   pull_request:
   push:
     branches: [ master ]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -38,11 +39,22 @@ jobs:
           ports:
             - 8983:8983
           options: >-
+            --name "solr_integration_tests"
             --health-cmd "curl --fail http://localhost:8983/v2/cores || exit 1"
             --health-interval 10s
             --health-timeout 5s
             --health-retries 5
       steps:
+      - name: create single test core
+        run: |
+          docker exec solr_integration_tests solr create -c test_core1
+    
+      - name: ingest test documents
+        run: |
+          docker exec solr_integration_tests sh -c "post -c test_core1 example/exampledocs/*.xml"
+          docker exec solr_integration_tests sh -c "post -c test_core1 example/exampledocs/*.json"
+          docker exec solr_integration_tests sh -c "post -c test_core1 example/exampledocs/*.csv"
+
       - name: run integration tests
         run: |
           echo "Checking on the solr instance"
