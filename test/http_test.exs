@@ -22,20 +22,7 @@ defmodule Hui.HttpTest do
       assert resp.body == "getting a response"
     end
 
-    test "returns a map body for json response", %{bypass: bypass, bypass_url: url} do
-      json_resp = %{"responseHeader" => "123", "response" => %{"numFound" => 47}}
-
-      Bypass.expect(bypass, fn conn ->
-        Plug.Conn.put_resp_header(conn, "content-type", "application/json;charset=utf-8")
-        |> Plug.Conn.resp(200, Jason.encode!(json_resp))
-      end)
-
-      {_, resp} = %Http{url: url} |> Http.dispatch()
-
-      assert resp.body == json_resp
-    end
-
-    test "returns the unparsed binary body if json response is invalid", %{bypass: bypass, bypass_url: url} do
+    test "returns raw body if json response is invalid", %{bypass: bypass, bypass_url: url} do
       Bypass.expect(bypass, fn conn ->
         Plug.Conn.put_resp_header(conn, "content-type", "application/json;charset=utf-8")
         |> Plug.Conn.resp(200, "non json response")
@@ -77,7 +64,7 @@ defmodule Hui.HttpTest do
         assert {:ok, "{\"doc\":\"request body\"}", conn} = Plug.Conn.read_body(conn)
         assert conn.method == "POST"
 
-        Plug.Conn.resp(conn, 200, "")
+        Plug.Conn.resp(conn, 200, "{\"doc\":\"response body\"}")
       end)
 
       {_, resp} =
@@ -90,26 +77,7 @@ defmodule Hui.HttpTest do
         |> Http.dispatch()
 
       assert 200 = resp.status
-    end
-
-    test "returns a map body for json response", %{bypass: bypass, bypass_url: url} do
-      json_resp = %{"responseHeader" => "123", "response" => %{"numFound" => 47}}
-
-      Bypass.expect(bypass, fn conn ->
-        Plug.Conn.put_resp_header(conn, "content-type", "application/json;charset=utf-8")
-        |> Plug.Conn.resp(200, Jason.encode!(json_resp))
-      end)
-
-      {_, resp} =
-        %Http{
-          method: :post,
-          url: url,
-          body: "{\"doc\":\"request body\"}",
-          headers: [{"content-type", "application/json"}]
-        }
-        |> Http.dispatch()
-
-      assert resp.body == json_resp
+      assert "{\"doc\":\"response body\"}" = resp.body
     end
 
     test "facilitates various httpc options", %{bypass: bypass, bypass_url: url} do

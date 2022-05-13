@@ -19,9 +19,12 @@ defmodule Hui do
   alias Hui.Error
   alias Hui.Http
   alias Hui.Query
-  alias Hui.Utils
+  alias Hui.Utils.ParserType
+  alias Hui.Utils.Url, as: UrlUtils
 
   @http_client Application.compile_env(:hui, :http_client, Hui.Http)
+  @json_parser Application.compile_env(:hui, :json_parser)
+  @parser_not_configured ParserType.not_configured()
 
   @type endpoint :: binary | atom | {binary, list} | {binary, list, list}
 
@@ -411,17 +414,17 @@ defmodule Hui do
   """
   @spec get(endpoint, query) :: http_response
   def get(endpoint, query) do
-    case Utils.parse_endpoint(endpoint) do
-      {:ok, {url, headers, options}} ->
-        %Http{
-          url: [url, "?", Encoder.encode(query)],
-          headers: headers,
-          options: options
-        }
-        |> dispatch(@http_client)
-
-      {:error, reason} ->
-        {:error, reason}
+    with {:ok, {url, headers, options, opted_parser}} <- UrlUtils.parse_endpoint(endpoint),
+         parser <- maybe_infer_parser(query, opted_parser) do
+      %Http{
+        url: [url, "?", Encoder.encode(query)],
+        headers: headers,
+        options: options
+      }
+      |> dispatch(@http_client)
+      |> parse_response(parser)
+    else
+      {:error, reason} -> {:error, reason}
     end
   end
 
@@ -430,8 +433,10 @@ defmodule Hui do
   """
   @spec post(endpoint, update_query) :: http_response
   def post(endpoint, docs) do
-    with {:ok, {url, headers, options}} <- Utils.parse_endpoint(endpoint),
+    with {:ok, {url, headers, options, parser}} <- UrlUtils.parse_endpoint(endpoint),
          docs <- maybe_encode_docs(docs) do
+      parser = if parser == :not_configured, do: @json_parser, else: parser
+
       %Http{
         url: url,
         headers: headers,
@@ -440,6 +445,7 @@ defmodule Hui do
         body: docs
       }
       |> dispatch(@http_client)
+      |> parse_response(parser)
     else
       {:error, reason} -> {:error, reason}
     end
@@ -447,4 +453,19 @@ defmodule Hui do
 
   defp maybe_encode_docs(docs) when is_binary(docs), do: docs
   defp maybe_encode_docs(docs), do: Encoder.encode(docs)
+
+  defp maybe_infer_parser(query, opted_parser) do
+    case opted_parser do
+      parser when parser == @parser_not_configured -> ParserType.infer(query)
+      opted_parser -> opted_parser
+    end
+  end
+
+  # no parser
+  defp parse_response(response, nil), do: response
+  defp parse_response({:error, _error} = response, _parser), do: response
+
+  defp parse_response(response, parser) do
+    apply(parser, :parse, [response])
+  end
 end

@@ -150,23 +150,11 @@ defmodule Hui.Http do
 
   defp handle_response({:ok, {{[?H, ?T, ?T, ?P | _], status, _}, headers, body}}, req) do
     headers = handle_resp_headers(headers)
-    {_, content_type} = List.keyfind(headers, "content-type", 0, {"content-type", ""})
-
-    case content_type do
-      "application/json" <> _ -> {:ok, %{req | body: decode_json(body), headers: headers, status: status}}
-      _ -> {:ok, %{req | body: to_string(body), headers: headers, status: status}}
-    end
+    {:ok, %{req | body: to_string(body), headers: headers, status: status}}
   end
 
   defp handle_response({:error, {reason, _details}}, _req), do: {:error, %Hui.Error{reason: reason}}
 
   # httpc could also return errors with only reason and without further details
   defp handle_response({:error, reason}, _req), do: {:error, %Hui.Error{reason: reason}}
-
-  defp decode_json(body) do
-    case Jason.decode(body) do
-      {:ok, map} -> map
-      {:error, _} -> to_string(body)
-    end
-  end
 end
