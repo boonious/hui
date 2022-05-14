@@ -7,31 +7,11 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    name: build
-    runs-on: ubuntu-latest
-    env:
-      MIX_ENV: test
-    steps:
-    - name: checkout repo
-      uses: actions/checkout@v2
-  
-    - name: setup Elixir
-      uses: erlef/setup-beam@v1
-      with:
-        otp-version: '21.3'
-        elixir-version: '1.10.4'
-
-    - name: install dependencies
-      run: mix deps.get
-  
-    - name: compile test env
-      run: mix compile
-  
   integration_tests:
-      name: test
-      needs: build
+      name: integration test
       runs-on: ubuntu-latest
+      env:
+        MIX_ENV: integration
 
       services:
         solr:
@@ -55,7 +35,20 @@ jobs:
           docker exec solr_integration_tests sh -c "post -c test_core1 example/exampledocs/*.json"
           docker exec solr_integration_tests sh -c "post -c test_core1 example/exampledocs/*.csv"
 
+      - name: checkout repo
+        uses: actions/checkout@v2
+  
+      - name: setup Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          otp-version: '21.3'
+          elixir-version: '1.10.4'
+
+      - name: install dependencies
+        run: mix deps.get
+  
+      - name: compile test env
+        run: mix compile
+
       - name: run integration tests
-        run: |
-          echo "Checking on the solr instance"
-          curl http://localhost:8983/v2/cores
+        run: mix test --only integration:true
