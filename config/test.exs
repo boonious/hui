@@ -1,6 +1,7 @@
 use Mix.Config
 
 config :hui,
+  integration_test_url: "http://localhost:8983/solr/test_core1/select",
   json_parser: Hui.ResponseParsers.JsonParserMock
 
 # http client configuration

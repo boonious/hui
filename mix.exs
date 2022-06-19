@@ -41,9 +41,9 @@ defmodule Hui.MixProject do
       {:jason, "~> 1.3"},
       {:finch, "~> 0.12", optional: true},
       {:httpoison, "~> 1.7", optional: true},
-      {:bypass, "~> 2.1", only: :test},
-      {:hammox, "~> 0.5", only: :test},
-      {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
+      {:bypass, "~> 2.1", only: [:test, :integration]},
+      {:hammox, "~> 0.5", only: [:test, :integration]},
+      {:credo, "~> 1.6", only: [:dev, :test, :integration], runtime: false},
       {:dialyxir, "~> 1.1", only: :dev, runtime: false},
       {:ex_doc, "~> 0.28.3", only: :dev, runtime: false},
       {:excoveralls, "~> 0.14.4", only: :test}
