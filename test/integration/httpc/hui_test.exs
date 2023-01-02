@@ -1,4 +1,8 @@
-defmodule Hui.Integration.HuiTest do
+defmodule Hui.Integration.Httpc.HuiTest do
+  @moduledoc """
+  Integration tests with the default Erlang httpc client.
+  """
+
   use ExUnit.Case, async: true
   alias Hui.Http
 
@@ -18,9 +22,12 @@ defmodule Hui.Integration.HuiTest do
                "responseHeader" => %{"params" => params}
              } = body
 
-      assert length(docs) > 0
+      assert length(docs) == 10
       assert hits > 0
       assert params == %{"fq" => "cat:electronics", "q" => "*", "rows" => "10"}
+
+      assert is_integer(hd(docs)["_version_"])
+      assert "electronics" in hd(docs)["cat"]
     end
   end
 end
