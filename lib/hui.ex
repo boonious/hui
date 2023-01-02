@@ -112,9 +112,10 @@ defmodule Hui do
   }
   ```
   """
-  @spec search(endpoint, query) :: http_response
-  def search(endpoint, query) when is_list(query) or is_map(query), do: get(endpoint, query)
-  def search(_endpoint, _query), do: {:error, %Error{reason: :einval}}
+  @spec search(endpoint, query, module) :: http_response
+  def search(endpoint, query, client \\ @http_client)
+  def search(endpoint, query, client) when is_list(query) or is_map(query), do: get(endpoint, query, client)
+  def search(_endpoint, _query, _client), do: {:error, %Error{reason: :einval}}
 
   @doc """
   Issue a structured suggest query to a specified Solr endpoint.
@@ -412,8 +413,8 @@ defmodule Hui do
   If `HTTPoison` is used, advanced HTTP options such as the use of connection pools
   may also be specified via `options`.
   """
-  @spec get(endpoint, query) :: http_response
-  def get(endpoint, query) do
+  @spec get(endpoint, query, module) :: http_response
+  def get(endpoint, query, client \\ @http_client) do
     with {:ok, {url, headers, options, opted_parser}} <- UrlUtils.parse_endpoint(endpoint),
          parser <- maybe_infer_parser(query, opted_parser) do
       %Http{
@@ -421,7 +422,7 @@ defmodule Hui do
         headers: headers,
         options: options
       }
-      |> dispatch(@http_client)
+      |> dispatch(client)
       |> parse_response(parser)
     else
       {:error, reason} -> {:error, reason}
@@ -431,8 +432,8 @@ defmodule Hui do
   @doc """
   Issues a POST request to a specific Solr endpoint, e.g. for data indexing and deletion.
   """
-  @spec post(endpoint, update_query) :: http_response
-  def post(endpoint, docs) do
+  @spec post(endpoint, update_query, module) :: http_response
+  def post(endpoint, docs, client \\ @http_client) do
     with {:ok, {url, headers, options, parser}} <- UrlUtils.parse_endpoint(endpoint),
          docs <- maybe_encode_docs(docs) do
       parser = if parser == :not_configured, do: @json_parser, else: parser
@@ -444,7 +445,7 @@ defmodule Hui do
         options: options,
         body: docs
       }
-      |> dispatch(@http_client)
+      |> dispatch(client)
       |> parse_response(parser)
     else
       {:error, reason} -> {:error, reason}
