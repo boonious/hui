@@ -1,7 +1,9 @@
 defmodule Hui.HttpTest do
   use ExUnit.Case, async: true
   import ExUnit.CaptureLog
+
   alias Hui.Http
+  alias Hui.Http.Client
 
   setup do
     bypass = Bypass.open()
@@ -16,7 +18,7 @@ defmodule Hui.HttpTest do
         Plug.Conn.resp(conn, 200, "getting a response")
       end)
 
-      {_, resp} = %Http{url: url} |> Http.dispatch()
+      {_, resp} = %Http{url: url} |> Client.dispatch()
 
       assert resp.status == 200
       assert resp.body == "getting a response"
@@ -28,7 +30,7 @@ defmodule Hui.HttpTest do
         |> Plug.Conn.resp(200, "non json response")
       end)
 
-      {_, resp} = %Http{url: url} |> Http.dispatch()
+      {_, resp} = %Http{url: url} |> Client.dispatch()
       assert resp.body == "non json response"
     end
 
@@ -40,7 +42,7 @@ defmodule Hui.HttpTest do
         Plug.Conn.resp(conn, 200, "getting a response")
       end)
 
-      {_, resp} = %Http{url: url, options: options} |> Http.dispatch()
+      {_, resp} = %Http{url: url, options: options} |> Client.dispatch()
       assert resp.body == "getting a response"
     end
 
@@ -53,7 +55,7 @@ defmodule Hui.HttpTest do
       end)
 
       # httpc outputs charlist equivalent of "Invalid option {non_existing_http_option,binary} ignored \n"
-      assert capture_log(fn -> %Http{url: url, options: options} |> Http.dispatch() end) =~
+      assert capture_log(fn -> %Http{url: url, options: options} |> Client.dispatch() end) =~
                "[73, 110, 118, 97, 108, 105, 100, 32, 111, 112, 116, 105, 111, 110, 32, [123, ['non_existing_option', 44, 'binary'], 125], 32, 105, 103, 110, 111, 114, 101, 100, 32, 10]"
     end
   end
@@ -74,7 +76,7 @@ defmodule Hui.HttpTest do
           body: "{\"doc\":\"request body\"}",
           headers: [{"content-type", "application/json"}]
         }
-        |> Http.dispatch()
+        |> Client.dispatch()
 
       assert 200 = resp.status
       assert "{\"doc\":\"response body\"}" = resp.body
@@ -96,7 +98,7 @@ defmodule Hui.HttpTest do
           headers: [{"content-type", "application/json"}],
           options: options
         }
-        |> Http.dispatch()
+        |> Client.dispatch()
 
       assert resp.body == "getting a response"
     end

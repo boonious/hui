@@ -1,14 +1,14 @@
-if Code.ensure_compiled(Finch) == {:module, Finch} and Code.ensure_loaded?(:hackney) do
-  defmodule Hui.Http.Finch do
+if Code.ensure_compiled(Finch) == {:module, Finch} do
+  defmodule Hui.Http.Clients.Finch do
     @moduledoc false
 
-    @behaviour Hui.Http
+    @behaviour Hui.Http.Client
 
     alias Hui.Http
 
     @config Application.compile_env(:hui, :finch)
 
-    @impl Http
+    @impl true
     def dispatch(request) do
       name = get_name(@config)
 

@@ -1,7 +1,8 @@
-defmodule Hui.Http.FinchTest do
+defmodule Hui.Http.Clients.FinchTest do
   use ExUnit.Case, async: true
 
   alias Hui.Http
+  alias Hui.Http.Clients
 
   setup_all do
     finch = Application.get_env(:hui, :finch)[:name]
@@ -23,7 +24,7 @@ defmodule Hui.Http.FinchTest do
         Plug.Conn.resp(conn, 200, "getting a response")
       end)
 
-      {_, resp} = %Http{url: url} |> Http.Finch.dispatch()
+      {_, resp} = %Http{url: url} |> Clients.Finch.dispatch()
 
       assert resp.status == 200
       assert resp.body == "getting a response"
@@ -37,7 +38,7 @@ defmodule Hui.Http.FinchTest do
         |> Plug.Conn.resp(200, json)
       end)
 
-      {_, resp} = %Http{url: url} |> Http.Finch.dispatch()
+      {_, resp} = %Http{url: url} |> Clients.Finch.dispatch()
 
       assert resp.body == json
     end
@@ -51,7 +52,7 @@ defmodule Hui.Http.FinchTest do
       Plug.Conn.resp(conn, 200, "")
     end)
 
-    {_, resp} = %Http{method: :post, url: bypass_url, body: "request body"} |> Http.Finch.dispatch()
+    {_, resp} = %Http{method: :post, url: bypass_url, body: "request body"} |> Clients.Finch.dispatch()
     assert 200 = resp.status
   end
 
@@ -63,12 +64,12 @@ defmodule Hui.Http.FinchTest do
       Plug.Conn.resp(conn, 404, "")
     end)
 
-    {_, resp} = %Http{url: bypass_url} |> Http.Finch.dispatch()
+    {_, resp} = %Http{url: bypass_url} |> Clients.Finch.dispatch()
     assert 404 = resp.status
   end
 
   test "handle unreachable host", %{bypass: bypass, bypass_url: bypass_url} do
     Bypass.down(bypass)
-    assert {:error, %Hui.Error{reason: :econnrefused}} == %Http{url: bypass_url} |> Http.Finch.dispatch()
+    assert {:error, %Hui.Error{reason: :econnrefused}} == %Http{url: bypass_url} |> Clients.Finch.dispatch()
   end
 end

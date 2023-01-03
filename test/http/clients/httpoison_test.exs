@@ -1,8 +1,8 @@
-defmodule Hui.Http.HttpoisonTest do
+defmodule Hui.Http.Clients.HttpoisonTest do
   use ExUnit.Case, async: true
 
-  alias Hui.Http.Httpoison
   alias Hui.Http
+  alias Hui.Http.Clients.Httpoison
 
   setup do
     bypass = Bypass.open()

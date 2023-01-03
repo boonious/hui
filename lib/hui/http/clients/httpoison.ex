@@ -1,12 +1,12 @@
 if Code.ensure_compiled(HTTPoison) == {:module, HTTPoison} and Code.ensure_loaded?(:hackney) do
-  defmodule Hui.Http.Httpoison do
+  defmodule Hui.Http.Clients.Httpoison do
     @moduledoc false
 
     alias Hui.Http
 
-    @behaviour Hui.Http
+    @behaviour Hui.Http.Client
 
-    @impl Hui.Http
+    @impl true
     def dispatch(request) do
       body = if request.body == nil, do: "", else: request.body
 
