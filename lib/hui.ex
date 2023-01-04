@@ -1,11 +1,11 @@
 defmodule Hui do
   @moduledoc """
-  Hui 辉 ("shine" in Chinese) is an [Elixir](https://elixir-lang.org) client and library for 
+  Hui 辉 ("shine" in Chinese) is an [Elixir](https://elixir-lang.org) client and library for
   [Solr enterprise search platform](http://lucene.apache.org/solr/).
 
   ### Usage
 
-  - Searching Solr: `search/2`
+  - Searching Solr: `search/3`
   - Updating: `update/3`, `delete/3`, `delete_by_query/3`, `commit/2`
   - Other: `suggest/2`, `suggest/5`
   - Admin: `metrics/2`, `ping/1`
@@ -13,7 +13,7 @@ defmodule Hui do
   """
 
   import Hui.Guards
-  import Hui.Http
+  import Hui.Http.Client
 
   alias Hui.Encoder
   alias Hui.Error
@@ -22,7 +22,7 @@ defmodule Hui do
   alias Hui.Utils.ParserType
   alias Hui.Utils.Url, as: UrlUtils
 
-  @http_client Application.compile_env(:hui, :http_client, Hui.Http)
+  @http_client Application.compile_env(:hui, :http_client, Hui.Http.Clients.Httpc)
   @json_parser Application.compile_env(:hui, :json_parser)
   @parser_not_configured ParserType.not_configured()
 
@@ -45,9 +45,9 @@ defmodule Hui do
   @type http_response :: Http.response()
 
   @doc """
-  Issue a keyword list or structured query to a specified Solr endpoint.
+  Issue a keyword list or structured query to a Solr endpoint.
 
-  ### Example - parameters 
+  ### Example - parameters
 
   ```
     url = "http://localhost:8983/solr/collection"
@@ -64,7 +64,7 @@ defmodule Hui do
     Hui.search(url, [x, y, z])
 
     # SolrCloud query
-    x = %Query.DisMax{q: "john"} 
+    x = %Query.DisMax{q: "john"}
     y = %Query.Common{collection: "library,commons", rows: 10, distrib: true, "shards.tolerant": true, "shards.info": true}
     Hui.search(url, [x,y])
 
@@ -111,6 +111,20 @@ defmodule Hui do
     "zkConnected" => true
   }
   ```
+
+  ### URLs, Headers, Options
+
+  HTTP headers and client options for a specific endpoint may also be
+  included in the a `{url, headers, options}` tuple where:
+
+  - `url` is a typical Solr endpoint that includes a request handler
+  - `headers`: a tuple list of [HTTP headers](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers)
+  - `options`: a keyword list of configured http client options such as [Erlang httpc](https://erlang.org/doc/man/httpc.html#request-4),
+   [HTTPoison](https://hexdocs.pm/httpoison/HTTPoison.Request.html), e.g.
+  `timeout`, `recv_timeout`, `max_redirect`
+
+  If `HTTPoison` is used, advanced HTTP options such as the use of connection pools
+  may also be specified via `options`.
   """
   @spec search(endpoint, query, module) :: http_response
   def search(endpoint, query, client \\ @http_client)
@@ -158,13 +172,13 @@ defmodule Hui do
 
   This function accepts documents as map (single or a list) and commits the docs
   to the index immediately by default - set `commit` to `false` for manual or
-  auto commits later. 
+  auto commits later.
 
   It can also operate in update struct and binary modes,
   the former uses the `t:Hui.Query.Update.t/0` struct
   while the latter acepts text containing any valid Solr update data or commands.
 
-  An index/update handler endpoint should be specified through a URL string or 
+  An index/update handler endpoint should be specified through a URL string or
   {url, headers, options} tuple for headers and HTTP client options specification.
 
   A "content-type" request header is required so that Solr knows the
@@ -201,7 +215,7 @@ defmodule Hui do
     Hui.update(endpoint, doc1) # add a single doc
     Hui.update(endpoint, [doc1, doc2]) # add a list of docs
 
-    # Don't commit the docs e.g. mass ingestion when index handler is setup for autocommit. 
+    # Don't commit the docs e.g. mass ingestion when index handler is setup for autocommit.
     Hui.update(endpoint, [doc1, doc2], false)
 
     # Send to a configured endpoint
@@ -418,11 +432,12 @@ defmodule Hui do
     with {:ok, {url, headers, options, opted_parser}} <- UrlUtils.parse_endpoint(endpoint),
          parser <- maybe_infer_parser(query, opted_parser) do
       %Http{
+        client: client,
         url: [url, "?", Encoder.encode(query)],
         headers: headers,
         options: options
       }
-      |> dispatch(client)
+      |> dispatch()
       |> parse_response(parser)
     else
       {:error, reason} -> {:error, reason}
@@ -439,13 +454,14 @@ defmodule Hui do
       parser = if parser == :not_configured, do: @json_parser, else: parser
 
       %Http{
+        client: client,
         url: url,
         headers: headers,
         method: :post,
         options: options,
         body: docs
       }
-      |> dispatch(client)
+      |> dispatch()
       |> parse_response(parser)
     else
       {:error, reason} -> {:error, reason}

@@ -1,9 +1,12 @@
 defmodule Hui.Http do
   @moduledoc """
-  A struct encapsulating Solr HTTP request and response.
+  A struct for Solr HTTP request and response.
   """
 
+  @default_client Hui.Http.Clients.Httpc
+
   defstruct body: nil,
+            client: @default_client,
             headers: [],
             method: :get,
             options: [],
@@ -11,7 +14,7 @@ defmodule Hui.Http do
             url: ""
 
   @typedoc """
-  Request or response body which can be in iodata or parsed (as map) format.
+  Request or response body in either iodata or parsed (as map) format.
   """
   @type body :: nil | iodata() | map()
 
@@ -30,6 +33,7 @@ defmodule Hui.Http do
   """
   @type t :: %__MODULE__{
           body: body,
+          client: module(),
           headers: list(),
           method: :get | :post,
           options: keyword(),

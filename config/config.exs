@@ -8,7 +8,6 @@ use Mix.Config
 #   http_client: Hui.Http.Httpoison
 
 config :hui,
-  http_client: Hui.Http.Client,
   json_parser: Hui.ResponseParsers.JsonParser
 
 import_config "#{Mix.env()}.exs"
