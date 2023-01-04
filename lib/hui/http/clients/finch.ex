@@ -8,6 +8,8 @@ if Code.ensure_compiled(Finch) == {:module, Finch} do
 
     @config Application.compile_env(:hui, :finch)
 
+    # FIX-ME: update implementation give Http.new, new client `handle_response/1` behaviour
+
     @impl true
     def dispatch(request) do
       name = get_name(@config)
@@ -21,11 +23,12 @@ if Code.ensure_compiled(Finch) == {:module, Finch} do
     defp get_name(config) when is_list(config), do: Keyword.get(config, :name) |> get_name()
     defp get_name(name) when is_atom(name), do: name
 
-    defp handle_response({:ok, %{body: body, headers: headers, status: status}}, url) do
+    @impl true
+    def handle_response({:ok, %{body: body, headers: headers, status: status}}, url) do
       {:ok, %Http{body: body, headers: headers, status: status, url: url}}
     end
 
-    defp handle_response({:error, %Mint.TransportError{reason: reason}}, _url) do
+    def handle_response({:error, %Mint.TransportError{reason: reason}}, _url) do
       {:error, %Hui.Error{reason: reason}}
     end
   end

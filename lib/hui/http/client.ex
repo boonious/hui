@@ -30,31 +30,30 @@ defmodule Hui.Http.Client do
   """
 
   alias Hui.Http
+  alias Hui.Query
 
+  @type http_response :: {:ok, term()} | {:ok, term()}
   @type request :: Http.t()
   @type response :: {:ok, Http.t()} | {:error, Hui.Error.t()}
 
   @doc """
   Dispatch HTTP request to a Solr endpoint.
 
-  This callback is optional and can be used to adapt other HTTP clients to
-  provide different HTTP options and performance. Hui provides `Hui.Http.Httpoison`,
-  a reference implementation of this callback that can be
-  used in conjunction with `dispatch/2`.
-
-  If the callback is not implemented, the default built-in httpc-based client
+  If a client is not set via `c:build_request/3`, the default httpc-based client
   will be used.
   """
-  @callback dispatch(request) :: response
-
+  @callback dispatch(request) :: http_response
 
   @doc """
-  Dispatch HTTP request to a Solr endpoint using a given client implementing the `Hui.Http` behaviour.
-
-  Same as `dispatch/1` but invoking request through dynamic dispatching. See `Hui.Http.Httpoison`
-  for a reference client implementation based on `HTTPoison` that provides additional options
-  such as [connection pooling](https://github.com/edgurgel/httpoison#connection-pools).
+  For post-dispatch processing such as error handling and parsing Solr documents.
   """
+  @callback handle_response(http_response, request) :: response
+
+  ### common functions
+
   @spec dispatch(request) :: response
   def dispatch(request), do: request.client.dispatch(request)
+
+  @spec handle_response(http_response, request) :: response
+  def handle_response(resp, request), do: request.client.handle_response(resp, request)
 end
