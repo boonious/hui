@@ -1,11 +1,11 @@
 defmodule Hui do
   @moduledoc """
-  Hui 辉 ("shine" in Chinese) is an [Elixir](https://elixir-lang.org) client and library for 
+  Hui 辉 ("shine" in Chinese) is an [Elixir](https://elixir-lang.org) client and library for
   [Solr enterprise search platform](http://lucene.apache.org/solr/).
 
   ### Usage
 
-  - Searching Solr: `search/2`
+  - Searching Solr: `search/3`
   - Updating: `update/3`, `delete/3`, `delete_by_query/3`, `commit/2`
   - Other: `suggest/2`, `suggest/5`
   - Admin: `metrics/2`, `ping/1`
@@ -13,41 +13,24 @@ defmodule Hui do
   """
 
   import Hui.Guards
-  import Hui.Http
+  import Hui.Http.Client
 
-  alias Hui.Encoder
   alias Hui.Error
   alias Hui.Http
   alias Hui.Query
-  alias Hui.Utils.ParserType
-  alias Hui.Utils.Url, as: UrlUtils
 
-  @http_client Application.compile_env(:hui, :http_client, Hui.Http)
-  @json_parser Application.compile_env(:hui, :json_parser)
-  @parser_not_configured ParserType.not_configured()
+  @http_client Application.compile_env(:hui, :http_client, Hui.Http.Clients.Httpc)
 
-  @type endpoint :: binary | atom | {binary, list} | {binary, list, list}
-
-  @type querying_struct :: Query.Standard.t() | Query.Common.t() | Query.DisMax.t()
-  @type faceting_struct :: Query.Facet.t() | Query.FacetRange.t() | Query.FacetInterval.t()
-  @type highlighting_struct ::
-          Query.Highlight.t()
-          | Query.HighlighterUnified.t()
-          | Query.HighlighterOriginal.t()
-          | Query.HighlighterFastVector.t()
-
-  @type misc_struct :: Query.MoreLikeThis.t() | Query.Suggest.t() | Query.SpellCheck.t() | Query.Metrics.t()
-  @type solr_struct :: querying_struct | faceting_struct | highlighting_struct | misc_struct
-
-  @type query :: keyword | map | solr_struct | [solr_struct]
-  @type update_query :: binary | map | list(map) | Query.Update.t()
+  @type endpoint :: Http.endpoint()
+  @type query :: Http.query()
+  @type update_query :: Http.update_query()
 
   @type http_response :: Http.response()
 
   @doc """
-  Issue a keyword list or structured query to a specified Solr endpoint.
+  Issue a keyword list or structured query to a Solr endpoint.
 
-  ### Example - parameters 
+  ### Example - parameters
 
   ```
     url = "http://localhost:8983/solr/collection"
@@ -64,7 +47,7 @@ defmodule Hui do
     Hui.search(url, [x, y, z])
 
     # SolrCloud query
-    x = %Query.DisMax{q: "john"} 
+    x = %Query.DisMax{q: "john"}
     y = %Query.Common{collection: "library,commons", rows: 10, distrib: true, "shards.tolerant": true, "shards.info": true}
     Hui.search(url, [x,y])
 
@@ -111,10 +94,25 @@ defmodule Hui do
     "zkConnected" => true
   }
   ```
+
+  ### URLs, Headers, Options
+
+  HTTP headers and client options for a specific endpoint may also be
+  included in the a `{url, headers, options}` tuple where:
+
+  - `url` is a typical Solr endpoint that includes a request handler
+  - `headers`: a tuple list of [HTTP headers](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers)
+  - `options`: a keyword list of configured http client options such as [Erlang httpc](https://erlang.org/doc/man/httpc.html#request-4),
+   [HTTPoison](https://hexdocs.pm/httpoison/HTTPoison.Request.html), e.g.
+  `timeout`, `recv_timeout`, `max_redirect`
+
+  If `HTTPoison` is used, advanced HTTP options such as the use of connection pools
+  may also be specified via `options`.
   """
-  @spec search(endpoint, query) :: http_response
-  def search(endpoint, query) when is_list(query) or is_map(query), do: get(endpoint, query)
-  def search(_endpoint, _query), do: {:error, %Error{reason: :einval}}
+  @spec search(endpoint, query, module) :: http_response
+  def search(endpoint, query, client \\ @http_client)
+  def search(endpoint, query, client) when is_list(query) or is_map(query), do: get(endpoint, query, client)
+  def search(_endpoint, _query, _client), do: {:error, %Error{reason: :einval}}
 
   @doc """
   Issue a structured suggest query to a specified Solr endpoint.
@@ -157,13 +155,13 @@ defmodule Hui do
 
   This function accepts documents as map (single or a list) and commits the docs
   to the index immediately by default - set `commit` to `false` for manual or
-  auto commits later. 
+  auto commits later.
 
   It can also operate in update struct and binary modes,
   the former uses the `t:Hui.Query.Update.t/0` struct
   while the latter acepts text containing any valid Solr update data or commands.
 
-  An index/update handler endpoint should be specified through a URL string or 
+  An index/update handler endpoint should be specified through a URL string or
   {url, headers, options} tuple for headers and HTTP client options specification.
 
   A "content-type" request header is required so that Solr knows the
@@ -200,7 +198,7 @@ defmodule Hui do
     Hui.update(endpoint, doc1) # add a single doc
     Hui.update(endpoint, [doc1, doc2]) # add a list of docs
 
-    # Don't commit the docs e.g. mass ingestion when index handler is setup for autocommit. 
+    # Don't commit the docs e.g. mass ingestion when index handler is setup for autocommit.
     Hui.update(endpoint, [doc1, doc2], false)
 
     # Send to a configured endpoint
@@ -377,95 +375,31 @@ defmodule Hui do
   @spec ping(binary() | atom(), keyword) :: http_response
   defdelegate ping(endpoint, options), to: Hui.Admin
 
-  @doc """
-  Issues a get request of Solr query to a specific endpoint.
+  @doc false
+  @spec get(endpoint, query, module) :: http_response
+  def get(endpoint, query, client \\ @http_client) do
+    case Http.new(:get, endpoint, query, client) do
+      req = %Http{} ->
+        req
+        |> dispatch()
+        |> handle_response(req)
 
-  The query can be a keyword list or a list of Hui query structs (`t:query/0`).
-
-  ## Example - parameters
-
-  ```
-    endpoint = "http://..."
-
-    # query via a list of keywords, which are unbound and sent to Solr directly
-    Hui.get(endpoint, q: "glen cova", facet: "true", "facet.field": ["type", "year"])
-
-    # query via Hui structs
-    alias Hui.Query
-    Hui.get(endpoint, %Query.DisMax{q: "glen cova"})
-    Hui.get(endpoint, [%Query.DisMax{q: "glen"}, %Query.Facet{field: ["type", "year"]}])
-  ```
-
-  The use of structs is more idiomatic and succinct. It is bound to qualified Solr fields.
-
-  ## URLs, Headers, Options
-
-  HTTP headers and client options for a specific endpoint may also be
-  included in the a `{url, headers, options}` tuple where:
-
-  - `url` is a typical Solr endpoint that includes a request handler
-  - `headers`: a tuple list of [HTTP headers](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers)
-  - `options`: a keyword list of [Erlang httpc options](https://erlang.org/doc/man/httpc.html#request-4)
-  or [HTTPoison options](https://hexdocs.pm/httpoison/HTTPoison.Request.html) if configured, e.g.
-  `timeout`, `recv_timeout`, `max_redirect`
-
-  If `HTTPoison` is used, advanced HTTP options such as the use of connection pools
-  may also be specified via `options`.
-  """
-  @spec get(endpoint, query) :: http_response
-  def get(endpoint, query) do
-    with {:ok, {url, headers, options, opted_parser}} <- UrlUtils.parse_endpoint(endpoint),
-         parser <- maybe_infer_parser(query, opted_parser) do
-      %Http{
-        url: [url, "?", Encoder.encode(query)],
-        headers: headers,
-        options: options
-      }
-      |> dispatch(@http_client)
-      |> parse_response(parser)
-    else
-      {:error, reason} -> {:error, reason}
+      error ->
+        error
     end
   end
 
-  @doc """
-  Issues a POST request to a specific Solr endpoint, e.g. for data indexing and deletion.
-  """
-  @spec post(endpoint, update_query) :: http_response
-  def post(endpoint, docs) do
-    with {:ok, {url, headers, options, parser}} <- UrlUtils.parse_endpoint(endpoint),
-         docs <- maybe_encode_docs(docs) do
-      parser = if parser == :not_configured, do: @json_parser, else: parser
+  @doc false
+  @spec post(endpoint, update_query, module) :: http_response
+  def post(endpoint, docs, client \\ @http_client) do
+    case Http.new(:post, endpoint, docs, client) do
+      req = %Http{} ->
+        req
+        |> dispatch()
+        |> handle_response(req)
 
-      %Http{
-        url: url,
-        headers: headers,
-        method: :post,
-        options: options,
-        body: docs
-      }
-      |> dispatch(@http_client)
-      |> parse_response(parser)
-    else
-      {:error, reason} -> {:error, reason}
+      error ->
+        error
     end
-  end
-
-  defp maybe_encode_docs(docs) when is_binary(docs), do: docs
-  defp maybe_encode_docs(docs), do: Encoder.encode(docs)
-
-  defp maybe_infer_parser(query, opted_parser) do
-    case opted_parser do
-      parser when parser == @parser_not_configured -> ParserType.infer(query)
-      opted_parser -> opted_parser
-    end
-  end
-
-  # no parser
-  defp parse_response(response, nil), do: response
-  defp parse_response({:error, _error} = response, _parser), do: response
-
-  defp parse_response(response, parser) do
-    apply(parser, :parse, [response])
   end
 end

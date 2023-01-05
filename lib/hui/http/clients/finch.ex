@@ -1,14 +1,16 @@
-if Code.ensure_compiled(Finch) == {:module, Finch} and Code.ensure_loaded?(:hackney) do
-  defmodule Hui.Http.Finch do
+if Code.ensure_compiled(Finch) == {:module, Finch} do
+  defmodule Hui.Http.Clients.Finch do
     @moduledoc false
 
-    @behaviour Hui.Http
+    @behaviour Hui.Http.Client
 
     alias Hui.Http
 
     @config Application.compile_env(:hui, :finch)
 
-    @impl Http
+    # FIX-ME: update implementation give Http.new, new client `handle_response/1` behaviour
+
+    @impl true
     def dispatch(request) do
       name = get_name(@config)
 
@@ -21,11 +23,12 @@ if Code.ensure_compiled(Finch) == {:module, Finch} and Code.ensure_loaded?(:hack
     defp get_name(config) when is_list(config), do: Keyword.get(config, :name) |> get_name()
     defp get_name(name) when is_atom(name), do: name
 
-    defp handle_response({:ok, %{body: body, headers: headers, status: status}}, url) do
+    @impl true
+    def handle_response({:ok, %{body: body, headers: headers, status: status}}, url) do
       {:ok, %Http{body: body, headers: headers, status: status, url: url}}
     end
 
-    defp handle_response({:error, %Mint.TransportError{reason: reason}}, _url) do
+    def handle_response({:error, %Mint.TransportError{reason: reason}}, _url) do
       {:error, %Hui.Error{reason: reason}}
     end
   end
