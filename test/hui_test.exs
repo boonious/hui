@@ -4,9 +4,11 @@ defmodule HuiTest do
 
   import Mox
   import TestHelpers
+  import Fixtures.Admin
   import Fixtures.Update
 
   alias Hui.Http
+  alias Hui.Http.Client.Mock, as: ClientMock
   alias Hui.Query
   alias Hui.ResponseParsers.JsonParserMock
 
@@ -294,34 +296,23 @@ defmodule HuiTest do
     Hui.commit(url)
   end
 
-  # more test coverage in the Hui.AdminTest test module
-  test "metrics/2", %{bypass: bypass} do
-    url = {"http://localhost:#{bypass.port}/solr/admin/metrics", [{"content-type", "application/json"}]}
+  test "metrics/2" do
+    url = {"http://localhost/solr/admin/metrics", [{"content-type", "application/json"}]}
+    ClientMock |> expect(:dispatch, fn req -> {:ok, %{req | status: 200}} end)
+    ClientMock |> expect(:handle_response, fn resp, _req -> resp end)
 
-    Bypass.expect_once(bypass, fn conn ->
-      assert conn.port == bypass.port
-      assert conn.path_info == ["solr", "admin", "metrics"]
-      assert conn.query_string == "group=core&type=timer"
-
-      Plug.Conn.resp(conn, 200, "")
-    end)
-
-    Hui.metrics(url, group: "core", type: "timer")
+    assert {:ok, _resp} = Hui.metrics(url, group: "core", type: "timer")
   end
 
-  # more test coverage in the Hui.AdminTest test module
-  test "ping/2", %{bypass: bypass} do
-    url = "http://localhost:#{bypass.port}/solr/collection/admin/ping"
+  test "ping/2" do
+    url = "http://localhost/solr/collection/admin/ping"
+    ok_resp = successful_ping_json_response() |> Jason.decode!()
 
-    Bypass.expect(bypass, fn conn ->
-      assert conn.port == bypass.port
-      assert conn.path_info == ["solr", "collection", "admin", "ping"]
+    ClientMock |> expect(:dispatch, 2, fn req -> {:ok, %{req | status: 200}} end)
+    ClientMock |> expect(:handle_response, 2, fn {:ok, resp}, _req -> {:ok, %{resp | body: ok_resp}} end)
 
-      Plug.Conn.resp(conn, 200, "")
-    end)
-
-    Hui.ping(url)
-    Hui.ping(url, wt: "xml")
+    assert {:pong, _qtime} = Hui.ping(url)
+    assert {:pong, _qtime} = Hui.ping(url, wt: "json")
   end
 
   describe "get/2 handles" do

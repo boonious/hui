@@ -14,8 +14,8 @@ defmodule Hui.HttpTest do
     Mock |> expect(:dispatch, fn %Http{} = req -> {:ok, %{req | body: resp}} end)
 
     Mock
-    |> expect(:handle_response, fn {:ok, %Http{body: ^resp} = req}, _parser ->
-      {:ok, %{req | body: resp_decoded}}
+    |> expect(:handle_response, fn {:ok, %Http{body: ^resp} = resp}, _req ->
+      {:ok, %{resp | body: resp_decoded}}
     end)
 
     assert {:ok, %Http{body: ^resp_decoded}} = Http.get("http://solr_endpoint", q: "get test")
@@ -26,7 +26,7 @@ defmodule Hui.HttpTest do
     docs_encoded = docs |> Jason.encode!()
 
     Mock |> expect(:dispatch, fn %Http{body: ^docs_encoded} = req -> {:ok, req} end)
-    Mock |> expect(:handle_response, fn {:ok, %Http{} = req}, _parser -> {:ok, req} end)
+    Mock |> expect(:handle_response, fn {:ok, %Http{} = resp}, _req -> {:ok, resp} end)
 
     assert {:ok, %Http{}} = Http.post("http://solr_endpoint", docs_encoded)
   end
