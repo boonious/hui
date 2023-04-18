@@ -30,7 +30,6 @@ defmodule Hui.Http.Client do
   """
 
   alias Hui.Http
-  alias Hui.Query
 
   @type http_response :: {:ok, term()} | {:ok, term()}
   @type request :: Http.t()
@@ -50,6 +49,9 @@ defmodule Hui.Http.Client do
   @callback handle_response(http_response, request) :: response
 
   ### common functions
+
+  @spec impl() :: module()
+  def impl(), do: Application.get_env(:hui, :http_client, Hui.Http.Clients.Httpc)
 
   @spec dispatch(request) :: response
   def dispatch(request), do: request.client.dispatch(request)

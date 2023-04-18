@@ -1,6 +1,6 @@
 defmodule Hui.Http do
   @moduledoc """
-  A struct for Solr HTTP request and response.
+  A struct and functions for making Solr HTTP request and response.
   """
 
   alias Hui.Encoder
@@ -9,12 +9,13 @@ defmodule Hui.Http do
   alias Hui.Utils.ParserType
   alias Hui.Utils.Url, as: UrlUtils
 
-  @default_client Hui.Http.Clients.Httpc
+  import Hui.Http.Client
+
   @json_parser Application.compile_env(:hui, :json_parser)
   @parser_not_configured ParserType.not_configured()
 
   defstruct body: nil,
-            client: @default_client,
+            client: impl(),
             headers: [],
             method: :get,
             options: [],
@@ -103,4 +104,22 @@ defmodule Hui.Http do
 
   defp maybe_encode_docs(docs) when is_binary(docs), do: docs
   defp maybe_encode_docs(docs), do: Encoder.encode(docs)
+
+  @doc false
+  @spec get(endpoint, query, module) :: response
+  def get(endpoint, query, client \\ impl()) do
+    new(:get, endpoint, query, client) |> request()
+  end
+
+  @doc false
+  @spec post(endpoint, update_query, module) :: response
+  def post(endpoint, docs, client \\ impl()) do
+    new(:post, endpoint, docs, client) |> request()
+  end
+
+  defp request(%Http{} = req) do
+    req
+    |> dispatch()
+    |> handle_response(req)
+  end
 end

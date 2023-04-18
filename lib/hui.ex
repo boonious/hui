@@ -19,7 +19,8 @@ defmodule Hui do
   alias Hui.Http
   alias Hui.Query
 
-  @http_client Application.compile_env(:hui, :http_client, Hui.Http.Clients.Httpc)
+  # hard-code for now, to use a mock later
+  @http_client Hui.Http.Clients.Httpc
 
   @type endpoint :: Http.endpoint()
   @type query :: Http.query()
