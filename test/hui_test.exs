@@ -136,8 +136,6 @@ defmodule HuiTest do
 
   test "when query is malformed, Hui should return error tuple" do
     assert {:error, @error_einval} == Hui.search(nil, nil)
-    assert {:error, @error_einval} == Hui.suggest(nil, nil)
-    assert {:error, @error_einval} == Hui.suggest(:default, "")
   end
 
   test "when url is malformed, search should return error tuple" do
@@ -145,38 +143,6 @@ defmodule HuiTest do
     assert {:error, @error_nxdomain} == Hui.search([], q: "*")
     assert {:error, @error_nxdomain} == Hui.search(:not_in_config_url, q: "*")
     assert {:error, @error_nxdomain} == Hui.search("boo", q: "*")
-  end
-
-  test "suggest/2", %{bypass: bypass} do
-    Bypass.expect_once(bypass, fn conn ->
-      assert conn.query_string == "suggest.count=10&suggest.dictionary=name_infix&suggest.q=ha&suggest=true"
-      Plug.Conn.resp(conn, 200, "")
-    end)
-
-    Hui.suggest(
-      "http://localhost:#{bypass.port}/suggest",
-      %Hui.Query.Suggest{q: "ha", count: 10, dictionary: "name_infix"}
-    )
-  end
-
-  test "suggest/5", %{bypass: bypass} do
-    expected =
-      "suggest.cfq=1939&suggest.count=5&" <>
-        "suggest.dictionary=name_infix&suggest.dictionary=ln_prefix&suggest.dictionary=fn_prefix&" <>
-        "suggest.q=ha&suggest=true"
-
-    Bypass.expect_once(bypass, fn conn ->
-      assert conn.query_string == expected
-      Plug.Conn.resp(conn, 200, "")
-    end)
-
-    Hui.suggest(
-      "http://localhost:#{bypass.port}/suggest",
-      "ha",
-      5,
-      ["name_infix", "ln_prefix", "fn_prefix"],
-      "1939"
-    )
   end
 
   describe "update/3 ingests" do
@@ -294,6 +260,23 @@ defmodule HuiTest do
     setup_bypass_for_update_query(bypass, %Query.Update{commit: true, waitSearcher: true} |> Hui.Encoder.encode())
 
     Hui.commit(url)
+  end
+
+  test "suggest/2" do
+    url = "http://localhost/suggester"
+    ClientMock |> expect(:dispatch, 2, fn req -> {:ok, %{req | status: 200}} end)
+    ClientMock |> expect(:handle_response, 2, fn resp, _req -> resp end)
+
+    assert {:ok, _resp} = Hui.suggest(url, %Query.Suggest{q: "ha", count: 10})
+    assert {:ok, _resp} = Hui.suggest(url, "ha")
+  end
+
+  test "suggest/5" do
+    url = "http://localhost/suggester"
+    ClientMock |> expect(:dispatch, fn req -> {:ok, %{req | status: 200}} end)
+    ClientMock |> expect(:handle_response, fn resp, _req -> resp end)
+
+    assert {:ok, _resp} = Hui.suggest(url, "ha", 10, ["ln_infix"], "1939")
   end
 
   test "metrics/2" do

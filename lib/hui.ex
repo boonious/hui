@@ -12,7 +12,6 @@ defmodule Hui do
   - [README](https://hexdocs.pm/hui/readme.html#usage)
   """
 
-  import Hui.Guards
   import Hui.Http.Client
 
   alias Hui.Error
@@ -127,7 +126,7 @@ defmodule Hui do
   ```
   """
   @spec suggest(endpoint, Query.Suggest.t()) :: http_response
-  def suggest(endpoint, %Query.Suggest{} = query), do: get(endpoint, query)
+  defdelegate suggest(endpoint, query), to: Hui.Suggest
 
   @doc """
   Convenience function for issuing a suggester query to a specified Solr endpoint.
@@ -141,15 +140,7 @@ defmodule Hui do
   ```
   """
   @spec suggest(endpoint, binary, nil | integer, nil | binary | list(binary), nil | binary) :: http_response
-  def suggest(endpoint, q, count \\ nil, dictionaries \\ nil, context \\ nil)
-
-  def suggest(endpoint, q, _, _, _) when is_nil_empty(q) or is_nil_empty(endpoint) do
-    {:error, %Error{reason: :einval}}
-  end
-
-  def suggest(endpoint, q, count, dictionaries, context) do
-    get(endpoint, %Query.Suggest{q: q, count: count, dictionary: dictionaries, cfq: context})
-  end
+  defdelegate suggest(endpoint, q, count, dictionaries, context), to: Hui.Suggest
 
   @doc """
   Updates or adds Solr documents to an index or collection.

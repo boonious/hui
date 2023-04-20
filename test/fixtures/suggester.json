@@ -1,0 +1,33 @@
+{
+    "responseHeader": {
+      "status": 0,
+      "QTime": 3
+    },
+    "suggest": {
+      "mySuggester": {
+        "elec": {
+          "numFound": 1,
+          "suggestions": [
+            {
+              "term": "electronics and computer1",
+              "weight": 100,
+              "payload": ""
+            }
+          ]
+        }
+      },
+      "altSuggester": {
+        "elec": {
+          "numFound": 1,
+          "suggestions": [
+            {
+              "term": "electronics and computer1",
+              "weight": 10,
+              "payload": ""
+            }
+          ]
+        }
+      }
+    }
+  }
+  
