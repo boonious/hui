@@ -8,9 +8,10 @@ Application.ensure_all_started(:mox)
 
 defmodule TestHelpers do
   import ExUnit.Assertions
+  alias Hui.Http
 
   def test_get_req_url(url, query) do
-    {_status, resp} = Hui.get(url, query)
+    {_status, resp} = get(url, query, Hui.Http.Clients.Httpc)
 
     regex =
       Hui.Encoder.encode(query)
@@ -18,6 +19,18 @@ defmodule TestHelpers do
       |> Regex.compile!()
 
     assert String.match?(resp.url |> to_string(), regex)
+  end
+
+  defp get(endpoint, query, client) do
+    case Http.new(:get, endpoint, query, client) do
+      req = %Http{} ->
+        req
+        |> Hui.Http.Client.dispatch()
+        |> Hui.Http.Client.handle_response(req)
+
+      error ->
+        error
+    end
   end
 
   def setup_bypass_for_update_query(bypass, expected_data, content_type \\ "application/json", resp \\ "") do

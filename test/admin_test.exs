@@ -9,30 +9,6 @@ defmodule Hui.AdminTest do
   alias Hui.Query.Metrics
 
   describe "metrics/2" do
-    test "via configured atomic endpoint" do
-      metric_url = "http://localhost/solr/admin/metrics"
-      Application.put_env(:hui, :test_endpoint, url: metric_url, headers: [{"accept", "application/json"}])
-
-      ClientMock |> expect(:dispatch, fn req -> {:ok, %{req | status: 200}} end)
-      ClientMock |> expect(:handle_response, fn resp, _req -> resp end)
-
-      {:ok, resp} = metrics(:test_endpoint, group: "core")
-
-      assert resp.status == 200
-      assert resp.method == :get
-      assert {"accept", "application/json"} in resp.headers
-    end
-
-    test "via binary endpoint" do
-      metrics_url = "http://localhost/solr/admin/metrics"
-
-      ClientMock |> expect(:dispatch, fn req -> {:ok, %{req | status: 200}} end)
-      ClientMock |> expect(:handle_response, fn resp, _req -> resp end)
-
-      {:ok, resp} = metrics(metrics_url, group: "core")
-      assert resp.status == 200
-    end
-
     test "request query string given metrics options" do
       metrics_url = "http://localhost/solr/admin/metrics"
       options = [group: "core", type: "timer", property: ["mean_ms", "max_ms", "p99_ms"], wt: "xml"]
@@ -81,29 +57,6 @@ defmodule Hui.AdminTest do
   end
 
   describe "ping/1" do
-    test "via configured atomic endpoint" do
-      url = "http://localhost:/solr/ping_test"
-      Application.put_env(:hui, :test_endpoint, url: url, headers: [{"accept", "application/json"}])
-
-      ClientMock |> expect(:dispatch, fn req -> {:ok, %{req | status: 200}} end)
-      ClientMock |> expect(:handle_response, fn resp, _req -> resp end)
-
-      {:ok, resp} = ping(:test_endpoint)
-      assert resp.status == 200
-      assert resp.method == :get
-    end
-
-    test "via binary endpoint" do
-      url = "http://localhost/solr/collection/admin/ping"
-
-      ClientMock |> expect(:dispatch, fn req -> {:ok, %{req | status: 200}} end)
-      ClientMock |> expect(:handle_response, fn resp, _req -> resp end)
-
-      {:ok, resp} = ping(url)
-      assert resp.status == 200
-      assert resp.method == :get
-    end
-
     test "request query string" do
       url = "http://localhost:/solr/ping_test"
       Application.put_env(:hui, :test_endpoint, url: url, headers: [{"accept", "application/json"}])

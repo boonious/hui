@@ -14,7 +14,6 @@ defmodule Hui do
 
   import Hui.Http.Client
 
-  alias Hui.Error
   alias Hui.Http
   alias Hui.Query
 
@@ -110,9 +109,7 @@ defmodule Hui do
   may also be specified via `options`.
   """
   @spec search(endpoint, query, module) :: http_response
-  def search(endpoint, query, client \\ @http_client)
-  def search(endpoint, query, client) when is_list(query) or is_map(query), do: get(endpoint, query, client)
-  def search(_endpoint, _query, _client), do: {:error, %Error{reason: :einval}}
+  defdelegate search(endpoint, query, client), to: Http, as: :get
 
   @doc """
   Issue a structured suggest query to a specified Solr endpoint.
@@ -366,20 +363,6 @@ defmodule Hui do
   """
   @spec ping(binary() | atom(), keyword) :: http_response
   defdelegate ping(endpoint, options), to: Hui.Admin
-
-  @doc false
-  @spec get(endpoint, query, module) :: http_response
-  def get(endpoint, query, client \\ @http_client) do
-    case Http.new(:get, endpoint, query, client) do
-      req = %Http{} ->
-        req
-        |> dispatch()
-        |> handle_response(req)
-
-      error ->
-        error
-    end
-  end
 
   @doc false
   @spec post(endpoint, update_query, module) :: http_response

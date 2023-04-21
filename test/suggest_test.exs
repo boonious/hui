@@ -8,29 +8,6 @@ defmodule Hui.SuggestTest do
   alias Hui.Query
 
   describe "suggest/2" do
-    test "via configured atomic endpoint" do
-      url = "http://localhost/suggest"
-      Application.put_env(:hui, :test_suggest_endpoint, url: url, headers: [{"accept", "application/json"}])
-
-      ClientMock |> expect(:dispatch, fn req -> {:ok, %{req | status: 200}} end)
-      ClientMock |> expect(:handle_response, fn resp, _req -> resp end)
-
-      {:ok, resp} = suggest(:test_suggest_endpoint, %Query.Suggest{q: "ha", count: 10, dictionary: "name_infix"})
-
-      assert resp.status == 200
-      assert resp.method == :get
-    end
-
-    test "via binary endpoint" do
-      url = "http://localhost/suggest"
-
-      ClientMock |> expect(:dispatch, fn req -> {:ok, %{req | status: 200}} end)
-      ClientMock |> expect(:handle_response, fn resp, _req -> resp end)
-
-      {:ok, resp} = suggest(url, %Query.Suggest{q: "ha", count: 10, dictionary: "name_infix"})
-      assert resp.status == 200
-    end
-
     test "request query string" do
       url = "http://localhost/suggest"
       suggest_struct = %Query.Suggest{q: "ha", count: 10, dictionary: "name_infix"}

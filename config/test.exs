@@ -3,7 +3,7 @@ use Mix.Config
 config :hui,
   http_client: Hui.Http.Client.Mock,
   integration_test_url: "http://localhost:8983/solr/test_core1/select",
-  json_parser: Hui.ResponseParsers.JsonParserMock
+  json_parser: Hui.ResponseParsers.JsonParser.Mock
 
 # http client configuration
 config :hui, :finch, name: TestFinch

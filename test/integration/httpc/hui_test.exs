@@ -13,8 +13,9 @@ defmodule Hui.Integration.Httpc.HuiTest do
   describe "search/2" do
     test "handles keyword query" do
       query = [q: "*", rows: 10, fq: ["cat:electronics"]]
+      client = Hui.Http.Client.impl()
 
-      assert {:ok, %Http{body: body, status: 200, url: url}} = Hui.search(@endpoint, query)
+      assert {:ok, %Http{body: body, status: 200, url: url}} = Hui.search(@endpoint, query, client)
       assert url == [@endpoint, "?", "q=%2A&rows=10&fq=cat%3Aelectronics"]
 
       assert %{

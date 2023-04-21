@@ -7,14 +7,11 @@ defmodule HuiTest do
   import Fixtures.Admin
   import Fixtures.Update
 
-  alias Hui.Http
-  alias Hui.Http.Client.Mock, as: ClientMock
   alias Hui.Query
-  alias Hui.ResponseParsers.JsonParserMock
+  alias Hui.ResponseParsers.JsonParser.Mock, as: JsonParserMock
 
-  @error_einval %Hui.Error{reason: :einval}
+  @client Hui.Http.Client.impl()
   @error_nxdomain %Hui.Error{reason: :nxdomain}
-  @json_parser Application.compile_env(:hui, :json_parser)
 
   doctest Hui
 
@@ -25,124 +22,13 @@ defmodule HuiTest do
     %{bypass: Bypass.open()}
   end
 
-  describe "search/2" do
-    test "handles keyword list query", %{bypass: bypass} do
-      query = [q: "*", rows: 10, fq: ["cat:electronic", "popularity:[0 TO *]"]]
+  test "search/3" do
+    url = "http://localhost/solr/collection/select"
 
-      Bypass.expect_once(bypass, fn conn ->
-        assert conn.query_string == query |> Hui.Encoder.encode()
-        Plug.Conn.resp(conn, 200, "")
-      end)
+    @client |> expect(:dispatch, fn req -> {:ok, %{req | status: 200}} end)
+    @client |> expect(:handle_response, fn resp, _req -> resp end)
 
-      Hui.search("http://localhost:#{bypass.port}/select", query)
-    end
-
-    test "handles a Hui query struct", %{bypass: bypass} do
-      query = %Hui.Query.DisMax{
-        q: "run",
-        qf: "description^2.3 title",
-        mm: "2<-25% 9<-3",
-        pf: "title",
-        ps: 1,
-        qs: 3
-      }
-
-      Bypass.expect_once(bypass, fn conn ->
-        assert conn.query_string == query |> Hui.Encoder.encode()
-        Plug.Conn.resp(conn, 200, "")
-      end)
-
-      Hui.search("http://localhost:#{bypass.port}/select", query)
-    end
-
-    test "handles a list of Hui query structs", %{bypass: bypass} do
-      struct1 = %Hui.Query.DisMax{
-        q: "run",
-        qf: "description^2.3 title",
-        mm: "2<-25% 9<-3",
-        pf: "title",
-        ps: 1,
-        qs: 3
-      }
-
-      struct2 = %Hui.Query.Common{rows: 10, start: 10, fq: ["edited:true"]}
-      struct3 = %Hui.Query.Facet{field: ["cat", "author_str"], mincount: 1}
-
-      Bypass.expect_once(bypass, fn conn ->
-        assert conn.query_string == [struct1, struct2, struct3] |> Hui.Encoder.encode()
-        Plug.Conn.resp(conn, 200, "")
-      end)
-
-      Hui.search("http://localhost:#{bypass.port}/select", [struct1, struct2, struct3])
-    end
-
-    test "returns map from JSON response", %{bypass: bypass} do
-      Bypass.expect_once(bypass, fn conn ->
-        Plug.Conn.put_resp_header(conn, "content-type", "application/json")
-        |> Plug.Conn.resp(200, File.read!("./test/fixtures/search_response.json"))
-      end)
-
-      {_, resp} = Hui.search("http://localhost:#{bypass.port}/select", q: "*")
-      assert is_map(resp.body)
-    end
-
-    test "returns binary response from non-JSON response", %{bypass: bypass} do
-      Bypass.expect_once(bypass, fn conn ->
-        Plug.Conn.resp(conn, 200, File.read!("./test/fixtures/search_response.xml"))
-      end)
-
-      {_, resp} = Hui.search("http://localhost:#{bypass.port}/select", q: "*")
-      assert is_binary(resp.body)
-    end
-
-    test "handles binary URL endpoint", %{bypass: bypass} do
-      url = "http://localhost:#{bypass.port}/solr/newspapers/suggest"
-
-      Bypass.expect_once(bypass, fn conn ->
-        assert conn.port == bypass.port
-        assert conn.request_path == "/solr/newspapers/suggest"
-        Plug.Conn.resp(conn, 200, "")
-      end)
-
-      Hui.search(url, suggest: true, "suggest.q": "el")
-    end
-
-    test "accepts HTTP headers", %{bypass: bypass} do
-      headers = [{"accept", "application/json"}]
-      url = {"http://localhost:#{bypass.port}/select?", headers}
-
-      Bypass.expect_once(bypass, fn conn ->
-        assert Enum.member?(conn.req_headers, {"accept", "application/json"})
-        Plug.Conn.resp(conn, 200, "")
-      end)
-
-      Hui.search(url, q: "*")
-    end
-
-    test "access configured atom URL key" do
-      bypass = Bypass.open(port: 8984)
-
-      Bypass.expect_once(bypass, fn conn ->
-        Plug.Conn.resp(conn, 200, "")
-      end)
-
-      query = [q: "edinburgh", rows: 10]
-      experted_request_url = Application.get_env(:hui, :library)[:url] <> "?" <> Hui.Encoder.encode(query)
-
-      {_, resp} = Hui.search(:library, query)
-      assert experted_request_url == resp.url |> to_string()
-    end
-  end
-
-  test "when query is malformed, Hui should return error tuple" do
-    assert {:error, @error_einval} == Hui.search(nil, nil)
-  end
-
-  test "when url is malformed, search should return error tuple" do
-    assert {:error, @error_nxdomain} == Hui.search("", q: "*")
-    assert {:error, @error_nxdomain} == Hui.search([], q: "*")
-    assert {:error, @error_nxdomain} == Hui.search(:not_in_config_url, q: "*")
-    assert {:error, @error_nxdomain} == Hui.search("boo", q: "*")
+    assert {:ok, _resp} = Hui.search(url, [q: "solr rocks"], @client)
   end
 
   describe "update/3 ingests" do
@@ -264,8 +150,8 @@ defmodule HuiTest do
 
   test "suggest/2" do
     url = "http://localhost/suggester"
-    ClientMock |> expect(:dispatch, 2, fn req -> {:ok, %{req | status: 200}} end)
-    ClientMock |> expect(:handle_response, 2, fn resp, _req -> resp end)
+    @client |> expect(:dispatch, 2, fn req -> {:ok, %{req | status: 200}} end)
+    @client |> expect(:handle_response, 2, fn resp, _req -> resp end)
 
     assert {:ok, _resp} = Hui.suggest(url, %Query.Suggest{q: "ha", count: 10})
     assert {:ok, _resp} = Hui.suggest(url, "ha")
@@ -273,16 +159,16 @@ defmodule HuiTest do
 
   test "suggest/5" do
     url = "http://localhost/suggester"
-    ClientMock |> expect(:dispatch, fn req -> {:ok, %{req | status: 200}} end)
-    ClientMock |> expect(:handle_response, fn resp, _req -> resp end)
+    @client |> expect(:dispatch, fn req -> {:ok, %{req | status: 200}} end)
+    @client |> expect(:handle_response, fn resp, _req -> resp end)
 
     assert {:ok, _resp} = Hui.suggest(url, "ha", 10, ["ln_infix"], "1939")
   end
 
   test "metrics/2" do
     url = {"http://localhost/solr/admin/metrics", [{"content-type", "application/json"}]}
-    ClientMock |> expect(:dispatch, fn req -> {:ok, %{req | status: 200}} end)
-    ClientMock |> expect(:handle_response, fn resp, _req -> resp end)
+    @client |> expect(:dispatch, fn req -> {:ok, %{req | status: 200}} end)
+    @client |> expect(:handle_response, fn resp, _req -> resp end)
 
     assert {:ok, _resp} = Hui.metrics(url, group: "core", type: "timer")
   end
@@ -291,13 +177,14 @@ defmodule HuiTest do
     url = "http://localhost/solr/collection/admin/ping"
     ok_resp = successful_ping_json_response() |> Jason.decode!()
 
-    ClientMock |> expect(:dispatch, 2, fn req -> {:ok, %{req | status: 200}} end)
-    ClientMock |> expect(:handle_response, 2, fn {:ok, resp}, _req -> {:ok, %{resp | body: ok_resp}} end)
+    @client |> expect(:dispatch, 2, fn req -> {:ok, %{req | status: 200}} end)
+    @client |> expect(:handle_response, 2, fn {:ok, resp}, _req -> {:ok, %{resp | body: ok_resp}} end)
 
     assert {:pong, _qtime} = Hui.ping(url)
     assert {:pong, _qtime} = Hui.ping(url, wt: "json")
   end
 
+  # Eventually move this to integration tests
   describe "get/2 handles" do
     test "a list of structs", context do
       Bypass.expect_once(context.bypass, fn conn ->
@@ -482,43 +369,6 @@ defmodule HuiTest do
       # {_status, resp} = Hui.mlt(url, solr_params_q, solr_params)
       # assert String.match?(resp.request_url, ~r/#{experted_url}/)
     end
-  end
-
-  test "get/2 parses JSON response with configured parser", %{bypass: bypass} do
-    query = [q: "*", rows: 10]
-
-    response = %{
-      "response" => %{
-        "docs" => [
-          %{
-            "id" => "TWINX2048-3200PRO",
-            "name" => [
-              "CORSAIR XMS 2GB"
-            ]
-          }
-        ]
-      }
-    }
-
-    endpoint_atom = "hui_test#{bypass.port}" |> String.to_atom()
-    json_response = response |> Jason.encode!()
-
-    Bypass.expect_once(bypass, fn conn ->
-      Plug.Conn.put_resp_header(conn, "content-type", "application/json")
-      |> Plug.Conn.resp(200, json_response)
-    end)
-
-    Application.put_env(:hui, endpoint_atom,
-      url: "http://localhost:#{bypass.port}/solr",
-      options: [timeout: 10_000, response_parser: @json_parser]
-    )
-
-    expect(@json_parser, :parse, 1, fn {:ok, %{body: body} = response} ->
-      assert body == json_response
-      {:ok, %{response | body: Jason.decode!(body)}}
-    end)
-
-    assert {:ok, %Http{body: ^response}} = Hui.search(endpoint_atom, query)
   end
 
   describe "post/2 handles" do
