@@ -11,145 +11,91 @@ defmodule HuiTest do
   alias Hui.ResponseParsers.JsonParser.Mock, as: JsonParserMock
 
   @client Hui.Http.Client.impl()
-  @error_nxdomain %Hui.Error{reason: :nxdomain}
 
   doctest Hui
 
   setup :verify_on_exit!
 
   setup do
-    stub_with(JsonParserMock, Hui.ResponseParsers.JsonParser)
-    %{bypass: Bypass.open()}
+    %{url: {"http://localhost/solr/endpoint", [{"content-type", "application/json"}]}}
   end
 
-  test "search/3" do
-    url = "http://localhost/solr/collection/select"
-
+  test "search/3", %{url: url} do
     @client |> expect(:dispatch, fn req -> {:ok, %{req | status: 200}} end)
     @client |> expect(:handle_response, fn resp, _req -> resp end)
 
     assert {:ok, _resp} = Hui.search(url, [q: "solr rocks"], @client)
   end
 
-  describe "update/3 ingests" do
-    test "a single doc (map)", %{bypass: bypass} do
-      url = {"http://localhost:#{bypass.port}/update", [{"content-type", "application/json"}]}
-      setup_bypass_for_update_query(bypass, update_json(single_doc(), commit: true))
+  test "update/4", %{url: url} do
+    docs = multi_docs()
+    query = %Query.Update{doc: docs, commit: true} |> Hui.Encoder.encode()
 
-      Hui.update(url, single_doc(), true)
-    end
+    @client |> expect(:dispatch, fn %{body: ^query} = req -> {:ok, %{req | status: 200}} end)
+    @client |> expect(:handle_response, fn resp, _req -> resp end)
+    assert {:ok, _resp} = Hui.update(url, docs)
 
-    test "a single doc (map) without commit", %{bypass: bypass} do
-      url = {"http://localhost:#{bypass.port}/update", [{"content-type", "application/json"}]}
-      setup_bypass_for_update_query(bypass, update_json(single_doc(), commit: false))
-
-      Hui.update(url, single_doc(), false)
-    end
-
-    test "multiple docs (map)", %{bypass: bypass} do
-      url = {"http://localhost:#{bypass.port}/update", [{"content-type", "application/json"}]}
-      setup_bypass_for_update_query(bypass, update_json(multi_docs(), commit: true))
-
-      Hui.update(url, multi_docs(), true)
-    end
-
-    test "multiple docs (map) without commit", %{bypass: bypass} do
-      url = {"http://localhost:#{bypass.port}/update", [{"content-type", "application/json"}]}
-      setup_bypass_for_update_query(bypass, update_json(multi_docs(), commit: false))
-
-      Hui.update(url, multi_docs(), false)
-    end
-
-    test "binary documents", %{bypass: bypass} do
-      url = {"http://localhost:#{bypass.port}/update", [{"content-type", "application/json"}]}
-      setup_bypass_for_update_query(bypass, update_json(multi_docs()))
-
-      Hui.update(url, update_json(multi_docs()))
-    end
-
-    test "via configured URL key" do
-      update_doc = File.read!("./test/fixtures/update_doc.xml")
-      bypass = Bypass.open(port: 8989)
-
-      setup_bypass_for_update_query(bypass, update_doc, "application/xml")
-      Hui.update(:update_test, update_doc)
-    end
+    commit = false
+    query = %Query.Update{doc: docs, commit: false} |> Hui.Encoder.encode()
+    @client |> expect(:dispatch, fn %{body: ^query} = req -> {:ok, %{req | status: 200}} end)
+    @client |> expect(:handle_response, fn resp, _req -> resp end)
+    assert {:ok, _resp} = Hui.update(url, docs, commit, @client)
   end
 
-  test "when url is malformed, update/3 should return error tuple" do
-    update_doc = File.read!("./test/fixtures/update_doc.xml")
+  test "delete docs via delete_by_id", %{url: url} do
+    ids = ["tt1650453", "tt1650453"]
+    commit = true
+    query = %Query.Update{delete_id: ids, commit: true} |> Hui.Encoder.encode()
 
-    assert {:error, @error_nxdomain} == Hui.update(nil, update_doc)
-    assert {:error, @error_nxdomain} == Hui.update("", update_doc)
-    assert {:error, @error_nxdomain} == Hui.update([], update_doc)
-    assert {:error, @error_nxdomain} == Hui.update(:blahblah, update_doc)
+    @client |> expect(:dispatch, 2, fn %{body: ^query} = req -> {:ok, %{req | status: 200}} end)
+    @client |> expect(:handle_response, 2, fn resp, _req -> resp end)
+
+    assert {:ok, _resp} = Hui.delete_by_id(url, ids)
+    assert {:ok, _resp} = Hui.delete_by_id(url, ids, commit, @client)
   end
 
-  describe "update/3 handles Update struct" do
-    test "with commitWithin, overwrite commands", %{bypass: bypass} do
-      url = {"http://localhost:#{bypass.port}/update", [{"content-type", "application/json"}]}
-      query_struct = %Query.Update{doc: single_doc(), commitWithin: 10, overwrite: true}
-      setup_bypass_for_update_query(bypass, query_struct |> Hui.Encoder.encode())
+  test "delete single doc via delete_by_id", %{url: url} do
+    id = "tt1650453"
+    commit = true
+    query = %Query.Update{delete_id: id, commit: true} |> Hui.Encoder.encode()
 
-      Hui.update(url, query_struct)
-    end
+    @client |> expect(:dispatch, 2, fn %{body: ^query} = req -> {:ok, %{req | status: 200}} end)
+    @client |> expect(:handle_response, 2, fn resp, _req -> resp end)
 
-    test "with multiple grouped update commands", %{bypass: bypass} do
-      url = {"http://localhost:#{bypass.port}/update", [{"content-type", "application/json"}]}
-
-      query_struct = %Query.Update{
-        doc: multi_docs(),
-        commitWithin: 50,
-        overwrite: true,
-        commit: true,
-        waitSearcher: true,
-        expungeDeletes: false
-      }
-
-      setup_bypass_for_update_query(bypass, query_struct |> Hui.Encoder.encode())
-      Hui.update(url, query_struct)
-    end
-
-    test "with optimize command", %{bypass: bypass} do
-      url = {"http://localhost:#{bypass.port}/update", [{"content-type", "application/json"}]}
-      setup_bypass_for_update_query(bypass, "{\"optimize\":{\"maxSegments\":10,\"waitSearcher\":false}}")
-
-      Hui.update(url, %Query.Update{optimize: true, maxSegments: 10, waitSearcher: false})
-    end
-
-    test "with rollback command", %{bypass: bypass} do
-      url = {"http://localhost:#{bypass.port}/update", [{"content-type", "application/json"}]}
-      setup_bypass_for_update_query(bypass, "{\"delete\":{\"query\":\"name:Persona\"},\"rollback\":{}}")
-
-      Hui.update(url, %Query.Update{delete_query: "name:Persona", rollback: true})
-    end
+    assert {:ok, _resp} = Hui.delete_by_id(url, id)
+    assert {:ok, _resp} = Hui.delete_by_id(url, id, commit, @client)
   end
 
-  test "delete/3 docs by ID", %{bypass: bypass} do
-    url = {"http://localhost:#{bypass.port}/update", [{"content-type", "application/json"}]}
-    delete_query = %Query.Update{delete_id: ["tt1650453", "tt1650453"], commit: true}
-    setup_bypass_for_update_query(bypass, delete_query |> Hui.Encoder.encode())
+  test "delete_by_query/4", %{url: url} do
+    filters = ["name:Persona", "genre:Drama"]
+    query = %Query.Update{delete_query: filters, commit: true} |> Hui.Encoder.encode()
 
-    Hui.delete(url, ["tt1650453", "tt1650453"])
+    @client |> expect(:dispatch, fn %{body: ^query} = req -> {:ok, %{req | status: 200}} end)
+    @client |> expect(:handle_response, fn resp, _req -> resp end)
+    Hui.delete_by_query(url, filters)
+
+    commit = false
+    query_without_commit = %Query.Update{delete_query: filters, commit: false} |> Hui.Encoder.encode()
+    @client |> expect(:dispatch, fn %{body: ^query_without_commit} = req -> {:ok, %{req | status: 200}} end)
+    @client |> expect(:handle_response, fn resp, _req -> resp end)
+    Hui.delete_by_query(url, filters, commit, @client)
   end
 
-  test "delete_by_query/3", %{bypass: bypass} do
-    url = {"http://localhost:#{bypass.port}/update", [{"content-type", "application/json"}]}
-    delete_query = %Query.Update{delete_query: ["name:Persona", "genre:Drama"], commit: true}
-    setup_bypass_for_update_query(bypass, delete_query |> Hui.Encoder.encode())
+  test "commit/3", %{url: url} do
+    query = %Query.Update{commit: true, waitSearcher: true} |> Hui.Encoder.encode()
 
-    Hui.delete_by_query(url, ["name:Persona", "genre:Drama"])
-  end
-
-  test "commit/2", %{bypass: bypass} do
-    url = {"http://localhost:#{bypass.port}/update", [{"content-type", "application/json"}]}
-    setup_bypass_for_update_query(bypass, %Query.Update{commit: true, waitSearcher: true} |> Hui.Encoder.encode())
-
+    @client |> expect(:dispatch, fn %{body: ^query} = req -> {:ok, %{req | status: 200}} end)
+    @client |> expect(:handle_response, fn resp, _req -> resp end)
     Hui.commit(url)
+
+    wait_searcher = false
+    query_wait_searcher = %Query.Update{commit: true, waitSearcher: false} |> Hui.Encoder.encode()
+    @client |> expect(:dispatch, fn %{body: ^query_wait_searcher} = req -> {:ok, %{req | status: 200}} end)
+    @client |> expect(:handle_response, fn resp, _req -> resp end)
+    Hui.commit(url, wait_searcher, @client)
   end
 
-  test "suggest/2" do
-    url = "http://localhost/suggester"
+  test "suggest/2", %{url: url} do
     @client |> expect(:dispatch, 2, fn req -> {:ok, %{req | status: 200}} end)
     @client |> expect(:handle_response, 2, fn resp, _req -> resp end)
 
@@ -157,24 +103,21 @@ defmodule HuiTest do
     assert {:ok, _resp} = Hui.suggest(url, "ha")
   end
 
-  test "suggest/5" do
-    url = "http://localhost/suggester"
+  test "suggest/5", %{url: url} do
     @client |> expect(:dispatch, fn req -> {:ok, %{req | status: 200}} end)
     @client |> expect(:handle_response, fn resp, _req -> resp end)
 
     assert {:ok, _resp} = Hui.suggest(url, "ha", 10, ["ln_infix"], "1939")
   end
 
-  test "metrics/2" do
-    url = {"http://localhost/solr/admin/metrics", [{"content-type", "application/json"}]}
+  test "metrics/2", %{url: url} do
     @client |> expect(:dispatch, fn req -> {:ok, %{req | status: 200}} end)
     @client |> expect(:handle_response, fn resp, _req -> resp end)
 
     assert {:ok, _resp} = Hui.metrics(url, group: "core", type: "timer")
   end
 
-  test "ping/2" do
-    url = "http://localhost/solr/collection/admin/ping"
+  test "ping/2", %{url: url} do
     ok_resp = successful_ping_json_response() |> Jason.decode!()
 
     @client |> expect(:dispatch, 2, fn req -> {:ok, %{req | status: 200}} end)
@@ -186,6 +129,11 @@ defmodule HuiTest do
 
   # Eventually move this to integration tests
   describe "get/2 handles" do
+    setup do
+      stub_with(JsonParserMock, Hui.ResponseParsers.JsonParser)
+      %{bypass: Bypass.open()}
+    end
+
     test "a list of structs", context do
       Bypass.expect_once(context.bypass, fn conn ->
         Plug.Conn.resp(conn, 200, "")
@@ -368,37 +316,6 @@ defmodule HuiTest do
 
       # {_status, resp} = Hui.mlt(url, solr_params_q, solr_params)
       # assert String.match?(resp.request_url, ~r/#{experted_url}/)
-    end
-  end
-
-  describe "post/2 handles" do
-    test "Update struct", %{bypass: bypass} do
-      url = {"http://localhost:#{bypass.port}/update", [{"content-type", "application/json"}]}
-      setup_bypass_for_update_query(bypass, update_json(single_doc()))
-
-      Hui.post(url, %Query.Update{doc: single_doc()})
-    end
-
-    test "Update struct - multiple docs", %{bypass: bypass} do
-      url = {"http://localhost:#{bypass.port}/update", [{"content-type", "application/json"}]}
-      setup_bypass_for_update_query(bypass, update_json(multi_docs()))
-
-      Hui.post(url, %Query.Update{doc: multi_docs()})
-    end
-
-    test "update document in binary formant", %{bypass: bypass} do
-      url = {"http://localhost:#{bypass.port}/update", [{"content-type", "application/json"}]}
-      setup_bypass_for_update_query(bypass, update_json(multi_docs()))
-
-      Hui.post(url, update_json(multi_docs()))
-    end
-
-    test "update document in XML binary data", %{bypass: bypass} do
-      url = {"http://localhost:#{bypass.port}/update", [{"content-type", "application/xml"}]}
-      update_doc = "<delete><id>9780141981727</id></delete>"
-      setup_bypass_for_update_query(bypass, update_doc, "application/xml")
-
-      Hui.post(url, update_doc)
     end
   end
 end

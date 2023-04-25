@@ -27,7 +27,7 @@ defprotocol Hui.Encoder do
       iex> %Highlight{fl: "title,words", usePhraseHighlighter: true, fragsize: 250} |> Encoder.encode
       "hl.fl=title%2Cwords&hl.fragsize=250&hl=true&hl.usePhraseHighlighter=true"
 
-      iex> %Query.Update{delete_id: ["tt1316540", "tt1650453"]} |> Encoder.encode          
+      iex> %Query.Update{delete_id: ["tt1316540", "tt1650453"]} |> Encoder.encode
       "{\"delete\":{\"id\":\"tt1316540\"},\"delete\":{\"id\":\"tt1650453\"}}"
 
   See `Hui.Query.Facet`, `Hui.Query.FacetRange`, `Hui.Query.FacetInterval`, `Hui.Query.Update` for more examples.
@@ -155,10 +155,13 @@ defimpl Hui.Encoder, for: Query.Update do
 
   def encode(query), do: encode_to_iodata(query) |> IO.iodata_to_binary()
 
+  # Potential to improve performance
   def encode_to_iodata(query) do
     [
       ?{,
-      for {field, config} <- @fields_sequence_config, Map.get(query, field) != nil do
+      for {field, config} <- @fields_sequence_config,
+          Map.get(query, field) != nil,
+          not (field == :commit and Map.get(query, field) == false) do
         encoded = Map.get(query, field) |> encode(query, config)
 
         cond do
@@ -173,7 +176,6 @@ defimpl Hui.Encoder, for: Query.Update do
   end
 
   def encode(value, query, config)
-
   def encode(false, _query, _config), do: []
 
   def encode(value, query, config) when is_list(value) do
