@@ -296,6 +296,17 @@ defmodule HuiEncoderTest do
     assert encoded == single_doc_update_json()
   end
 
+  test "encodes Update struct - single doc with commit option" do
+    encoded = Encoder.encode(%Query.Update{doc: single_doc(), commit: true})
+
+    assert encoded =~ single_doc() |> Jason.encode!()
+    assert encoded == update_json(single_doc(), commit: true)
+
+    encoded = Encoder.encode(%Query.Update{doc: single_doc(), commit: false})
+    assert encoded =~ single_doc() |> Jason.encode!()
+    assert encoded == update_json(single_doc())
+  end
+
   test "encodes Update struct - multiple docs" do
     encoded = Encoder.encode(%Query.Update{doc: multi_docs()})
 

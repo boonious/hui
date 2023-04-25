@@ -1,107 +1,209 @@
 defmodule Hui.HttpTest do
   use ExUnit.Case, async: true
 
-  import ExUnit.CaptureLog
+  import Fixtures.Update
+  import Hui.Http
   import Mox
 
   alias Hui.Http
-  alias Hui.Http.Client
-  alias Hui.ResponseParsers.JsonParserMock
+  alias Hui.Http.Client.Mock, as: ClientMock
+  alias Hui.Query
 
-  setup do
-    bypass = Bypass.open()
-    bypass_url = "http://localhost:#{bypass.port}"
-    stub_with(JsonParserMock, Hui.ResponseParsers.JsonParser)
+  describe "get/3" do
+    setup do
+      ClientMock |> stub(:handle_response, fn resp, _req -> resp end)
 
-    %{bypass: bypass, bypass_url: bypass_url, client: Hui.Http.Clients.Httpc}
-  end
+      %{url: "http://localhost/solr/collection/select"}
+    end
 
-  describe "get/1" do
-    test "response status and body", %{bypass: bypass, bypass_url: url, client: client} do
-      Bypass.expect(bypass, fn conn ->
-        Plug.Conn.resp(conn, 200, "{\"doc\":\"response body\"}")
+    test "via binary endpoint", %{url: url} do
+      ClientMock
+      |> expect(:dispatch, fn req ->
+        assert url in req.url
+        {:ok, %{req | status: 200}}
       end)
 
-      req = Http.new(:get, url, %{}, client)
-      {_, resp} = req |> Client.dispatch() |> Client.handle_response(req)
+      {:ok, resp} = get(url, q: "solr rocks")
+      assert resp.status == 200
+    end
+
+    test "via configured atomic endpoint", %{url: url} do
+      Application.put_env(:hui, :test_get_endpoint, url: url, headers: [{"accept", "application/json"}])
+
+      ClientMock |> expect(:dispatch, fn req -> {:ok, %{req | status: 200}} end)
+
+      {:ok, resp} = get(:test_get_endpoint, q: "solr rocks")
 
       assert resp.status == 200
-      assert resp.body == %{"doc" => "response body"}
+      assert resp.method == :get
+      assert {"accept", "application/json"} in resp.headers
     end
 
-    test "returns raw body if json response is invalid", %{bypass: bypass, bypass_url: url, client: client} do
-      Bypass.expect(bypass, fn conn ->
-        Plug.Conn.put_resp_header(conn, "content-type", "application/json;charset=utf-8")
-        |> Plug.Conn.resp(200, "non json response")
+    test "accepts HTTP headers", %{url: url} do
+      header = {"accept", "application/json"}
+
+      ClientMock
+      |> expect(:dispatch, fn %Http{} = req ->
+        assert header in req.headers
+        {:ok, req}
       end)
 
-      req = Http.new(:get, url, %{}, client)
-      {_, resp} = req |> Client.dispatch() |> Client.handle_response(req)
-
-      assert resp.body == "non json response"
+      {:ok, _resp} = get({url, [header]}, q: "*")
     end
 
-    test "facilitates various httpc options", %{bypass: bypass, bypass_url: url} do
-      # See: http://erlang.org/doc/man/httpc.html#request-5
-      options = [{:autoredirect, true}, {:timeout, 1000}, {:body_format, :binary}]
+    # test returns raw response
 
-      Bypass.expect(bypass, fn conn ->
-        Plug.Conn.resp(conn, 200, "getting a response")
+    test "returns parsed JSON response" do
+      resp = File.read!("./test/fixtures/search_response.json")
+      resp_decoded = resp |> Jason.decode!()
+
+      ClientMock |> expect(:dispatch, fn %Http{} = req -> {:ok, %{req | body: resp}} end)
+
+      ClientMock
+      |> expect(:handle_response, fn {:ok, %Http{body: ^resp} = resp}, _req ->
+        {:ok, %{resp | body: resp_decoded}}
       end)
 
-      req = %Http{url: url, options: options}
-      {_, resp} = req |> Client.dispatch() |> Client.handle_response(req)
-      assert resp.body == "getting a response"
+      assert {:ok, %Http{body: ^resp_decoded}} = get("http://solr_endpoint", q: "get test")
     end
 
-    test "ignores invalid httpc options", %{bypass: bypass, bypass_url: url} do
-      # See: http://erlang.org/doc/man/httpc.html#request-5
-      options = [{:non_existing_option, :binary}]
+    test "handles keyword list query", %{url: url} do
+      query = [q: "*", rows: 10, fq: ["cat:electronic", "popularity:[0 TO *]"]]
+      query_encoded = Hui.Encoder.encode(query)
 
-      Bypass.expect(bypass, fn conn ->
-        Plug.Conn.resp(conn, 200, "getting a response")
+      ClientMock
+      |> expect(:dispatch, fn %Http{} = req ->
+        assert [^url, "?", ^query_encoded] = req.url
+        {:ok, req}
       end)
 
-      # httpc outputs charlist equivalent of "Invalid option {non_existing_http_option,binary} ignored \n"
-      assert capture_log(fn -> %Http{url: url, options: options} |> Client.dispatch() end) =~
-               "[73, 110, 118, 97, 108, 105, 100, 32, 111, 112, 116, 105, 111, 110, 32, [123, ['non_existing_option', 44, 'binary'], 125], 32, 105, 103, 110, 111, 114, 101, 100, 32, 10]"
+      assert {:ok, _resp} = get(url, query)
     end
+
+    test "handles a query struct", %{url: url} do
+      query = %Query.DisMax{
+        q: "run",
+        qf: "description^2.3 title",
+        mm: "2<-25% 9<-3",
+        pf: "title",
+        ps: 1,
+        qs: 3
+      }
+
+      query_encoded = Hui.Encoder.encode(query)
+
+      ClientMock
+      |> expect(:dispatch, fn %Http{} = req ->
+        assert [^url, "?", ^query_encoded] = req.url
+        {:ok, req}
+      end)
+
+      assert {:ok, _resp} = get(url, query)
+    end
+
+    test "handles a list of query structs", %{url: url} do
+      struct1 = %Hui.Query.DisMax{
+        q: "run",
+        qf: "description^2.3 title",
+        mm: "2<-25% 9<-3",
+        pf: "title",
+        ps: 1,
+        qs: 3
+      }
+
+      struct2 = %Hui.Query.Common{rows: 10, start: 10, fq: ["edited:true"]}
+      struct3 = %Hui.Query.Facet{field: ["cat", "author_str"], mincount: 1}
+
+      query_encoded = [struct1, struct2, struct3] |> Hui.Encoder.encode()
+
+      ClientMock
+      |> expect(:dispatch, fn %Http{} = req ->
+        assert [^url, "?", ^query_encoded] = req.url
+        {:ok, req}
+      end)
+
+      get(url, [struct1, struct2, struct3])
+    end
+
+    # test "calls configured response parser", %{url: url}
+    # test "calls global response parser", %{url: url}
   end
 
-  describe "post/1" do
-    test "response status and body", %{bypass: bypass, bypass_url: url, client: client} do
-      Bypass.expect(bypass, fn conn ->
-        assert {:ok, "{\"doc\":\"request body\"}", conn} = Plug.Conn.read_body(conn)
-        assert conn.method == "POST"
+  describe "post/4" do
+    setup do
+      ClientMock |> stub(:handle_response, fn resp, _req -> resp end)
+      update_json = update_json(single_doc(), commit: true)
 
-        Plug.Conn.resp(conn, 200, "{\"doc\":\"response body\"}")
-      end)
-
-      req = Http.new(:post, url, "{\"doc\":\"request body\"}", client)
-      {_, resp} = req |> Client.dispatch() |> Client.handle_response(req)
-
-      assert 200 = resp.status
-      assert %{"doc" => "response body"} = resp.body
+      %{url: "http://localhost/solr/collection/select", updates: update_json}
     end
 
-    test "facilitates various httpc options", %{bypass: bypass, bypass_url: url, client: client} do
-      # See: http://erlang.org/doc/man/httpc.html#request-5
-      options = [{:autoredirect, true}, {:timeout, 1000}, {:body_format, :binary}]
+    test "via binary endpoint", %{url: url, updates: updates} do
+      ClientMock |> expect(:dispatch, fn %{url: ^url} = req -> {:ok, %{req | status: 200}} end)
 
-      Bypass.expect(bypass, fn conn ->
-        Plug.Conn.resp(conn, 200, "getting a response")
-      end)
+      {:ok, resp} = post(url, updates)
+      assert resp.status == 200
+    end
 
-      req =
-        Http.new(
-          :post,
-          {url, [{"content-type", "application/json"}], options},
-          "{\"doc\":\"request body\"}",
-          client
-        )
+    test "via configured atomic endpoint", %{url: url, updates: updates} do
+      Application.put_env(:hui, :test_post_endpoint, url: url, headers: [{"accept", "application/json"}])
+      ClientMock |> expect(:dispatch, fn %{url: ^url} = req -> {:ok, %{req | status: 200}} end)
 
-      {_, resp} = req |> Client.dispatch() |> Client.handle_response(req)
-      assert resp.body == "getting a response"
+      {:ok, resp} = post(:test_post_endpoint, updates)
+
+      assert resp.status == 200
+      assert resp.method == :post
+      assert {"accept", "application/json"} in resp.headers
+    end
+
+    test "handles binary update data", %{url: url} do
+      url = {url, [{"content-type", "application/xml"}]}
+      updates = "<delete><id>9780141981727</id></delete>"
+
+      ClientMock |> expect(:dispatch, fn %Http{body: ^updates} = req -> {:ok, %{req | status: 200}} end)
+
+      {:ok, _resp} = post(url, updates)
+    end
+
+    test "handles update struct", %{url: url} do
+      updates = %Query.Update{doc: single_doc(), commit: true}
+      updates_encoded = updates |> Hui.Encoder.encode()
+      ClientMock |> expect(:dispatch, fn %Http{body: ^updates_encoded} = req -> {:ok, %{req | status: 200}} end)
+
+      {:ok, _resp} = post(url, updates)
+    end
+
+    test "handles single map default update", %{url: url} do
+      doc = single_doc()
+      updates_encoded = update_json(doc, commit: true)
+      ClientMock |> expect(:dispatch, fn %Http{body: ^updates_encoded} = req -> {:ok, %{req | status: 200}} end)
+
+      {:ok, _resp} = post(url, doc)
+    end
+
+    test "handles single map update with commit false", %{url: url} do
+      doc = single_doc()
+      commit = false
+      updates_encoded = update_json(doc, commit: false)
+      ClientMock |> expect(:dispatch, fn %Http{body: ^updates_encoded} = req -> {:ok, %{req | status: 200}} end)
+
+      {:ok, _resp} = post(url, doc, commit)
+    end
+
+    test "handles list of maps default update", %{url: url} do
+      docs = multi_docs()
+      updates_encoded = update_json(docs, commit: true)
+      ClientMock |> expect(:dispatch, fn %Http{body: ^updates_encoded} = req -> {:ok, %{req | status: 200}} end)
+
+      {:ok, _resp} = post(url, docs)
+    end
+
+    test "handles list of maps update with commit false", %{url: url} do
+      docs = multi_docs()
+      commit = false
+      updates_encoded = update_json(docs, commit: false)
+      ClientMock |> expect(:dispatch, fn %Http{body: ^updates_encoded} = req -> {:ok, %{req | status: 200}} end)
+
+      {:ok, _resp} = post(url, docs, commit)
     end
   end
 end

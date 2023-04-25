@@ -1,6 +1,8 @@
 defmodule Hui.Http.Clients.Httpc do
   @moduledoc false
 
+  # FIX-ME: need to conform to behaviour response types
+
   @behaviour Hui.Http.Client
 
   @httpc_options [:timeout, :connect_timeout, :ssl, :essl, :autoredirect, :proxy_auth, :version, :relaxed]

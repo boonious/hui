@@ -12,14 +12,10 @@ defmodule Hui do
   - [README](https://hexdocs.pm/hui/readme.html#usage)
   """
 
-  import Hui.Guards
-  import Hui.Http.Client
-
-  alias Hui.Error
   alias Hui.Http
   alias Hui.Query
 
-  @http_client Application.compile_env(:hui, :http_client, Hui.Http.Clients.Httpc)
+  @client Hui.Http.Client.impl()
 
   @type endpoint :: Http.endpoint()
   @type query :: Http.query()
@@ -110,9 +106,7 @@ defmodule Hui do
   may also be specified via `options`.
   """
   @spec search(endpoint, query, module) :: http_response
-  def search(endpoint, query, client \\ @http_client)
-  def search(endpoint, query, client) when is_list(query) or is_map(query), do: get(endpoint, query, client)
-  def search(_endpoint, _query, _client), do: {:error, %Error{reason: :einval}}
+  defdelegate search(endpoint, query, client), to: Http, as: :get
 
   @doc """
   Issue a structured suggest query to a specified Solr endpoint.
@@ -126,7 +120,7 @@ defmodule Hui do
   ```
   """
   @spec suggest(endpoint, Query.Suggest.t()) :: http_response
-  def suggest(endpoint, %Query.Suggest{} = query), do: get(endpoint, query)
+  defdelegate suggest(endpoint, query), to: Hui.Suggest
 
   @doc """
   Convenience function for issuing a suggester query to a specified Solr endpoint.
@@ -140,15 +134,7 @@ defmodule Hui do
   ```
   """
   @spec suggest(endpoint, binary, nil | integer, nil | binary | list(binary), nil | binary) :: http_response
-  def suggest(endpoint, q, count \\ nil, dictionaries \\ nil, context \\ nil)
-
-  def suggest(endpoint, q, _, _, _) when is_nil_empty(q) or is_nil_empty(endpoint) do
-    {:error, %Error{reason: :einval}}
-  end
-
-  def suggest(endpoint, q, count, dictionaries, context) do
-    get(endpoint, %Query.Suggest{q: q, count: count, dictionary: dictionaries, cfq: context})
-  end
+  defdelegate suggest(endpoint, q, count, dictionaries, context), to: Hui.Suggest
 
   @doc """
   Updates or adds Solr documents to an index or collection.
@@ -237,14 +223,11 @@ defmodule Hui do
     {status, resp} = Hui.update(endpoint, %Query.Update{commit: true, expungeDeletes: true})
   ```
   """
-  @spec update(endpoint, update_query, boolean) :: http_response
-  def update(endpoint, docs, commit \\ true)
-  def update(endpoint, docs, _commit) when is_binary(docs), do: post(endpoint, docs)
-  def update(endpoint, %Query.Update{} = docs, _commit), do: post(endpoint, docs)
+  @spec update(endpoint, update_query) :: http_response
+  defdelegate update(endpoint, query), to: Http, as: :post
 
-  def update(endpoint, docs, commit) when is_map(docs) or is_list(docs) do
-    post(endpoint, %Query.Update{doc: docs, commit: commit})
-  end
+  @spec update(endpoint, update_query, boolean, module) :: http_response
+  defdelegate update(endpoint, query, commit, client), to: Http, as: :post
 
   @doc """
   Deletes Solr documents.
@@ -264,16 +247,24 @@ defmodule Hui do
     headers = [{"content-type", "application/json"}]
     endpoint = {"http://localhost:8983/solr/collection/update", headers}
 
-    Hui.delete(endpoint, "tt2358891") # delete a single doc
-    Hui.delete(endpoint, ["tt2358891", "tt1602620"]) # delete a list of docs
+    Hui.delete_by_id(endpoint, "tt2358891") # delete a single doc
+    Hui.delete_by_id(endpoint, ["tt2358891", "tt1602620"]) # delete a list of docs
 
-    Hui.delete(endpoint, ["tt2358891", "tt1602620"], false) # delete without immediate commit
+    Hui.delete_by_id(endpoint, ["tt2358891", "tt1602620"], false) # delete without immediate commit
   ```
   """
-  @spec delete(endpoint, binary | list(binary), boolean) :: http_response
-  def delete(endpoint, ids, commit \\ true) when is_binary(ids) or is_list(ids) do
-    post(endpoint, %Query.Update{delete_id: ids, commit: commit})
+  @spec delete_by_id(endpoint, binary | list(binary), boolean, module) :: http_response
+  def delete_by_id(endpoint, ids, commit \\ true, client \\ @client) when is_binary(ids) or is_list(ids) do
+    Http.post(endpoint, %Query.Update{delete_id: ids, commit: commit}, commit, client)
   end
+
+  # coveralls-ignore-start
+  @deprecated "Use delete_by_id/3 instead"
+  def delete(endpoint, ids, commit \\ true) when is_binary(ids) or is_list(ids) do
+    Http.post(endpoint, %Query.Update{delete_id: ids, commit: commit})
+  end
+
+  # coveralls-ignore-stop
 
   @doc """
   Deletes Solr documents by filter queries.
@@ -298,8 +289,8 @@ defmodule Hui do
   ```
   """
   @spec delete_by_query(endpoint, binary | list(binary), boolean) :: http_response
-  def delete_by_query(endpoint, q, commit \\ true) when is_binary(q) or is_list(q) do
-    post(endpoint, %Query.Update{delete_query: q, commit: commit})
+  def delete_by_query(endpoint, q, commit \\ true, client \\ @client) when is_binary(q) or is_list(q) do
+    Http.post(endpoint, %Query.Update{delete_query: q, commit: commit}, commit, client)
   end
 
   @doc """
@@ -330,8 +321,8 @@ defmodule Hui do
   physically remove docs from the index, which could be a system-intensive operation.
   """
   @spec commit(endpoint, boolean) :: http_response
-  def commit(endpoint, wait_searcher \\ true) do
-    post(endpoint, %Query.Update{commit: true, waitSearcher: wait_searcher})
+  def commit(endpoint, wait_searcher \\ true, client \\ @client) do
+    Http.post(endpoint, %Query.Update{commit: true, waitSearcher: wait_searcher}, true, client)
   end
 
   @doc """
@@ -374,32 +365,4 @@ defmodule Hui do
   """
   @spec ping(binary() | atom(), keyword) :: http_response
   defdelegate ping(endpoint, options), to: Hui.Admin
-
-  @doc false
-  @spec get(endpoint, query, module) :: http_response
-  def get(endpoint, query, client \\ @http_client) do
-    case Http.new(:get, endpoint, query, client) do
-      req = %Http{} ->
-        req
-        |> dispatch()
-        |> handle_response(req)
-
-      error ->
-        error
-    end
-  end
-
-  @doc false
-  @spec post(endpoint, update_query, module) :: http_response
-  def post(endpoint, docs, client \\ @http_client) do
-    case Http.new(:post, endpoint, docs, client) do
-      req = %Http{} ->
-        req
-        |> dispatch()
-        |> handle_response(req)
-
-      error ->
-        error
-    end
-  end
 end

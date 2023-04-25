@@ -1,12 +1,11 @@
 defmodule Hui.Admin do
   @moduledoc false
 
+  alias Hui.Http
   alias Hui.Query.Metrics
 
   @spec metrics(Hui.url(), keyword) :: Http.response()
-  def metrics(endpoint, options) do
-    Hui.get(endpoint, struct(Metrics, options))
-  end
+  def metrics(endpoint, options), do: Http.get(endpoint, struct(Metrics, options))
 
   @spec ping(Hui.url()) :: {:pong, integer} | :pang | Http.response()
   def ping(endpoint, options \\ [])
@@ -19,14 +18,13 @@ defmodule Hui.Admin do
       url ->
         [url, "/admin/ping"]
         |> to_string()
-        |> Hui.get(opts)
-        |> handle_response(opts)
+        |> ping(opts)
     end
   end
 
-  def ping(endpoint, opts), do: Hui.get(endpoint, opts) |> handle_response(opts)
+  def ping(endpoint, opts), do: Http.get(endpoint, opts) |> handle_response(opts)
 
-  defp handle_response({:ok, %{body: %{"status" => "OK"}, status: 200} = resp}, []) do
+  defp handle_response({:ok, %{body: %{"status" => "OK"}, status: 200} = resp}, _opts) do
     {:pong, resp.body["responseHeader"]["QTime"]}
   end
 

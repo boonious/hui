@@ -1,20 +1,22 @@
 defmodule Hui.Http do
   @moduledoc """
-  A struct for Solr HTTP request and response.
+  A struct and functions for making Solr HTTP request and response.
   """
 
   alias Hui.Encoder
   alias Hui.Http
   alias Hui.Query
+  alias Hui.Query.Update
   alias Hui.Utils.ParserType
   alias Hui.Utils.Url, as: UrlUtils
 
-  @default_client Hui.Http.Clients.Httpc
+  import Hui.Http.Client
+
   @json_parser Application.compile_env(:hui, :json_parser)
   @parser_not_configured ParserType.not_configured()
 
   defstruct body: nil,
-            client: @default_client,
+            client: impl(),
             headers: [],
             method: :get,
             options: [],
@@ -34,7 +36,7 @@ defmodule Hui.Http do
   @type solr_struct :: querying_struct | faceting_struct | highlighting_struct | misc_struct
 
   @type query :: keyword | map | solr_struct | [solr_struct]
-  @type update_query :: binary | map | list(map) | Query.Update.t()
+  @type update_query :: binary | map | list(map) | Update.t()
 
   @type client :: module
   @type method :: :get | :post
@@ -77,13 +79,13 @@ defmodule Hui.Http do
     end
   end
 
-  def new(:post, endpoint, docs, client) do
+  def new(:post, endpoint, updates, client) do
     with {:ok, {url, headers, options, parser}} <- UrlUtils.parse_endpoint(endpoint),
-         docs <- maybe_encode_docs(docs) do
+         updates <- maybe_encode_updates(updates) do
       parser = if parser == :not_configured, do: @json_parser, else: parser
 
       %Http{
-        body: docs,
+        body: updates,
         client: client,
         url: url,
         headers: headers,
@@ -101,6 +103,33 @@ defmodule Hui.Http do
     end
   end
 
-  defp maybe_encode_docs(docs) when is_binary(docs), do: docs
-  defp maybe_encode_docs(docs), do: Encoder.encode(docs)
+  defp maybe_encode_updates(updates) when is_binary(updates), do: updates
+  defp maybe_encode_updates(updates), do: Encoder.encode(updates)
+
+  @doc false
+  @spec get(endpoint, query, module) :: response
+  def get(endpoint, query, client \\ impl()) do
+    new(:get, endpoint, query, client) |> request()
+  end
+
+  @doc false
+  @spec post(endpoint, update_query, boolean, module) :: response
+  def post(endpoint, updates, commit \\ true, client \\ impl())
+
+  def post(endpoint, updates, _commit, client) when is_binary(updates), do: do_post(endpoint, updates, client)
+  def post(endpoint, %Update{} = updates, _commit, client), do: do_post(endpoint, updates, client)
+
+  def post(endpoint, %{} = doc, commit, client), do: post(endpoint, %Update{doc: doc, commit: commit}, client)
+
+  def post(endpoint, [%{} = _doc | _] = docs, commit, client) do
+    post(endpoint, %Update{doc: docs, commit: commit}, client)
+  end
+
+  defp do_post(endpoint, updates, client), do: new(:post, endpoint, updates, client) |> request()
+
+  defp request(%Http{} = req) do
+    req
+    |> dispatch()
+    |> handle_response(req)
+  end
 end
