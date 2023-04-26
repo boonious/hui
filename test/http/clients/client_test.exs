@@ -1,4 +1,4 @@
-for client <- [Hui.Http.Clients.Httpc, Hui.Http.Clients.Httpoison, Hui.Http.Clients.Finch] do
+for client <- Hui.Http.Client.all_clients() do
   test_module = Module.concat(client, ClientTest)
 
   defmodule test_module do
