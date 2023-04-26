@@ -6,6 +6,8 @@ ExUnit.start(exclude: [integration: true])
 Application.ensure_all_started(:bypass)
 Application.ensure_all_started(:mox)
 
+Finch.start_link(name: Application.get_env(:hui, :finch)[:name])
+
 defmodule TestHelpers do
   import ExUnit.Assertions
   alias Hui.Http
@@ -45,4 +47,16 @@ defmodule TestHelpers do
       Plug.Conn.resp(conn, 200, resp)
     end)
   end
+
+  def status_code(%HTTPoison.Response{status_code: status}), do: status
+  def status_code(%Finch.Response{status: status}), do: status
+  def status_code({{_http_ver, status, _}, _headers, _body}), do: status
+
+  def body(%HTTPoison.Response{body: body}), do: body
+  def body(%Finch.Response{body: body}), do: body
+  def body({_status, _headers, body}), do: IO.iodata_to_binary(body)
+
+  def is_http_client_error(%Mint.TransportError{}), do: true
+  def is_http_client_error(%HTTPoison.Error{}), do: true
+  def is_http_client_error({:failed_connect, _error}), do: true
 end

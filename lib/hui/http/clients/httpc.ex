@@ -1,8 +1,6 @@
 defmodule Hui.Http.Clients.Httpc do
   @moduledoc false
 
-  # FIX-ME: need to conform to behaviour response types
-
   @behaviour Hui.Http.Client
 
   @httpc_options [:timeout, :connect_timeout, :ssl, :essl, :autoredirect, :proxy_auth, :version, :relaxed]
@@ -45,8 +43,8 @@ defmodule Hui.Http.Clients.Httpc do
   def handle_response({:ok, {{[?H, ?T, ?T, ?P | _], status, _}, headers, body}}, req) do
     headers = handle_resp_headers(headers)
 
-    {:ok, %{req | body: to_string(body), headers: headers, status: status}}
-    |> parse_docs(req.response_parser)
+    {:ok, %{req | body: body |> IO.iodata_to_binary(), headers: headers, status: status}}
+    |> parse(req.response_parser)
   end
 
   def handle_response({:error, {reason, _details}}, _req), do: {:error, %Hui.Error{reason: reason}}
@@ -56,11 +54,6 @@ defmodule Hui.Http.Clients.Httpc do
 
   defp handle_resp_headers(headers), do: Enum.map(headers, fn {k, v} -> {to_string(k), to_string(v)} end)
 
-  # no parser
-  defp parse_docs(response, nil), do: response
-  defp parse_docs({:error, _error} = response, _parser), do: response
-
-  defp parse_docs(response, parser) do
-    apply(parser, :parse, [response])
-  end
+  defp parse(response, nil), do: response
+  defp parse(response, parser), do: apply(parser, :parse, [response])
 end
