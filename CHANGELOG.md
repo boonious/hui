@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.11.0 (2023-04-27)
+* HTTP client behaviour rewrite, adding `handle_response` callback
+* introduce a response parser behaviour and implementation for parsing JSON response
+* provide support for using Finch HTTP client
+* refactoring in accordance with SOLID
+* add integration tests and Github action workflow for all 3 supported HTTP clients: httpc, HTTPoison, Finch
+* other: use Hammox/Mox in unit tests, credo linter
+
 ## 0.10.5 (2021-05-07)
 * support Solr metrics API querying
 * implement ping functions
