@@ -7,7 +7,7 @@ defmodule Hui.MixProject do
   def project do
     [
       app: :hui,
-      version: "0.10.5",
+      version: "0.11.0",
       elixir: "~> 1.10",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
@@ -39,14 +39,14 @@ defmodule Hui.MixProject do
   defp deps do
     [
       {:jason, "~> 1.4"},
-      {:finch, "~> 0.14", optional: true},
+      {:finch, "~> 0.16", optional: true},
       {:httpoison, "~> 2.1", optional: true},
       {:bypass, "~> 2.1", only: [:test, :integration]},
       {:hammox, "~> 0.5", only: [:test, :integration]},
-      {:credo, "~> 1.6", only: [:dev, :test, :integration], runtime: false},
-      {:dialyxir, "~> 1.2", only: :dev, runtime: false},
+      {:credo, "~> 1.7", only: [:dev, :test, :integration], runtime: false},
+      {:dialyxir, "~> 1.3", only: :dev, runtime: false},
       {:ex_doc, "~> 0.29", only: :dev, runtime: false},
-      {:excoveralls, "~> 0.15", only: :test}
+      {:excoveralls, "~> 0.16", only: :test}
     ]
   end
 

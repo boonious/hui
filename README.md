@@ -6,8 +6,6 @@ Hui 辉 ("shine" in Chinese) is a [Solr](http://lucene.apache.org/solr/) client 
 
 Hui enables [Solr](http://lucene.apache.org/solr/) querying, updating and other forms of interaction
 in [Elixir](https://elixir-lang.org) or [Phoenix](https://phoenixframework.org) applications.
-Typical Solr data can be contained within a core (index) held on a single server or
-a data collection in distributed server architecture (cloud).
 
 ### Example - searching
 
@@ -51,9 +49,9 @@ a data collection in distributed server architecture (cloud).
   suggest(suggester_url, "ha", 5, ["name_infix", "ln_prefix", "fn_prefix"], "1939")
 ```
 
-Query parameters could be arbitrary keywords or
+Query parameters could be any arbitrary keywords such as `[q: "*", rows: 10]` or
 built-in query [structs](https://hexdocs.pm/hui/Hui.html#t:solr_struct/0) that
-provide a structured way for invoking the comprehensive and powerful features of Solr.
+provide a structured way for using the comprehensive and powerful features of Solr.
 
 See the [API reference](https://hexdocs.pm/hui/api-reference.html#content)
 and [Solr reference guide](http://lucene.apache.org/solr/guide/searching.html)
@@ -64,6 +62,8 @@ for more details on available search parameters.
 To add, update and delete Solr documents, as well as optimised search indexes:
 
 ```elixir
+  import Hui
+
   # Specify an update handler endpoint for JSON-formatted update
   headers = [{"content-type", "application/json"}]
   url = {"http://localhost:8983/solr/collection/update", headers}
@@ -89,45 +89,45 @@ To add, update and delete Solr documents, as well as optimised search indexes:
   }
 
   # Add the docs and commit them to the index immediately
-  Hui.update(url, [doc1, doc2])
+  update(url, [doc1, doc2])
 
   # Send documents to another pre-configured endpoint
-  Hui.update(:updater, [doc1, doc2])
+  update(:updater, [doc1, doc2])
 
-  Hui.delete(url, "tt0077711") # delete one doc
-  Hui.delete(url, ["tt0077711", "tt0060827"]) # delete a list of docs
-  Hui.delete_by_query(url, ["genre:Drama", "name:Persona"]) # delete via filter queries
+  delete_by_id(url, "tt0077711") # delete one doc
+  delete_by_id(url, ["tt0077711", "tt0060827"]) # delete a list of docs
+  delete_by_query(url, ["genre:Drama", "name:Persona"]) # delete via filter queries
 ```
 
-Advanced update requests may be issued using the
+Advanced update commands may be issued using the
 [`Hui.Query.Update`](https://hexdocs.pm/hui/Hui.Query.Update.html) struct, as well as through
 any valid binary data encapsulating Solr documents and commands.
 
 ```elixir
-  # Hui.Query.Update struct commands for updating and committing the docs to Solr immediately
+  import Hui
   alias Hui.Query.Update
 
   x = %Update{doc: [doc1, doc2], commit: true, waitSearcher: true}
-  Hui.update(url, x)
+  update(url, x)
 
   # Commits docs within 5 seconds
   x = %Update{doc: [doc1, doc2], commitWithin: 5000, overwrite: true}
-  Hui.update(url, x)
+  update(url, x)
 
   # Commit and optimise index
-  Hui.update(url, %Update{commit: true, waitSearcher: true, optimize: true, maxSegments: 10})
+  update(url, %Update{commit: true, waitSearcher: true, optimize: true, maxSegments: 10})
 
   # Binary mode, e.g. delete a document via XML binary
   {url: "http://localhost:8983/solr/collection", [{"content-type", "application/xml"}]}
-  |> Hui.update("<delete><id>9780141981727</id></delete>")
+  |> update("<delete><id>9780141981727</id></delete>")
 ```
 
 See [Solr reference](http://lucene.apache.org/solr/guide/uploading-data-with-index-handlers.html)
 for more details on update commands, data types and formats.
 
-### Parsing Solr results
+### Parsed Solr response
 
-Solr results is returned encapsulated in `HTTP` response struct containing the Solr response.
+Solr results is returned encapsulated in the `HTTP` response struct containing the Solr response.
 
 ```elixir
   {:ok,
@@ -149,26 +149,26 @@ JSON response is automatically parsed and decoded as map.
 It is accessible via the `body` key.
 
 ```elixir
-  {status, resp} = Hui.q(solr_params)
+  {:ok, resp} = Hui.search(solr_params)
 
   # getting a list of Solr documents (Map)
   solr_docs = resp.body["response"]["docs"]
   total_hits = resp.body["response"]["numFound"]
 ```
 
-**Note**: other response formats such as XML, are currently being returned in raw text.
+**Note**: other response formats such as XML, are currently being returned as raw text.
 
-## URLs, Headers and Options
+## HTTP clients and endpoints settings
 Solr endpoints and request handlers may be specified in multiple ways:
 
 ```elixir
-  # URL binary string
+  # binary string endpoint
   Hui.search("http://localhost:8983/solr/collection/select", q: "loch")
 
-  # URL key referring to an endpoint in configuration - see "Configuration"
+  # atomic key referring to an endpoint in configuration - see "Configuration"
   Hui.search(:library, q: "edinburgh", rows: 10)
 
-  # URL via a tuple including HTTP headers and client options
+  # a tuple containing HTTP headers and client options
   headers = [{"accept", "application/json"}]
   options = [timeout: 10000]
   url = {"http://localhost:8983/solr/collection/suggest", headers, options}
@@ -179,18 +179,95 @@ Solr endpoints and request handlers may be specified in multiple ways:
 HTTP headers and client options for a specific endpoint may also be
 included in the a `{url, headers, options}` tuple where:
 
-  - `url` is a typical Solr endpoint that includes a request handler
+  - `url` is the Solr HTTP endpoint including any request handler
   - `headers`: a tuple list of [HTTP headers](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers)
-  - `options`: a keyword list of [Erlang httpc options](https://erlang.org/doc/man/httpc.html#request-4)
-  or [HTTPoison options](https://hexdocs.pm/httpoison/HTTPoison.Request.html) if configured, e.g.
-  `timeout`, `recv_timeout`, `max_redirect`
+  - `options`: a keyword list of HTTP client options such as [Erlang httpc options](https://erlang.org/doc/man/httpc.html#request-4) or [HTTPoison options](https://hexdocs.pm/httpoison/HTTPoison.Request.html), e.g. `timeout`, `recv_timeout`, `max_redirect`
 
-If `HTTPoison` is used, advanced HTTP options such as the use of connection pools
-may also be specified via `options`.
+If `HTTPoison` is used, advanced HTTP options such as [the use of connection pools](https://github.com/edgurgel/httpoison#connection-pools)
+may also be specified via `options`, e.g. `[hackney: [pool: :default]]`
 
-See "Configuration" on using different HTTP clients.
+### Deploying an HTTP client
 
-### Software library
+Hui relies on an existing client to facilitate HTTP requests. It currently provides support
+for the following clients:
+ - [Erlang httpc](https://erlang.org/doc/man/httpc.html) - built-in
+ - [HTTPoison](https://github.com/edgurgel/httpoison)
+ - [Finch](https://github.com/sneako/finch)
+
+Instead of using the default httpc client, one of the above HTTP clients may be deployed
+by adding the client as dependency and specificying it via the `http_client` configuration - see below. 
+Other HTTP clients may also be used by implementing the `Hui.Http.Client` behaviour.
+
+```ex
+  config :hui,
+    http_client: Hui.Http.Clients.Finch
+```
+
+```ex
+  defp deps do
+    [
+      ..
+      {:finch, "~> 0.16"}
+      ..
+    ]
+  end
+```
+
+For `Finch` (only), you also need to [start it from your supervision tree](https://github.com/sneako/finch#usage) and 
+configure it as below:
+  
+```ex
+  # use the same name specified in the supervision tree
+  config :hui, :finch, name: FinchSolr
+```
+
+See `Hui.Http.Client` for further details.
+
+## Installation
+
+Hui is [available in Hex](https://hex.pm/packages/hui), the package can be installed
+by adding `hui` to your list of dependencies in `mix.exs`:
+
+```elixir
+  def deps do
+    [
+      {:hui, "~> 0.11.0"}
+    ]
+  end
+```
+
+Then run `$ mix deps.get`.
+
+Documentation can be found at [https://hexdocs.pm/hui](https://hexdocs.pm/hui).
+
+## Configuration
+
+A default Solr endpoint may be specified in the application configuration. HTTP headers and options may also be configured.
+
+```elixir
+  config :hui, :default,
+    url: "http://localhost:8983/solr/gettingstarted/select",
+    headers: [{"accept", "application/json"}]
+    options: [timeout: 10_000]
+```
+
+The URL endpoint should also include
+[various request handlers](http://lucene.apache.org/solr/guide/7_4/overview-of-searching-in-solr.html#overview-of-searching-in-solr)
+for many purposes (search, autosuggest, spellcheck, indexing etc.). The handlers are configured
+in different custom or normative names in
+[Solr configuration](http://lucene.apache.org/solr/guide/7_4/requesthandlers-and-searchcomponents-in-solrconfig.html#requesthandlers-and-searchcomponents-in-solrconfig),
+e.g. "select" for search queries.
+
+Additional endpoints and request handlers can be configured in Hui using arbitrary config keys (e.g. `:suggester`):
+
+```elixir
+  config :hui, :suggester,
+    url: "http://localhost:8983/solr/collection/suggest"
+```
+
+Use the config key to represent Solr endpoints in functions such as `Hui.search/3`.
+
+## Software library
 
 Hui [modules and data structures](https://hexdocs.pm/hui/api-reference.html#content) can be used for building Solr
 application in Elixir and Phoenix. The query struct modules provide idiomatic and structured ways for
@@ -275,60 +352,9 @@ usage and increased performance, `Hui.Encoder` provides functions to return eith
 string or [IO data](https://hexdocs.pm/elixir/IO.html#module-io-data)
 which can be sent directly to IO functions or over the socket.
 
-## Installation
-
-Hui is [available in Hex](https://hex.pm/packages/hui), the package can be installed
-by adding `hui` to your list of dependencies in `mix.exs`:
-
-```elixir
-  def deps do
-    [
-      {:hui, "~> 0.10.5"}
-    ]
-  end
-```
-
-Then run `$ mix deps.get`.
-
-Documentation can be found at [https://hexdocs.pm/hui](https://hexdocs.pm/hui).
-
-## Configuration
-
-A default Solr endpoint may be specified in the application configuration. HTTP headers and options may also be configured.
-
-```elixir
-  config :hui, :default,
-    url: "http://localhost:8983/solr/gettingstarted/select",
-    headers: [{"accept", "application/json"}]
-    options: [timeout: 10000]
-```
-
-The URL endpoint should also include
-[various request
-handlers](http://lucene.apache.org/solr/guide/7_4/overview-of-searching-in-solr.html#overview-of-searching-in-solr)
-for many purposes (search, autosuggest, spellcheck, indexing etc.). The handlers are configured
-in different custom or normative names in
-[Solr configuration](http://lucene.apache.org/solr/guide/7_4/requesthandlers-and-searchcomponents-in-solrconfig.html#requesthandlers-and-searchcomponents-in-solrconfig),
-e.g. "select" for search queries.
-
-Additional endpoints and request handlers can be configured in Hui using arbitrary config keys (e.g. `:suggester`):
-
-```elixir
-  config :hui, :suggester,
-    url: "http://localhost:8983/solr/collection/suggest"
-```
-
-Use the config key to represent Solr endpoints in functions such as `Hui.search/2`, `Hui.search/3`.
-
-### Using other HTTP clients
-
-Hui relies on an existing client to facilitate HTTP requests - [Erlang httpc](https://erlang.org/doc/man/httpc.html).
-Instead of using the built-in client, other HTTP clients can be implemented and configured.
-See `Hui.Http` for further details.
-
 ## Copyright and License
 
-Copyright (c) 2018 Boon Low
+Copyright (c) 2023 Boon Low
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
