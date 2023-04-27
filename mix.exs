@@ -32,7 +32,7 @@ defmodule Hui.MixProject do
     [applications: applications(Mix.env())]
   end
 
-  def applications(env) when env in [:dev, :test], do: [:logger, :inets, :ssl, :httpoison]
+  def applications(env) when env in [:dev, :test, :integration], do: [:logger, :inets, :ssl, :httpoison]
   def applications(_), do: [:logger, :inets, :ssl]
 
   # Run "mix help deps" to learn about dependencies.
@@ -40,7 +40,7 @@ defmodule Hui.MixProject do
     [
       {:jason, "~> 1.4"},
       {:finch, "~> 0.14", optional: true},
-      {:httpoison, "~> 1.8", optional: true},
+      {:httpoison, "~> 2.1", optional: true},
       {:bypass, "~> 2.1", only: [:test, :integration]},
       {:hammox, "~> 0.5", only: [:test, :integration]},
       {:credo, "~> 1.6", only: [:dev, :test, :integration], runtime: false},

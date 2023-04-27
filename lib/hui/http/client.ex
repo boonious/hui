@@ -31,6 +31,8 @@ defmodule Hui.Http.Client do
 
   alias Hui.Http
 
+  @before_compile Hui.Http.Clients
+
   @type http_response :: {:ok, term()} | {:ok, term()}
   @type request :: Http.t()
   @type response :: {:ok, Http.t()} | {:error, Hui.Error.t()}

@@ -5,7 +5,7 @@ defmodule Hui.Query.DisMax do
   Correspond to the query parsers known as the Maximum Disjunction - DisMax
   and eDismax (extended version).
 
-  See below for more details: 
+  See below for more details:
    - [DisMax](http://lucene.apache.org/solr/guide/the-dismax-query-parser.html#dismax-query-parser-parameters)
    - [Extended DisMax](http://lucene.apache.org/solr/guide/the-extended-dismax-query-parser.html)
   """
@@ -29,7 +29,8 @@ defmodule Hui.Query.DisMax do
     :sow,
     :stopwords,
     :tie,
-    :uf
+    :uf,
+    defType: "dismax"
   ]
 
   @typedoc """

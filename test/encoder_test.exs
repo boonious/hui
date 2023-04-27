@@ -127,7 +127,7 @@ defmodule HuiEncoderTest do
     }
 
     assert Encoder.encode(query) ==
-             "bq=edited%3Atrue&mm=2%3C-25%25+9%3C-3&pf=title&ps=1&q=edinburgh&qf=description%5E2.3+title&qs=3"
+             "bq=edited%3Atrue&defType=dismax&mm=2%3C-25%25+9%3C-3&pf=title&ps=1&q=edinburgh&qf=description%5E2.3+title&qs=3"
   end
 
   test "encodes Facet struct" do
